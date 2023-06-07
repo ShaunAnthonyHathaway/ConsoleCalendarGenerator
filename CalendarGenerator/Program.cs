@@ -1,8 +1,5 @@
 ﻿
 using System.Globalization;
-using System;
-using System.Text;
-using System.ComponentModel;
 
 GenerateCalendar(1, 2023, new List<DateTime>() { new DateTime(2023, 1, 1) });
 GenerateCalendar(2, 2023, new List<DateTime>() { new DateTime(2023, 2, 1) });

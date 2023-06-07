@@ -2,24 +2,33 @@
 using System.Globalization;
 using System;
 using System.Text;
+using System.ComponentModel;
 
-GenerateCalendar(1, 2023);
-GenerateCalendar(2, 2023);
-GenerateCalendar(3, 2023);
-GenerateCalendar(4, 2023);
-GenerateCalendar(5, 2023);
-GenerateCalendar(6, 2023);
-GenerateCalendar(7, 2023);
-GenerateCalendar(8, 2023);
-GenerateCalendar(9, 2023);
-GenerateCalendar(10, 2023);
-GenerateCalendar(11, 2023);
-GenerateCalendar(12, 2023);
+GenerateCalendar(1, 2023, new List<DateTime>() { new DateTime(2023, 1, 1) });
+GenerateCalendar(2, 2023, new List<DateTime>() { new DateTime(2023, 2, 1) });
+GenerateCalendar(3, 2023, new List<DateTime>() { new DateTime(2023, 3, 1) });
+GenerateCalendar(4, 2023, new List<DateTime>() { new DateTime(2023, 4, 1) });
+GenerateCalendar(5, 2023, new List<DateTime>() { new DateTime(2023, 5, 1) });
+GenerateCalendar(6, 2023, new List<DateTime>() { new DateTime(2023, 6, 1) });
+GenerateCalendar(7, 2023, new List<DateTime>() { new DateTime(2023, 7, 1) });
+GenerateCalendar(8, 2023, new List<DateTime>() { new DateTime(2023, 8, 1) });
+GenerateCalendar(9, 2023, new List<DateTime>() { new DateTime(2023, 9, 1) });
+GenerateCalendar(10, 2023, new List<DateTime>() { new DateTime(2023, 10, 1) });
+GenerateCalendar(11, 2023, new List<DateTime>() { new DateTime(2023, 11, 1) });
+GenerateCalendar(12, 2023, new List<DateTime>() { new DateTime(2023, 12, 1) });
 
 Console.WriteLine("\n\nPress any key to terminate");
 Console.ReadKey();
-void GenerateCalendar(int Month, int Year)
+void GenerateCalendar(int Month, int Year, List<DateTime> dates)
 {
+    List<Int32> HitDays = new List<Int32>();
+    foreach (DateTime dt in dates)
+    {
+        if (HitDays.Contains(dt.Day) == false)
+        {
+            HitDays.Add(dt.Day);
+        }
+    }
     int days = DateTime.DaysInMonth(Year, Month);
     String StartDay = ConvertToShortDay(new DateTime(Year, Month, 1).DayOfWeek);
     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -31,7 +40,6 @@ void GenerateCalendar(int Month, int Year)
     Console.ResetColor();
     int Counter = 1;
     bool Started = false;
-    StringBuilder CalendarSB = new StringBuilder();
     String ThisDayOfWeek = "Mo";
     days++;
     while (Counter < days)
@@ -41,12 +49,14 @@ void GenerateCalendar(int Month, int Year)
             if(ThisDayOfWeek == StartDay)
             {                
                 Started = true;
-                CalendarSB.Append(" " + Counter);
+                SetColor(Counter, ref HitDays);
+                Console.Write(" " + Counter);
                 Counter++;
             }
             else
             {
-                CalendarSB.Append("   ");                
+                SetColor(Counter, ref HitDays);
+                Console.Write("   ");                
             }
         }
         else
@@ -55,36 +65,51 @@ void GenerateCalendar(int Month, int Year)
             {
                 if (ThisDayOfWeek == "Mo")
                 {
-                    CalendarSB.Append(" " + Counter);
+                    SetColor(Counter, ref HitDays);
+                    Console.Write(" " + Counter);
                 }
                 else
                 {
-                    CalendarSB.Append("  " + Counter);
+                    SetColor(Counter, ref HitDays);
+                    Console.Write("  " + Counter);
                 }                    
             }
             else
             {
                 if (ThisDayOfWeek == "Mo")
                 {
-                    CalendarSB.Append(Counter);
+                    SetColor(Counter, ref HitDays);
+                    Console.Write(Counter);
                 }
                 else
                 {
-                    CalendarSB.Append(" " + Counter);
+                    SetColor(Counter, ref HitDays);
+                    Console.Write(" " + Counter);
                 }
             }
             Counter++;
         }
         if (ThisDayOfWeek == "Su")
         {
-            Console.WriteLine(CalendarSB.ToString());
-            CalendarSB = new StringBuilder();
+            Console.WriteLine();
         }
         if(Counter == days)
         {
-            Console.WriteLine(CalendarSB.ToString() + "\n");            
+            Console.Write("\n");
+            Console.WriteLine();            
         }
         ThisDayOfWeek = GetNextShortDay(ThisDayOfWeek);
+    }
+}
+static void SetColor(int Counter, ref List<Int32> HitDays)
+{
+    if(HitDays.Contains(Counter))
+    {
+        Console.ForegroundColor = ConsoleColor.Blue;         
+    }
+    else
+    {
+        Console.ResetColor();
     }
 }
 String GetSpaces(String MonthName)

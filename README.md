@@ -51,7 +51,7 @@ CalendarExample2.GenerateMonth(5, 2023, HitDates);
 
 ```c#
 //Generate a year with no selected dates
-CalendarExample2.SetTitleColor(ConsoleColor.DarkMagenta);//Change title color
+CalendarExample2.SetTitleColor(ConsoleColor.DarkMagenta);
 CalendarExample2.GenerateYear(2023);
 ```
 ![ss3](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/ConsoleCalendarGenerator/docs/ss3.png?raw=true)

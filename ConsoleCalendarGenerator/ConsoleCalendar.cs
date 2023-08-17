@@ -38,7 +38,7 @@ namespace CalendarGenerator
                 }
             }
             int days = DateTime.DaysInMonth(Year, Month);
-            String StartDay = ConvertToShortDay(new DateTime(Year, Month, 1).DayOfWeek);
+            String StartDay = (new DateTime(Year, Month, 1).DayOfWeek).ToString().Substring(0,2);
             Console.ForegroundColor = _titleColor;
             String MonthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Month);
             Console.WriteLine(GetSpaces(MonthName) + MonthName + " " + Year);
@@ -230,36 +230,6 @@ namespace CalendarGenerator
                     break;
                 case "Su":
                     ReturnStr = "Mo";
-                    break;
-            }
-            return ReturnStr;
-        }
-        private String ConvertToShortDay(DayOfWeek CompareDay)
-        {
-            String ReturnStr = String.Empty;
-
-            switch (CompareDay)
-            {
-                case DayOfWeek.Monday:
-                    ReturnStr = "Mo";
-                    break;
-                case DayOfWeek.Tuesday:
-                    ReturnStr = "Tu";
-                    break;
-                case DayOfWeek.Wednesday:
-                    ReturnStr = "We";
-                    break;
-                case DayOfWeek.Thursday:
-                    ReturnStr = "Th";
-                    break;
-                case DayOfWeek.Friday:
-                    ReturnStr = "Fr";
-                    break;
-                case DayOfWeek.Saturday:
-                    ReturnStr = "Sa";
-                    break;
-                case DayOfWeek.Sunday:
-                    ReturnStr = "Su";
                     break;
             }
             return ReturnStr;

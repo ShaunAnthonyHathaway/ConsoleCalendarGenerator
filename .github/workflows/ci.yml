@@ -43,15 +43,13 @@ jobs:
       - name: Restore
         run: dotnet restore ConsoleCalendarGenerator.sln
 
-      # Every warning fails the build except NETSDK1138, which the example project's
-      # net7.0 target is known to raise. That one stays visible as a warning.
+      # Every warning fails the build.
       - name: Build (Release)
         run: >-
           dotnet build ConsoleCalendarGenerator.sln
           --configuration Release
           --no-restore
           -warnaserror
-          -warnnotaserror:NETSDK1138
 
       - name: Test
         run: >-
@@ -70,32 +68,43 @@ jobs:
           --no-build
           --filter "TestCategory=Terminal"
 
-      # Packs into a local folder only. Nothing here pushes to a registry.
+      # The steps above test the library's net10.0 build. This one builds the tests again, into
+      # their own folder, against the netstandard2.1 build that existing consumers use.
+      - name: Test (netstandard2.1 library build)
+        run: >-
+          dotnet test ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj
+          --configuration Release
+          --no-restore
+          -p:LibraryTargetFramework=netstandard2.1
+          -warnaserror
+          --filter "TestCategory!=Terminal"
+
+      # Packs into a local folder only; nothing here pushes to a registry. Packing also runs
+      # package validation, which fails if the public API is no longer compatible with the
+      # published 1.0.0 package.
       - name: Pack (Release)
         run: >-
           dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj
           --configuration Release
           --no-build
           --output artifacts/package
+          -warnaserror
 
-      - name: Verify the package
-        run: |
-          shopt -s nullglob
-          packages=(artifacts/package/ConsoleCalendarGenerator.*.nupkg)
-          if [ "${#packages[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one ConsoleCalendarGenerator package, found ${#packages[@]}."
-            exit 1
-          fi
-          echo "Package: ${packages[0]}"
-          contents="$(unzip -Z1 "${packages[0]}")"
-          echo "$contents"
-          grep -qx 'lib/netstandard2.1/ConsoleCalendarGenerator.dll' <<< "$contents"
+      - name: Verify the packages
+        run: bash eng/verify-package.sh artifacts/package
 
-      - name: Upload the package
-        if: matrix.os == 'ubuntu-latest'
+      # Installs the package from a local feed into separate applications and runs them.
+      # On Linux this includes a Native AOT publish.
+      - name: Consumer smoke tests
+        run: bash eng/consumer-smoke.sh artifacts/package ${{ runner.os == 'Linux' && '--native-aot' || '' }}
+
+      - name: Upload the packages
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
-          name: nuget-package
-          path: artifacts/package/*.nupkg
+          name: nuget-packages
+          path: |
+            artifacts/package/*.nupkg
+            artifacts/package/*.snupkg
           if-no-files-found: error
           retention-days: 7

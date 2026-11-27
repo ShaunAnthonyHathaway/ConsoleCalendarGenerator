@@ -1,0 +1,24 @@
+library: {LIBRARY}
+
+[unchanged]
+title: "   February 2023"
+weekday row: "Mo Tu We Th Fr Sa Su"
+first week, from Monday: "       1  2  3  4  5"
+last row: "27 28"
+a selected date changes the text: False
+GenerateYear draws this many weekday rows: 12
+default colors: title Yellow, weekday row Cyan, dates White, selected dates Blue
+after the four setters: title Green, weekday row DarkRed, dates Gray, selected dates DarkMagenta
+month 13: ArgumentOutOfRangeException, parameter month
+year 0: ArgumentOutOfRangeException, parameter year
+named arguments compile: True
+
+[corrected in 2.0]
+1. new ConsoleCalendar(Red): title Yellow, weekday row Red
+   new ConsoleCalendar(Red, Green, Blue, Magenta): title Magenta, weekday row Red, dates Green, selected dates Blue
+2. a null list: NullReferenceException
+   a null list and month 13: NullReferenceException
+3. with a CRLF writer: a bare LF is mixed in
+4. blank lines after April 2023, which ends on a Sunday: 2
+   blank lines after February 2023, which does not: 1
+5. the title under a culture with another calendar: names the month of that number in the other calendar

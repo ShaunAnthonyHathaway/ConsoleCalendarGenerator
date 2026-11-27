@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A program written for ConsoleCalendarGenerator 1.0.0, as an existing user has one: it references the
+    published package by its version. eng/upgrade-smoke.sh builds and runs it against 1.0.0 from nuget.org, then
+    upgrades this reference to the package under test, as a user would, and builds and runs it again. The
+    version below is the starting point of that upgrade and is changed only in the script's temporary copy.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(ConsumerTargetFramework)</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseAppHost>false</UseAppHost>
+    <RollForward>LatestMajor</RollForward>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <!-- Modern.cs uses the API that is new in 2.0. It is compiled only when the script asks for it. -->
+    <DefineConstants Condition="'$(UseModernApi)' == 'true'">$(DefineConstants);MODERN_API</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ConsoleCalendarGenerator" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>

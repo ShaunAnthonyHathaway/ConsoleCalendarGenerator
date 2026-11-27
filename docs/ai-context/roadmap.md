@@ -29,33 +29,37 @@ phase's pull request is #2.
 | Null list (D-58) | The second runtime change of 2.0: the two methods that take a list throw `ArgumentNullException` for `dates` when it is null, where 1.0.0 threw `NullReferenceException`. Still first, with nothing written and nothing touched. Only a null check in each of the two methods and their comments changed in the library. The migration tests recognize exactly that difference; the one recorded digest that covers null lists became an explicit comparison with the frozen source. | #15 | `042c3bc` |
 | Line terminator and blank line (D-59, D-60) | The third and fourth runtime changes of 2.0, in one pull request because both change the same calls at the end of a month: the last row of days ends with the console's line terminator, where 1.0.0 wrote a literal line feed, and every month is followed by exactly one blank line, where 1.0.0 wrote two after a month ending on a Sunday. Two lines of the library. The first corrections that change text: the remaining library-side digest comparisons became explicit comparisons with the frozen source, and the original sample has an expected text for each version. | #16 | `09e4034` |
 | Gregorian title (D-61) | The fifth and last runtime change of 2.0: the title of a legacy month is the current culture's name for the Gregorian month that is drawn, where 1.0.0 wrote the culture's name for the month of the same number in its own calendar. Nothing changes under a culture whose calendar is Gregorian. One changed line and two small private methods in the library. The migration tests recognize exactly that difference, in the text of title calls only; the 1.0.0 behavior is recorded against the frozen source. The consumer smoke tests now check the title under every culture of the system and print which cultures it has. | #17 | `9b99fa5` |
-| Final 2.0 documentation and migration guidance | Brought every document in line with the completed implementation, while the repository stays on `2.0.0-dev` and unpublished: the README with one migration section (the five corrections, and what did not change), the changelog's "Unreleased" section as the proposed changelog of 2.0, the XML comments of the legacy class, the package's description, tags and release notes, `SECURITY.md` and `CONTRIBUTING.md`, and these notes. Classified the README's links for the later switch to the tag, and wrote the release preparation checklist and the immutable-release plan. No runtime behavior and no public API changed; the only changes to library files are comments and package metadata. | #18 | see `git log` |
+| Final 2.0 documentation and migration guidance | Brought every document in line with the completed implementation, while the repository stays on `2.0.0-dev` and unpublished: the README with one migration section (the five corrections, and what did not change), the changelog's "Unreleased" section as the proposed changelog of 2.0, the XML comments of the legacy class, the package's description, tags and release notes, `SECURITY.md` and `CONTRIBUTING.md`, and these notes. Classified the README's links for the later switch to the tag, and wrote the release preparation checklist and the immutable-release plan. No runtime behavior and no public API changed; the only changes to library files are comments and package metadata. | #18 | `4a6e049` |
+| Release infrastructure and supply-chain hardening | Pinned the three actions of the workflow to the full SHA of a commit. Added the machinery of a release and made CI run it on every build for the development version: the release bundle (the package, the symbol package, a reproducible archive of the assemblies, SHA-256 checksums), its check and a test that a damaged bundle is refused; a program that references an assembly of the archive directly; a program upgraded from the published 1.0.0; the substitution of the README's links, as data and as one command; and a rehearsal of release preparation that changes nothing. Decided against artifact attestations for now. No runtime behavior, public API, version or package metadata changed, and nothing was published, tagged or designated a candidate. | #19 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 behavior of the legacy class was unchanged in every phase before the constructor colors. With the Gregorian
 title, **all five approved runtime corrections are made**; no other runtime change is approved. With the final
-documentation, the work on 2.0 that is not about releasing it is done.
+documentation, the work on 2.0 that is not about releasing it is done, and with the release infrastructure the
+tools for releasing it are in place and run on every build.
 
 ## Remaining sequence
 
-The implementation of 2.0 and its documentation are complete. What is left is the release, and none of it is
-runtime work. Each item is a phase or an action of its own, and each needs its own brief or approval from
-Shaun before it starts.
+The implementation of 2.0, its documentation and the machinery of its release are complete. What is left is
+the release itself. Each item is a phase or an action of its own, and each needs its own brief or approval
+from Shaun before it starts.
 
-1. **Release infrastructure and supply-chain hardening.** How the release files are produced and protected.
-   What it contains is for Shaun's brief.
-2. **Release-readiness audit.**
-3. **Release preparation:** the final version 2.0.0, the README's links at the tag `v2.0.0`
+1. **Release-readiness audit.** A read-only review of the merged result, made right after the release
+   infrastructure was merged, in the same phase. Its report goes to Shaun; it changes nothing here.
+2. **Release preparation:** the final version 2.0.0, the README's links at the tag `v2.0.0`
    ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), its text, the changelog. The
-   list is the [release preparation checklist](packaging-and-releases.md#release-preparation-checklist).
-4. **The candidate,** built once from the approved release commit, with its hashes recorded, and its
+   list is the [release preparation checklist](packaging-and-releases.md#release-preparation-checklist), and
+   `eng/release-rehearsal.sh` rehearses it on every build.
+3. **The candidate,** built once from the approved release commit as a
+   [release bundle](packaging-and-releases.md#the-release-bundle), with its checksums recorded, and its
    validation ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)).
-5. **Repository settings,** approved separately: private vulnerability reporting
-   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
-   readiness audit names.
-6. **The tag, the GitHub release and the NuGet publication,** each approved separately, of the exact files
+   Where it is built is open ([Q-16](open-questions.md#q-16-where-is-the-candidate-built)).
+4. **Repository settings,** approved separately: private vulnerability reporting
+   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)), release immutability, and
+   whatever else the readiness audit names.
+5. **The tag, the GitHub release and the NuGet publication,** each approved separately, of the exact files
    that were validated ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)).
-7. **Verification** from nuget.org, and then, if Shaun decides it, the deprecation of 1.0.0
+6. **Verification** from nuget.org, and then, if Shaun decides it, the deprecation of 1.0.0
    ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)), and a factual handoff for the
    Campertron project.
 
@@ -68,6 +72,7 @@ What this sequence does and does not say:
   is authorized ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
 - Publishing 2.0 on NuGet is planned. It is **not authorized yet**. No tag, release or publication is.
 - A published version is never changed. A mistake after publication means a new version.
+- The bundle CI makes on every build is a development bundle. None of them is a candidate.
 - Changing Campertron is not part of this roadmap. After a published 2.0 package has been verified, Campertron's
   adoption of it is handled in Shaun's separate Campertron project and chat.
 - Nothing is added to the modern API on the way, and no whole-year rendering
@@ -75,28 +80,36 @@ What this sequence does and does not say:
 
 ## Next action
 
-**Release infrastructure and supply-chain hardening** (item 1), and only after Shaun has scoped it. Read
-[packaging-and-releases.md](packaging-and-releases.md) first, above all
-[Release boundaries](packaging-and-releases.md#release-boundaries), and
-[development.md](development.md#ci) for what CI is today.
+**Final release preparation** (item 2), and only after Shaun has read the readiness report and scoped it. Read
+[packaging-and-releases.md](packaging-and-releases.md) first: the
+[release preparation checklist](packaging-and-releases.md#release-preparation-checklist),
+[The release bundle](packaging-and-releases.md#the-release-bundle) and
+[Release boundaries](packaging-and-releases.md#release-boundaries).
 
 What that phase starts from:
 
-- There is one workflow, `ci.yml`. It has read-only permission, no secrets and no manual trigger, and it
-  publishes nothing. Nothing in the repository can push a package, create a tag or create a release.
-- The package is `2.0.0-dev`. Every pull request builds it, validates its API against 1.0.0, verifies its
-  contents and installs it into separate applications, on three operating systems.
-- The documents say 2.0 is complete in the repository and not published. They change again only in release
-  preparation, by the checklist.
-- Three questions are open, all about the release: [Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on),
-  [Q-14](open-questions.md#q-14-how-is-the-publication-authenticated) and
-  [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20).
+- `bash eng/release-rehearsal.sh` passes on `master`. It names, with line numbers, the three places that state
+  the version, and shows the three lines of the README that change.
+- There is one workflow, `ci.yml`, with every action pinned to a commit. It has read-only permission, no
+  secrets and no manual trigger, and it publishes nothing. Nothing in the repository can push a package,
+  create a tag or create a release.
+- The package is `2.0.0-dev`. Every build makes its release bundle, checks it, and uploads it from Linux as
+  the artifact `release-bundle`.
+- The documents say 2.0 is complete in the repository and not published. They change in release preparation,
+  by the checklist, and not before.
+- Four questions are open, all about the release: [Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on),
+  [Q-14](open-questions.md#q-14-how-is-the-publication-authenticated),
+  [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20) and
+  [Q-16](open-questions.md#q-16-where-is-the-candidate-built).
 
 Known and not yet dealt with, none of it part of the next phase unless Shaun puts it there:
 
 - **There is no private channel for security reports**
   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)). Turning one on is a repository
   setting and needs Shaun.
+- **Release immutability is off for the repository.** It is a setting, and it only protects releases published
+  after it is turned on.
+- `master` has no branch protection and no ruleset, and no rule protects tags.
 - The repository's description on GitHub still reads as it did for 1.0.0. It is a repository setting.
 - That the console writer puts the caller's colors back is not verified on Windows
   ([D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes)); the

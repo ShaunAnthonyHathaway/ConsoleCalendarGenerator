@@ -1,3 +1,10 @@
+# Builds, tests, packs and checks the library on every pull request and every push to master. It publishes
+# nothing: it has read-only permission, uses no secret and has no manual trigger.
+#
+# Every action is pinned to the full SHA of a commit, with the version that commit is released as beside it.
+# A tag such as "v7" can be moved to other code; a commit cannot. To move a pin, look up the commit of the
+# new release in the action's own repository, read what changed, and change the SHA and the comment together.
+# The steps are in docs/ai-context/development.md, and a test fails on any reference that is not a full SHA.
 name: CI
 
 on:
@@ -31,12 +38,12 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Check out
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up the .NET SDK from global.json
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: global.json
 
@@ -100,9 +107,32 @@ jobs:
       - name: Consumer smoke tests
         run: bash eng/consumer-smoke.sh artifacts/package ${{ runner.os == 'Linux' && '--native-aot --published-sample' || '' }}
 
+      # The four files a release consists of, made from the package above and checked: the package, the
+      # symbol package, an archive of the assemblies and a file of checksums. This is the bundle of a
+      # development version. It shows on every build that the release machinery works; it is not a release
+      # and not a candidate for one, and its checksums are not the checksums of any release.
+      - name: Release bundle (development version)
+        run: bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
+
+      # The check of a bundle has to refuse one that was changed. A copy is damaged in one way at a time.
+      - name: Check that a damaged bundle is refused
+        run: bash eng/release-bundle-tamper-test.sh artifacts/release-bundle
+
+      # A program that references an assembly of the archive by its path, with no package.
+      - name: Use the assemblies of the bundle directly
+        run: bash eng/direct-reference-smoke.sh artifacts/release-bundle
+
+      # A program that references the published 1.0.0 is upgraded to the package above, as a user would.
+      - name: Upgrade a program from the published 1.0.0
+        run: bash eng/upgrade-smoke.sh artifacts/package
+
+      # Works out what release preparation would do from this commit. It builds and changes nothing.
+      - name: Rehearse release preparation
+        run: bash eng/release-rehearsal.sh
+
       - name: Upload the packages
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nuget-packages
           path: |
@@ -110,3 +140,15 @@ jobs:
             artifacts/package/*.snupkg
           if-no-files-found: error
           retention-days: 7
+
+      # The bundle made above, as an artifact of the run. While the repository builds a development version
+      # this is a development bundle and nothing more.
+      - name: Upload the release bundle
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-bundle
+          path: artifacts/release-bundle/
+          if-no-files-found: error
+          # Kept as long as GitHub allows, so that the bundle of a commit is still there when it is wanted.
+          retention-days: 90

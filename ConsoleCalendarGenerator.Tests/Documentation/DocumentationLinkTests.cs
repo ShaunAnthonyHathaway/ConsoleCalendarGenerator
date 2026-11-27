@@ -104,17 +104,41 @@ public class DocumentationLinkTests
     /// project's current policy stays on the default branch, because the current policy is what a reader of
     /// any version should get. Until the tag exists, all of them point at the default branch.
     /// </summary>
-    internal static readonly (string Target, bool PointsAtTheTagOnceReleased)[] ReadmeLinksIntoTheRepository =
+    internal static readonly (string Target, bool PointsAtTheTagOnceReleased)[] ReadmeLinksIntoTheRepository = ReadTheList();
+
+    /// <summary>
+    /// The list is a file, eng/release-links.txt, because a script reads it too: eng/release-links.sh makes the
+    /// substitution when a release is prepared and rehearses it on every build. One list, read by both.
+    /// </summary>
+    internal const string ListOfLinks = "eng/release-links.txt";
+
+    private static (string, bool)[] ReadTheList() => Repository.Read(ListOfLinks).Split('\n')
+        .Where(line => line.Trim().Length > 0 && !line.StartsWith('#'))
+        .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        .Select(parts => parts.Length == 2 && parts[0] is "tag" or "master"
+            ? (parts[1], parts[0] == "tag")
+            : throw new FormatException(ListOfLinks + " has a line that is not 'tag <address>' or 'master <address>'."))
+        .ToArray();
+
+    /// <summary>The approved classification (D-68), so that an edit of the list is a visible decision.</summary>
+    [Test]
+    public void TheList_ClassifiesTheLinksAsApproved()
     {
-        (RawFiles + "docs/images/month-with-theme.png", true),
-        (RepositoryPage + "/blob/master/global.json", true),
-        (RepositoryPage + "/tree/master/ConsoleCalendarGeneratorExample", true),
-        (RepositoryPage + "/blob/master/CHANGELOG.md", false),
-        (RepositoryPage + "/blob/master/CONTRIBUTING.md", false),
-        (RepositoryPage + "/blob/master/SECURITY.md", false),
-        (RepositoryPage + "/blob/master/LICENSE", false),
-        (RepositoryPage + "/issues", false),
-    };
+        Assert.That(ReadmeLinksIntoTheRepository.Where(link => link.PointsAtTheTagOnceReleased).Select(link => link.Target), Is.EqualTo(new[]
+        {
+            RawFiles + "docs/images/month-with-theme.png",
+            RepositoryPage + "/blob/master/global.json",
+            RepositoryPage + "/tree/master/ConsoleCalendarGeneratorExample",
+        }), "the image, the SDK file and the example program are part of a version");
+        Assert.That(ReadmeLinksIntoTheRepository.Where(link => !link.PointsAtTheTagOnceReleased).Select(link => link.Target), Is.EqualTo(new[]
+        {
+            RepositoryPage + "/blob/master/CHANGELOG.md",
+            RepositoryPage + "/blob/master/CONTRIBUTING.md",
+            RepositoryPage + "/blob/master/SECURITY.md",
+            RepositoryPage + "/blob/master/LICENSE",
+            RepositoryPage + "/issues",
+        }), "the documents of current policy stay on the default branch");
+    }
 
     /// <summary>What a link that is part of the version becomes in the README of the released package.</summary>
     internal static string AtTheReleaseTag(string target) => target.Replace("/master/", "/" + ReleaseTag + "/", StringComparison.Ordinal);

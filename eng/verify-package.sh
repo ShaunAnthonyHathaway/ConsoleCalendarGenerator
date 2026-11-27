@@ -7,11 +7,15 @@
 #   eng/verify-package.sh artifacts/package
 #
 # (The pack command itself runs package validation against the published 1.0.0; see the project file.)
+#
+#   eng/verify-package.sh --check-readme <readme file> <version>
+#
+# applies only the rules for the packed readme, to a file, as they hold for a package of that version. It is
+# how eng/release-links.sh checks the readme of a release before there is a package of it.
 
 set -euo pipefail
 shopt -s nullglob
 
-directory="${1:-artifacts/package}"
 repository_url="https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator"
 
 # The version this repository builds: a development version of 2.0, with the assembly and file version of the
@@ -23,6 +27,40 @@ fail() {
   echo "error: $*" >&2
   exit 1
 }
+
+# check_readme <text of the readme> <version of the package it is in>
+#
+# nuget.org shows only images with absolute URLs from a short list of hosts; any other image is a broken image
+# there. The images of this readme are files of this repository, served by raw.githubusercontent.com: from the
+# default branch while the package is a development version, and from the tag of the release in a released
+# package, where they can never change. nuget.org does not resolve relative links either: every link is
+# absolute or points inside the page.
+check_readme() {
+  local readme="$1" version="$2" ref
+  [ -n "$readme" ] || fail "the packaged readme is empty"
+  case "$version" in
+    *-*) ref="master" ;;
+    *) ref="v$version" ;;
+  esac
+  local other_images
+  other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E "!\[[^]]+\]\(https://raw\.githubusercontent\.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/$ref/[^) ]+\)" || true)"
+  [ -z "$other_images" ] || fail "the packaged readme of version $version has an image that is not served from this repository at $ref, or has no alternative text: $other_images"
+  local relative_links
+  relative_links="$(grep -o -E '\]\([^)]*\)' <<< "$readme" | grep -v -E '^\]\((https://|#)' || true)"
+  [ -z "$relative_links" ] || fail "the packaged readme has a link that is neither absolute nor inside the page: $relative_links"
+  # A development version has no tag to point at, and a released one points at its own tag and no other.
+  local at_a_tag
+  at_a_tag="$(grep -o -E "ShaunAnthonyHathaway/ConsoleCalendarGenerator/(blob/|tree/)?v[0-9][^/) ]*" <<< "$readme" | grep -v -E "/$ref\$" || true)"
+  [ -z "$at_a_tag" ] || fail "the packaged readme of version $version links to a tag that is not its own: $at_a_tag"
+}
+
+if [ "${1:-}" = "--check-readme" ]; then
+  [ "$#" -eq 3 ] || fail "usage: eng/verify-package.sh --check-readme <readme file> <version>"
+  check_readme "$(tr -d '\r' < "$2")" "$3"
+  exit 0
+fi
+
+directory="${1:-artifacts/package}"
 
 # ---- exactly one package and one symbol package, and nothing else ----
 
@@ -109,15 +147,7 @@ commit="$(sed -n -E 's:.*<repository [^>]*commit="([0-9a-f]{40})".*:\1:p' <<< "$
 
 # ---- readme, documentation and symbols ----
 
-readme="$(unzip -p "$package" README.md)"
-[ -n "$readme" ] || fail "the packaged readme is empty"
-# nuget.org shows only images with absolute URLs from a short list of hosts; any other image is a broken image
-# there. The images of this readme are files of this repository, served by raw.githubusercontent.com.
-other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E '!\[[^]]+\]\(https://raw\.githubusercontent\.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/[^) ]+\)' || true)"
-[ -z "$other_images" ] || fail "the packaged readme has an image that is not served from this repository's master branch, or has no alternative text: $other_images"
-# nuget.org does not resolve relative links either: every link is absolute or points inside the page.
-relative_links="$(grep -o -E '\]\([^)]*\)' <<< "$readme" | grep -v -E '^\]\((https://|#)' || true)"
-[ -z "$relative_links" ] || fail "the packaged readme has a link that is neither absolute nor inside the page: $relative_links"
+check_readme "$(unzip -p "$package" README.md | tr -d '\r')" "$version"
 
 # Every public type of the modern namespace. A new public type is added to this list in the change that adds it.
 modern_types="CalendarTheme ConsoleMonthWriter DayState MonthLayout MonthLayoutCell MonthLayoutWeek MonthRenderOptions MonthRenderer MonthWriter RenderedLine RenderedLineKind RenderedMonth RenderedSegment RenderedSegmentKind TitleAlignment WeekdayLabelStyle"

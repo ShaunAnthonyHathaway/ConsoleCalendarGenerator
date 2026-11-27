@@ -8,8 +8,14 @@
   and file version `2.0.0.0`
   ([D-65](decisions.md#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)). It is produced
   locally and in CI for validation and has never been published. No prerelease is published.
+- **The release machinery exists and runs on every build, on a development version.** CI makes the four
+  files a release consists of (the package, the symbol package, an archive of the assemblies, a file of
+  checksums), checks them, uses the assemblies directly, upgrades a program from the published 1.0.0, and
+  rehearses release preparation. See [The release bundle](#the-release-bundle). What it makes is a
+  development bundle: **no candidate for a release has been built or named, and no checksum of a release
+  exists.**
 - **There is no publication workflow.** Nothing in the repository can push a package, create a tag or create a
-  release.
+  release, and a test fails on a script or a workflow that could.
 
 All package settings are in `ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj`.
 
@@ -280,6 +286,139 @@ terminal echoes nothing. The run behind the 21,738 sent its keys after a delay. 
 sent, and when, was not recorded, so that it was this case is a reproduction of the number and not a record
 of the run. Neither number was wrong, and neither is a criterion now.
 
+## The release bundle
+
+A release of this package is four files, and `eng/release-bundle.sh` makes them
+([D-76](decisions.md#d-76-a-release-is-four-files-made-and-checked-by-scripts)):
+
+| File | What it is |
+|---|---|
+| `ConsoleCalendarGenerator.<version>.nupkg` | The package, exactly as `dotnet pack` made it |
+| `ConsoleCalendarGenerator.<version>.snupkg` | The symbol package, exactly as `dotnet pack` made it |
+| `ConsoleCalendarGenerator-<version>-binaries.zip` | The assemblies for use without NuGet. A library, not an application |
+| `SHA256SUMS.txt` | The SHA-256 of the other three |
+
+```bash
+dotnet build ConsoleCalendarGenerator.sln --configuration Release -warnaserror -p:ContinuousIntegrationBuild=true
+# ... the tests ...
+dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configuration Release --no-build --output artifacts/package -warnaserror
+bash eng/release-bundle.sh artifacts/package artifacts/release-bundle     # makes the bundle, then checks it
+bash eng/verify-release-bundle.sh artifacts/release-bundle                # the check alone
+bash eng/release-bundle-tamper-test.sh artifacts/release-bundle           # the check refuses a damaged bundle
+bash eng/direct-reference-smoke.sh artifacts/release-bundle               # a program that references an assembly directly
+bash eng/upgrade-smoke.sh artifacts/package                               # a program upgraded from the published 1.0.0
+bash eng/release-rehearsal.sh                                             # what release preparation would do; changes nothing
+```
+
+None of these publishes, uploads, tags or pushes, and none changes a file of the repository. They need `bash`,
+`unzip`, `git` and the .NET SDK, and work on Linux, macOS and Windows (Git Bash). **Linux is the authoritative
+place to make a bundle:** it is where CI uploads one, and where line ends in the readme and the documentation
+files are the repository's. A bundle made on Windows passes the same checks but is not the same bytes.
+
+**The archive.**
+
+```text
+ConsoleCalendarGenerator-<version>/
+  LICENSE
+  README.md
+  net10.0/ConsoleCalendarGenerator.dll, .pdb, .xml
+  netstandard2.1/ConsoleCalendarGenerator.dll, .pdb, .xml
+```
+
+- **Nothing in it is built for it.** The assemblies, their documentation files and the readme are taken out of
+  the package, the symbols out of the symbol package, and the license from the commit the package names. The
+  script also requires them to be this checkout's Release build, byte for byte, which is the build the tests
+  ran against. So the package, the symbol package, the archive and the tested build cannot differ.
+- **It is reproducible.** `eng/tools/StoredZip` writes it: entries in ordinal order of their paths, stored and
+  not compressed, each with the same fixed time, with no attributes and no name of an operating system. The
+  same files give the same archive on any system and any runtime. The class library's own ZIP writer records
+  the operating system and its file permissions, which is why the tool writes the format directly. The check
+  makes the archive again from its own contents and requires the same bytes.
+- **No name of a machine.** A build for a bundle is made with `ContinuousIntegrationBuild`, which CI sets by
+  itself, so the symbols map their sources from `/_/` to the commit on GitHub. The check refuses symbols or an
+  assembly that name a folder of the machine that built them.
+- It holds no test assembly, no example and nothing else: the list of entries is exact.
+
+**The checksums.** One line for each of the other three files, in the order of their names:
+`<64 lowercase hexadecimal digits><two spaces><file name>`, ending with a line feed. That is what `sha256sum`
+writes, so anyone can check a downloaded release without this repository: `sha256sum -c SHA256SUMS.txt` on
+Linux and in Git Bash, `shasum -a 256 -c SHA256SUMS.txt` on macOS. The check in this repository is stricter:
+exactly three lines, exactly these names, in order, lower case, every checksum right.
+
+**What the bundle script refuses:** a package built from another commit than the checkout is at; a checkout
+with uncommitted changes; a package whose assemblies are not this checkout's Release build; an output folder
+that is not empty; and, through the check, everything the tamper test tries. The tamper test damages a copy of
+a good bundle in sixteen ways, one at a time: a byte changed or added in each file, a file missing or too
+many, checksums in upper case, out of order, short of a line or with one too many, and an archive put together
+again with another file, another assembly or another license and given checksums that match.
+
+**Using the assemblies directly** (`eng/direct-reference-smoke.sh`). A `net10.0` program references
+`net10.0/ConsoleCalendarGenerator.dll` by its path, and a `net8.0` program the `netstandard2.1` one. Neither
+has a package reference, and NuGet is offered no source for the library. Each must run with exactly the
+assembly from the archive, find the symbols and the documentation beside it, use both APIs, and report the
+behavior of 2.0. Native AOT stays tested through the package.
+
+**Upgrading from 1.0.0** (`eng/upgrade-smoke.sh`). A `net8.0` and a `net10.0` program reference
+`ConsoleCalendarGenerator` 1.0.0 from nuget.org, build, run and report the behavior of 1.0.0. Code that uses
+the modern API does not compile there. The reference is then upgraded with `dotnet add package` to the package
+under test, from a local feed that is the only source allowed for it; the source of the program is not
+touched. It builds again, now with the modern API, runs with the build of the package meant for its framework,
+byte for byte, and reports the behavior of 2.0. NuGet's cache is a temporary folder, so no cached package can
+stand in for either version. This is a real change of a package reference, and is separate from running the
+sample of 1.0.0 and from putting the new assembly under a program that is not rebuilt, which
+`eng/consumer-smoke.sh` does.
+
+**The program both use** is `eng/consumer-smoke/MigrationProbe`. Every line it prints is one fact about the
+legacy class. `expected-1.0.0.txt` and `expected-2.0.txt` are what it prints with each version: the lines
+under `[unchanged]` are the same in both, each of the five numbered lines under `[corrected in 2.0]` differs,
+and only the second has the section of the modern API. A test and the script both require exactly that, so
+the two files are the migration from 1.0.0 written as data. The published 1.0.0 produced the first file.
+
+**The rehearsal** (`eng/release-rehearsal.sh`) asks, on every build, whether release preparation would work
+from this commit, and changes nothing. It never builds a package or an archive of the release version: it
+evaluates the project with the version suffix removed and requires package version 2.0.0, assembly and file
+version `2.0.0.0` and an informational version of `2.0.0` and the commit; it rehearses the substitution of the
+README's links; it checks that the changelog's "Unreleased" section can be given the version and a date; and
+it finds every place that states the development version by number.
+
+**The README's links** (`eng/release-links.sh`). `eng/release-links.txt` lists every link of the README into
+this repository with `tag` or `master`
+([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)); the tests read the same file.
+`eng/release-links.sh v2.0.0` shows the substitution and checks its result on a copy, without a tag having to
+exist. With `--apply` it writes `README.md`, which is the one edit release preparation makes there.
+`eng/verify-package.sh` requires the image of a packed readme on `master` for a development version and at the
+version's own tag for a released one, so the check of the package needs no change for the release.
+
+**In CI** all of this runs on Linux, macOS and Windows after the consumer smoke tests. The Linux job uploads
+the bundle as the artifact `release-bundle`, kept 90 days, and prints its checksums. Until the version suffix
+is removed, those are the checksums of a development bundle and of nothing else.
+
+What the first CI run with this machinery showed, for the record and not as a criterion: the Linux job and the
+macOS job made the same archive from the same commit, byte for byte, so the compiler's output and the archive
+are both independent of the system there. The Windows job's archive differs, because its readme and
+documentation files have Windows line ends. The package and the symbol package differ between all three jobs:
+`dotnet pack` does not write the same package file twice. That is why a release is built once and its files
+are kept, and not built again and compared.
+
+### Artifact attestations: not now
+
+GitHub can attest that a file was built by a workflow run of this repository at a commit
+(`gh attestation verify <file> -R <repository>`). It was considered for the four files and **deferred**
+([D-77](decisions.md#d-77-no-artifact-attestations-for-now)):
+
+- Creating one needs `id-token: write` and `attestations: write` in the job that does it. The only workflow
+  runs on every pull request and every push with `contents: read` and nothing else, and that is worth more
+  here than what an attestation adds.
+- An attestation is a public, permanent record. A job that attests on every push to `master` would start
+  making them for development bundles the day it is merged.
+- An immutable GitHub release, which is a repository setting and part of the plan, makes GitHub record an
+  attestation of the release's tag, commit and assets by itself, with no workflow permission; and
+  `SHA256SUMS.txt` lets anyone compare a download with the release.
+
+If it is wanted later, the clean way is a job of its own that runs only for the release commit, has those two
+permissions and no others beyond reading, takes the bundle the build job uploaded and attests it, without
+rebuilding. That is a change of the workflow's permissions and needs its own decision.
+
 ## Release boundaries
 
 Each of the following needs Shaun's **separate, explicit approval**, every time:
@@ -304,9 +443,12 @@ of it is authorized.** It is a list of what is known to go stale at that moment,
 put together from memory. It starts from the release-readiness audit and is one of the steps of the
 [sequence](#planned-20-publication-sequence) below.
 
-**The version.** Remove `VersionSuffix` from the project file, so that the package is 2.0.0. The version is
-stated in four places that change together: the project file, `VersionIdentityTests`, `eng/verify-package.sh`
-and `eng/consumer-smoke/AssetProbe/expected-output.txt`.
+**Before anything else,** run `bash eng/release-rehearsal.sh` on the commit to be prepared. It lists, with
+line numbers, the places named below, and fails if one of them moved.
+
+**The version.** Remove `VersionSuffix` from the project file, so that the package is 2.0.0. Three places
+state the version and change together: the project file, `expected_version` in `eng/verify-package.sh`, and
+`VersionIdentityTests`. The smoke tests take the version from the package they are given.
 
 **The README's links** ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)). The README
 is packed into the package and shown on nuget.org for as long as the version exists. A link whose target is
@@ -323,13 +465,15 @@ part of the version moves to the tag `v2.0.0`; a link to a document of current p
 | `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/LICENSE` | unchanged |
 | `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/issues` | unchanged |
 
-The same list is data in `DocumentationLinkTests`, which fails when the README has a link that is not in it,
-and which compares it with this table. The tag does not exist until it is created, which needs its own
-approval, so the links are changed in the release commit and lead nowhere until the tag is pushed: check them
-after the tag exists and before the package is published. One test,
-`WhileTheVersionIsADevelopmentVersion_NoLinkPointsAtTheReleaseTag`, fails on purpose as soon as the suffix is
-removed; it is replaced in the same change by one that requires the tag form. `eng/verify-package.sh` checks
-the image address of the packed README and changes with it.
+The same list is the file `eng/release-links.txt`, which `DocumentationLinkTests` and `eng/release-links.sh`
+both read, and which a test compares with this table. **The edit is one command:**
+`bash eng/release-links.sh v2.0.0 --apply`. Run without `--apply` first; it shows the three lines. The tag does
+not exist until it is created, which needs its own approval, so the links are changed in the release commit
+and lead nowhere until the tag is pushed: check them after the tag exists and before the package is
+published. One test, `WhileTheVersionIsADevelopmentVersion_NoLinkPointsAtTheReleaseTag`, fails on purpose as
+soon as the suffix is removed; it is replaced in the same change by one that requires the tag form, and
+`EveryLink_PointsAtSomethingThatExists` learns the tag form with it. `eng/verify-package.sh` already requires
+the image at the version's own tag for a version without a suffix.
 
 **The README's text.** The "Status" section (what is published, what is not), the "Installation" section (what
 the command installs) and the first sentences of "Legacy API" and of "Migrating from 1.0.0 to 2.0" speak of
@@ -348,7 +492,13 @@ is then still true.
 **`CONTRIBUTING.md`** says where the project is, including the development version by number.
 
 **The release notes of the package** ([D-74](decisions.md#d-74-the-package-describes-the-modern-api-and-its-release-notes-are-the-changelog))
-link to the changelog on `master`. Decide then whether they stay so.
+link to the changelog on `master`. Decide then whether they stay so or point at the tag;
+`eng/verify-package.sh` and the rehearsal accept either, and `PackageMetadataTests` requires `master` until
+then.
+
+**The release's other files.** The changelog, and the notes of the GitHub release, are where a user learns
+that a release also has an archive of the assemblies and a file of checksums. Nothing public says so yet,
+because no release has them yet.
 
 **These notes.** `CLAUDE.md`, [roadmap.md](roadmap.md), this file and
 [compatibility.md](compatibility.md#versions) say that 2.0 is unpublished and that the version is `2.0.0-dev`.
@@ -368,23 +518,30 @@ Done:
 
 - The implementation: the modern API and the five corrections.
 - The user documentation and the migration guidance, for the repository as it is while 2.0 is unpublished.
+- The release infrastructure: actions pinned to commits, the [release bundle](#the-release-bundle) made and
+  checked on every build, direct use and the upgrade from 1.0.0 tested, release preparation rehearsed.
 
 To come, in this order:
 
-1. **Release infrastructure and supply-chain hardening.** How the release files are produced and protected.
-   Its content is for Shaun's brief; nothing of it is decided here.
-2. **Release-readiness audit.** A review of everything a release depends on.
+2. **Release-readiness audit.** A read-only review of the merged result, made right after the release
+   infrastructure is merged and reported to Shaun outside the repository. It changes nothing here.
 3. **Release preparation.** The [checklist](#release-preparation-checklist) above, in one change: the final
    version, the README's links and text, the changelog. Its result is the release commit.
-4. **The candidate.** Built once, from the release commit Shaun approves. The SHA-256 of the exact `.nupkg`
-   and `.snupkg` is recorded. These files, and no later build, are what everything after this step is about.
-5. **Validation of the candidate:** the contents of both files, clean consumers from a local feed, migration
-   from 1.0.0, the readme as nuget.org will render it.
+4. **The candidate.** Built once, from the release commit Shaun approves, as a
+   [release bundle](#the-release-bundle): four files, with their checksums in `SHA256SUMS.txt`. These files,
+   and no later build, are what everything after this step is about. Where it is built is open
+   ([Q-16](open-questions.md#q-16-where-is-the-candidate-built)).
+5. **Validation of the candidate:** `eng/verify-release-bundle.sh`, `eng/direct-reference-smoke.sh` and the
+   upgrade from 1.0.0 on those exact files, clean consumers from a local feed, and the readme as nuget.org
+   will render it.
 6. **Repository settings,** as approved separately: private vulnerability reporting
    ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever the audit names.
 7. **The tag** `v2.0.0`, on the release commit. Separate approval.
-8. **The GitHub release,** with the candidate's two files attached, unchanged. Separate approval.
-9. **NuGet publication:** a push of the candidate's two files, the same bytes, not a rebuild
+8. **The GitHub release,** created as a draft, with the candidate's four files attached, unchanged, and then
+   published. With release immutability turned on for the repository, which is a setting of step 6, the tag
+   and the files can no longer be changed once it is published, and no file can be added: everything has to
+   be attached while it is a draft. Separate approval.
+9. **NuGet publication:** a push of the candidate's package and symbol package, the same bytes, not a rebuild
    ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)). Separate approval. Claude
    is expected to perform it once that approval is given and a secure credential is available; how it is
    authenticated is open ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)).

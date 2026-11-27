@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The same program, using the library without NuGet: it references one assembly of the binaries archive by
+    its path. eng/direct-reference-smoke.sh builds and runs it once for each of the two builds in the archive.
+    It has no package reference at all.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(ConsumerTargetFramework)</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseAppHost>false</UseAppHost>
+    <RollForward>LatestMajor</RollForward>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <DefineConstants Condition="'$(UseModernApi)' == 'true'">$(DefineConstants);MODERN_API</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="ConsoleCalendarGenerator">
+      <HintPath>$(LibraryAssemblyPath)</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

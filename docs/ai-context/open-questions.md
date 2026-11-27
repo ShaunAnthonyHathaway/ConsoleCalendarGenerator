@@ -5,8 +5,8 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-Three questions are open: Q-11, Q-14 and Q-15. All three belong to the release. The implementation and the
-documentation of 2.0 are complete and depend on none of them.
+Four questions are open: Q-11, Q-14, Q-15 and Q-16. All four belong to the release. The implementation, the
+documentation and the release infrastructure of 2.0 are complete and depend on none of them.
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
 D-28, rendering in D-30 to D-37, and states, the theme and output in
@@ -87,3 +87,19 @@ of Q-08.
 - **Evidence needed:** Shaun's choice, once 2.0 is published and verified.
 - **Decide in:** the release phase, after publication. It needs its own approval.
 - **Recommendation:** None yet.
+
+## Q-16: Where is the candidate built?
+
+- **Why it matters:** The candidate is built once
+  ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)), so
+  where it is built decides what the published files are. The scripts work in a session on Linux and in CI
+  alike.
+- **The two ways:** (a) The Linux job of the CI run for the release commit on `master` already makes the
+  bundle and uploads it as the artifact `release-bundle`, kept 90 days: a clean machine, pinned actions, a
+  build that names no folder, and a public log with the checksums. The candidate would be that artifact,
+  downloaded once. The run must then not be run again, because a rerun builds again. (b) A build in a session,
+  from a clean clone of the release commit, with `-p:ContinuousIntegrationBuild=true`.
+- **Evidence needed:** Shaun's choice.
+- **Decide in:** the brief for release preparation or for the candidate.
+- **Recommendation:** (a). It is the build that every check ran against, on a machine nobody configured by
+  hand, and anyone can read its log.

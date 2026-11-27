@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up the .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ConsoleCalendarGenerator.sln
+
+      # Every warning fails the build except NETSDK1138, which the example project's
+      # net7.0 target is known to raise. That one stays visible as a warning.
+      - name: Build (Release)
+        run: >-
+          dotnet build ConsoleCalendarGenerator.sln
+          --configuration Release
+          --no-restore
+          -warnaserror
+          -warnnotaserror:NETSDK1138
+
+      # Packs into a local folder only. Nothing here pushes to a registry.
+      - name: Pack (Release)
+        run: >-
+          dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/package
+
+      - name: Verify the package
+        run: |
+          shopt -s nullglob
+          packages=(artifacts/package/ConsoleCalendarGenerator.*.nupkg)
+          if [ "${#packages[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one ConsoleCalendarGenerator package, found ${#packages[@]}."
+            exit 1
+          fi
+          echo "Package: ${packages[0]}"
+          contents="$(unzip -Z1 "${packages[0]}")"
+          echo "$contents"
+          grep -qx 'lib/netstandard2.1/ConsoleCalendarGenerator.dll' <<< "$contents"
+
+      - name: Upload the package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-package
+          path: artifacts/package/*.nupkg
+          if-no-files-found: error
+          retention-days: 7

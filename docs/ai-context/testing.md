@@ -2,9 +2,9 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **154 tests**: 153 characterization tests of the legacy API and 1 test
-about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
-Microsoft.NET.Test.Sdk 18.12.0.
+`ConsoleCalendarGenerator.Tests` holds **340 tests**: 153 characterization tests of the legacy API, 186 tests of
+the layout model and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with
+NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
 
@@ -15,11 +15,14 @@ definition of "unchanged" for the whole 1.x line. See [compatibility.md](compati
 A test whose name contains `Characterized1xBehavior` pins down something that is not the intended design. Do not
 correct it.
 
+The layout tests are ordinary specification tests: they say what `MonthLayout` must do, and a failure there
+means the code is wrong.
+
 ### Organization
 
 | Fixture | Tests | Covers |
 |---|---|---|
-| `Legacy/PublicApiTests` | 5 | The public surface by reflection, and source compatibility with named arguments |
+| `Legacy/PublicApiTests` | 5 | The public surface of the legacy namespace by reflection, and source compatibility with named arguments |
 | `Legacy/ConstructorColorTests` | 7 | Which color each constructor argument controls |
 | `Legacy/ColorAccessorTests` | 28 | Getters, setters, defaults, undefined color values |
 | `Legacy/MonthLayoutTests` | 26 | The text of a month, line by line, and the layout rules for every month from 1900 through 2100 |
@@ -32,6 +35,13 @@ correct it.
 | `Legacy/RedirectedOutputTests` | 4 | The real console streams, through a child process |
 | `Legacy/TerminalTests` | 3 | Color on a terminal (`Terminal` category) |
 | `Legacy/Published100BaselineTests` | 2 | Digests recorded from the published 1.0.0 assembly |
+| `Layout/FirstDayOfWeekTests` | 53 | The weekday of each column and where the 1st and the last day land, for each of the seven first days of the week, with hand-written grids |
+| `Layout/MonthShapeTests` | 77 | Month lengths, leap years, four, five and six weeks, January 0001 and December 9999, and the step from each month to the next |
+| `Layout/ExhaustiveLayoutTests` | 20 | Every layout against an independent reference and against the layout rules: 1900 through 2100, and all 839,916 layouts there are |
+| `Layout/LayoutValidationTests` | 20 | Exception type, parameter name, value and checking order for invalid arguments |
+| `Layout/LayoutImmutabilityTests` | 6 | That the collections cannot be cast and changed, and that nothing public can be set |
+| `Layout/LayoutDeterminismTests` | 8 | The same result every time, under any culture, from many threads, with no effect on the console or the process |
+| `Layout/LayoutApiTests` | 2 | The modern public surface by reflection, and that the assembly exports nothing else |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 
 `Support/` holds the helpers. The ones to know:
@@ -46,14 +56,19 @@ correct it.
 - `GlobalStateGuardAttribute`: applied to the assembly; fails any test that leaves global state changed.
 - `Ordinal`: substring constraints that compare character by character. NUnit's `Does.Contain` compares with the
   current culture, which ignores control characters and so "finds" an escape character in any text.
+- `ReferenceCalendar`: the Gregorian calendar and a month's grid from whole-number arithmetic alone, with no
+  `DateTime` and no calendar class, filled one day at a time. It shares nothing with `MonthLayout`, and it is
+  itself tested against dates whose weekday is known and against `DateTime` for every month.
+- `LayoutPicture`: writes a layout out as lines of text so that a test can spell out the grid it expects. It is
+  a test aid, not the library's rendering.
 
 ### What a run executes
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 149 pass | 2 Windows-only | 3 pass |
-| macOS | 149 pass | 2 Windows-only | not part of CI |
-| Windows | 124 pass | 27 that need Linux or macOS | not part of CI |
+| Linux | 335 pass | 2 Windows-only | 3 pass |
+| macOS | 335 pass | 2 Windows-only | not part of CI |
+| Windows | 309 pass | 28 that need Linux or macOS | not part of CI |
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -67,10 +82,16 @@ The library writes to the process-wide console and reads the process-wide cultur
   that one leaking test does not fail the ones after it.
 - Tests never change environment variables of the test process. A child process gets its own.
 
+The layout tests touch no global state and would be safe to run in parallel, but they live in the same
+non-parallel assembly and run one after another like the rest. Two of them use `Parallel.For` inside the test to
+create and read layouts from several threads. The whole layout folder takes a few seconds; the slowest test is
+the one that checks every layout there is.
+
 ### Platform-specific tests
 
-- **Linux and macOS only (27):** 25 tests that read console colors back, and 2 that assert line-feed-only
-  output. On those systems the runtime keeps the current colors in the process, so they can be read without a
+- **Linux and macOS only (28):** 26 tests that read console colors back (25 legacy, and 1 that checks the layout
+  leaves the colors alone), and 2 that assert line-feed-only output.
+  On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
 - **Windows only (2):** the real mixed line endings.
@@ -114,6 +135,14 @@ blank line, and changing the title indent. Each failed the suite. Deliberate API
 way against package validation. This was a one-time check of the tests themselves. It is not automated; repeat
 it by hand when a change raises doubt about whether the tests would notice something.
 
+The layout tests were checked the same way when they were written. Twenty-seven deliberate changes were applied
+to a scratch copy of the layout model, one at a time, and each failed the suite: reversed column arithmetic; a
+first day of the week and a month length taken from the culture; one week too many and one too few; the Julian
+leap-year rule; a dropped last day; columns that ignore the first day of the week; validation checks removed,
+reordered, off by one, given the wrong parameter name, the wrong exception type or no value; each of the three
+collections handed out as its array; an array shared between layouts; dates with a time of day or a kind; a
+write to the console; a wrong weekday on empty cells; an inverted `IsEmpty`; and a settable property.
+
 ## Rules for adding tests
 
 - **Never weaken a legacy test** to make a change pass. A failing characterization test means the behavior
@@ -138,14 +167,15 @@ it by hand when a change raises doubt about whether the tests would notice somet
 
 Nothing in this section exists yet.
 
-### Layout and renderer
+### Renderer
 
-- Because layout and rendering will be pure, their tests should need no console capture, no culture scoping
-  beyond an explicit `CultureInfo` argument, and no platform conditions. They should be safe to run in parallel
-  in principle, though the assembly stays non-parallel while it also holds the legacy tests.
-- Layout: every month in a wide range against an independent model, and every first-weekday setting.
+- Because rendering will be pure, its tests should need no console capture, no culture scoping beyond an
+  explicit `CultureInfo` argument, and no platform conditions. They should be safe to run in parallel in
+  principle, though the assembly stays non-parallel while it also holds the legacy tests.
 - Rendering: exact text, exact segment boundaries and roles, cell width, indent, alignment, no trailing spaces,
   explicit line endings.
+- The layout is already covered; renderer tests should not repeat it. `LayoutPicture` is for layout tests and
+  must not turn into a second renderer.
 - Both library builds, as now.
 - When the legacy class becomes a facade, every test in `Legacy/` must pass without being edited. That is the
   acceptance test for that phase.

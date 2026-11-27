@@ -1,7 +1,7 @@
 # Architecture
 
-Two parts: what exists today, and the direction that has been approved but not built. Do not treat anything in
-the second part as existing code.
+Two parts: what exists today, and the direction that has been approved but, apart from its first layer, not
+built. Do not treat anything in the second part as existing code unless it says so.
 
 ## Current
 
@@ -9,7 +9,7 @@ the second part as existing code.
 
 | Path | What it is |
 |---|---|
-| `ConsoleCalendarGenerator/` | The library and the NuGet package. One source file, `ConsoleCalendar.cs`. |
+| `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs` and the layout model in `Layout/`. |
 | `ConsoleCalendarGenerator/docs/` | A stale duplicate of the README and the four README screenshots. Not packed. To be replaced in the user-facing material phase. |
 | `ConsoleCalendarGeneratorExample/` | A small interactive console program that uses the library. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). |
@@ -18,11 +18,16 @@ the second part as existing code.
 | `Directory.Build.props`, `.editorconfig`, `global.json` | Shared build settings, formatting rules, SDK pin. See [development.md](development.md). |
 | `docs/ai-context/`, `CLAUDE.md` | This documentation. |
 
-### The library: one legacy class
+### The library: a legacy class and a layout model
 
-`CalendarGenerator.ConsoleCalendar` is the whole public API. The namespace is `CalendarGenerator`; the assembly
-and the package are `ConsoleCalendarGenerator`. The exact public surface and the behavior that must be preserved
-are in [compatibility.md](compatibility.md).
+The assembly has two public namespaces. `CalendarGenerator` holds the legacy class and nothing else.
+`ConsoleCalendarGenerator`, which matches the assembly and the package, holds the modern API; so far that is the
+layout model. Neither uses the other.
+
+### The legacy class
+
+`CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface and the
+behavior that must be preserved are in [compatibility.md](compatibility.md).
 
 How it works:
 
@@ -44,6 +49,54 @@ Consequences of this design that the planned work exists to remove:
 - Layout, text, color and output are one loop and cannot be used separately.
 - A selected day differs from other days by color only.
 
+### The layout model
+
+Three types in `ConsoleCalendarGenerator/Layout/`, namespace `ConsoleCalendarGenerator`. They are the first layer
+of the approved direction below and the only part of it that exists.
+
+```text
+public sealed class MonthLayout
+    static MonthLayout Create(int year, int month, DayOfWeek firstDayOfWeek)
+    int Year                               1 through 9999
+    int Month                              1 through 12
+    DayOfWeek FirstDayOfWeek
+    IReadOnlyList<DayOfWeek> DaysOfWeek    the weekday of each column; always 7, starting with FirstDayOfWeek
+    IReadOnlyList<MonthLayoutWeek> Weeks   4, 5 or 6, the week that contains the 1st first
+
+public sealed class MonthLayoutWeek
+    IReadOnlyList<MonthLayoutCell> Cells   always 7, in column order
+
+public sealed class MonthLayoutCell
+    DayOfWeek DayOfWeek                    the weekday of the cell's column, also when the cell is empty
+    DateTime? Date                         a day of the month, or null for an empty cell
+    bool IsEmpty
+```
+
+What it answers: which dates belong to the month, which week and weekday column each is in, how many weeks are
+needed, and which cells are empty. What it deliberately knows nothing about: text, cell width, gaps, weekday or
+month names, culture, titles, indentation, alignment, colors, markers, day states, the console and line endings.
+Those belong to the layers that are still planned.
+
+What every layout guarantees (the tests check the first five for every one of the 839,916 layouts there are,
+and the last two on samples):
+
+- Every week has exactly seven cells, and cell *i* of every week has the weekday `DaysOfWeek[i]`.
+- Every day of the month appears exactly once, in increasing order. No other date appears.
+- Empty cells occur only before the 1st and after the last day. The cells of a neighbouring month are empty, not
+  filled with its dates.
+- There are no more weeks than the month needs: the first and the last week each hold at least one date.
+- A date is midnight with `DateTimeKind.Unspecified`, in the Gregorian calendar.
+- The result depends only on the three arguments. It does not read the culture, the console, the environment or
+  the clock, and it changes nothing outside itself.
+- The objects are immutable. The collections are read-only wrappers, not arrays, and reject every change.
+
+Invalid arguments throw `ArgumentOutOfRangeException` naming the parameter, checked in the order year, month,
+first day of the week, before anything is built. Equality is reference equality; nothing overrides `Equals`. The
+reasons for these choices are in [decisions.md](decisions.md#layout-model).
+
+The legacy class always starts weeks on Monday and does not use the layout model. It will only when it becomes a
+facade, after the rendering layers exist and can be shown to reproduce its output.
+
 ### The example
 
 `ConsoleCalendarGeneratorExample/Program.cs` is the sample that accompanied 1.0.0. It waits for key presses and
@@ -53,10 +106,12 @@ as it is even when the example is rewritten.
 
 ### Tests
 
-One NUnit project on `net11.0`. The tests replace `Console.Out` with a recording writer, read console colors back
-where the platform allows, start the test assembly as a child process to observe the real console streams, and
-compare against digests recorded from the published 1.0.0 assembly. The project can be built against either
-library build. Details: [testing.md](testing.md).
+One NUnit project on `net11.0`. The legacy tests replace `Console.Out` with a recording writer, read console
+colors back where the platform allows, start the test assembly as a child process to observe the real console
+streams, and compare against digests recorded from the published 1.0.0 assembly. The layout tests need none of
+that: they compare layouts with hand-written grids and with an independent reference for every month from
+January 0001 through December 9999. The project can be built against either library build. Details:
+[testing.md](testing.md).
 
 ### Build, package and CI
 
@@ -72,26 +127,28 @@ library build. Details: [testing.md](testing.md).
 
 `eng/consumer-smoke.sh` copies the packed package to a local feed in a temporary folder, restores into a
 temporary package cache with nuget.org forbidden for this package, and builds and runs small applications from
-`eng/consumer-smoke/` against it. It proves which library build each kind of consumer receives. Details:
+`eng/consumer-smoke/` against it. Each application uses the layout model and the legacy class. It proves which
+library build each kind of consumer receives. Details:
 [packaging-and-releases.md](packaging-and-releases.md#consumer-smoke-tests).
 
-## Approved direction (planned, not implemented)
+## Approved direction
 
-None of the types below exist. Their names and signatures are **not decided**; see
-[open-questions.md](open-questions.md). What is decided is the separation and the constraints.
+The first layer, calendar layout, exists; see [The layout model](#the-layout-model). None of the other types
+exist. Their names and signatures are **not decided**; see [open-questions.md](open-questions.md). What is
+decided is the separation and the constraints.
 
 New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays and becomes
 a facade over the new code.
 
-| Layer | Responsibility | Touches the live console |
-|---|---|---|
-| Calendar layout | A month as weeks and days for a given first weekday. No text. | No |
-| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No |
-| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No |
-| State markers | A day's state can be shown with a text marker, so state is never conveyed by color alone. Optional. | No |
-| Theme | Maps segment roles and states to console colors. | No |
-| Output | Writes rendered lines to a `TextWriter`, applying colors through something the caller can replace. | Only this layer |
-| Consumer mapping | Turning segments into a consumer's own types. Lives in the consumer, not in the package. | n/a |
+| Layer | Responsibility | Touches the live console | Status |
+|---|---|---|---|
+| Calendar layout | A month as weeks and days for a given first weekday. No text. | No | Implemented: `MonthLayout` |
+| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No | Planned |
+| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No | Planned |
+| State markers | A day's state can be shown with a text marker, so state is never conveyed by color alone. Optional. | No | Planned |
+| Theme | Maps segment roles and states to console colors. | No | Planned |
+| Output | Writes rendered lines to a `TextWriter`, applying colors through something the caller can replace. | Only this layer | Planned |
+| Consumer mapping | Turning segments into a consumer's own types. Lives in the consumer, not in the package. | n/a | n/a |
 
 Constraints:
 

@@ -107,6 +107,9 @@ for framework in net10.0 netstandard2.1; do
   # grep -c reads its whole input, so unzip is never cut off mid-write (which "set -o pipefail" would report).
   unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | grep -c '<name>ConsoleCalendarGenerator</name>' > /dev/null \
     || fail "lib/$framework/ConsoleCalendarGenerator.xml is not the library's documentation file"
+  # The modern API is documented in the source. Its comments must reach the package, for both builds.
+  unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | grep -c 'name="M:ConsoleCalendarGenerator.MonthLayout.Create(' > /dev/null \
+    || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document the modern API"
   # Source Link: the symbols must say where on GitHub the exact sources are.
   unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" \
     | grep -a -c 'https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/' > /dev/null \

@@ -7,11 +7,15 @@ Recommendations are starting points from the Phase 0 audit, not decisions.
 
 ## Q-01: What are the modern API's public types and signatures?
 
-- **Why it matters:** Public names are permanent once published. Everything in
-  [architecture.md](architecture.md#approved-direction-planned-not-implemented) is still unnamed.
-- **Evidence needed:** A concrete design per layer, reviewed against what Campertron's `Calendar.Lines` needs
-  and against what a general consumer needs. Includes the defaults for culture and first weekday, and how dates
-  are passed (`DateTime` works on both targets; `DateOnly` does not exist on `netstandard2.1`).
+- **Settled so far:** the layout layer, in [D-25](decisions.md#d-25-the-layout-model-is-three-small-sealed-classes)
+  to [D-28](decisions.md#d-28-layout-arguments-are-validated-in-order-with-argumentoutofrangeexception). The
+  layout takes the first day of the week as a required argument and represents dates as `DateTime`.
+- **Why it matters:** Public names are permanent once published. Every other layer in
+  [architecture.md](architecture.md#approved-direction) is still unnamed.
+- **Evidence needed:** A concrete design per remaining layer, reviewed against what Campertron's
+  `Calendar.Lines` needs and against what a general consumer needs. Includes the defaults for culture and first
+  weekday, which the layout deliberately does not choose, and how the dates that carry a state are passed
+  (`DateTime` works on both targets; `DateOnly` does not exist on `netstandard2.1`).
 - **Decide in:** each implementation phase, for the types that phase adds, before they are merged.
 - **Recommendation:** Decide layer by layer rather than up front, and keep each phase's public surface as small
   as it can be.

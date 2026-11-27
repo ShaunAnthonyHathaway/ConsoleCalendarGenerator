@@ -11,13 +11,16 @@ console applications. It is .NET only.
 
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
 - **`master`:** builds an unpublished development package, `1.1.0-dev`.
-- **Production code:** one legacy class, `CalendarGenerator.ConsoleCalendar`, in
-  `ConsoleCalendarGenerator/ConsoleCalendar.cs`. Its behavior is identical to published 1.0.0, which the tests
-  verify.
-- **Phase:** the foundations are complete (CI, characterization tests, build and packaging, this documentation).
-  The modern layout and rendering API is **planned and not implemented**.
-- **Next phase:** the layout model. See [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has
-  scoped it.
+- **Production code:** two parts, in one assembly.
+  - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. Its
+    behavior is identical to published 1.0.0, which the tests verify.
+  - The layout model, in `ConsoleCalendarGenerator/Layout/`: `MonthLayout`, `MonthLayoutWeek` and
+    `MonthLayoutCell` in the `ConsoleCalendarGenerator` namespace. It places the days of a month in weeks and
+    weekday columns and does nothing else. The legacy class does not use it.
+- **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation) and the
+  layout model are complete. Text rendering and everything after it is **planned and not implemented**.
+- **Next phase:** options and text rendering. See [roadmap.md](docs/ai-context/roadmap.md). Start it only when
+  Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

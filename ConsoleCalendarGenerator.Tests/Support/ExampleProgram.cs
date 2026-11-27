@@ -74,28 +74,40 @@ internal static class ExampleProgram
         return examples;
     }
 
+    /// <summary>The heading under which the program prints a month labeled with the culture's own day names.</summary>
+    public const string CultureDerivedHeading = "== The culture's own day names ==";
+
     /// <summary>
-    /// The expected output holds month and day names of en-US and fr-FR, which come from the culture data of the
-    /// operating system. A test that compares real output with it is inconclusive, not failed, on a machine
-    /// whose data gives other names than the machine the file was written on.
+    /// The weekday row of that month as this machine's culture data gives it. It is the one line of the
+    /// program's output that is allowed to differ between systems: .NET's shortest French day names are two
+    /// letters on Linux and macOS and one letter on Windows.
     /// </summary>
-    public static void AssumeTheCultureDataTheExpectedOutputWasWrittenWith()
+    public static string CultureDerivedWeekdayRowOnThisMachine =>
+        MonthRenderer.Render(2027, 3, MonthRenderOptions.Default.WithCulture(CultureInfo.GetCultureInfo("fr-FR"))).Lines[1].Text;
+
+    /// <summary>Where that row is in the output: two lines below its heading, after the title.</summary>
+    public static int CultureDerivedWeekdayRowIndex(string[] lines) => Array.IndexOf(lines, CultureDerivedHeading) + 2;
+
+    /// <summary>
+    /// What the program must print on this machine: expected-output.txt, which was written on Linux, with the
+    /// one culture-derived weekday row replaced by what this machine's culture data gives. Every other line is
+    /// the same on every system, because every other example supplies its weekday labels.
+    /// </summary>
+    public static string ExpectedOutputOnThisMachine
     {
-        foreach ((string culture, string title, string labels) in new[]
+        get
         {
-            ("en-US", "     March 2027", "Mo Tu We Th Fr Sa Su"),
-            ("fr-FR", "     mars 2027", "lu ma me je ve sa di"),
-        })
-        {
-            RenderedMonth month = MonthRenderer.Render(2027, 3, MonthRenderOptions.Default.WithCulture(CultureInfo.GetCultureInfo(culture)));
-            Assume.That(month.Lines[0].Text + "\n" + month.Lines[1].Text, Is.EqualTo(title + "\n" + labels),
-                "The culture data of this machine gives other names for " + culture + " than the expected output was written with.");
+            string[] lines = ExpectedOutput.Split('\n');
+            lines[CultureDerivedWeekdayRowIndex(lines)] = CultureDerivedWeekdayRowOnThisMachine;
+            return string.Join("\n", lines);
         }
     }
 
     /// <summary>
-    /// The same for the month names alone. They are what the titles of the expected output are made of, and
-    /// they are the same on Linux, macOS and Windows.
+    /// The titles of the expected output contain the English and the French name of March, which come from the
+    /// culture data of the machine. They are the same on Linux, macOS and Windows. A test that compares real
+    /// output with the expected output is inconclusive, not failed, on a machine that has other names, such as
+    /// one that runs .NET without globalization data.
     /// </summary>
     public static void AssumeTheMonthNamesTheExpectedOutputWasWrittenWith()
     {
@@ -105,25 +117,6 @@ internal static class ExampleProgram
             Assume.That(month.Lines[0].Text.Trim(), Is.EqualTo(title),
                 "The culture data of this machine gives another month name for " + culture + " than the expected output was written with.");
         }
-    }
-
-    /// <summary>The weekday rows of the expected output whose text is a culture's day names.</summary>
-    private static readonly string[] WeekdayRows =
-    {
-        "Mo Tu We Th Fr Sa Su", "Su Mo Tu We Th Fr Sa", "lu ma me je ve sa di", " Mo  Tu  We  Th  Fr  Sa  Su",
-    };
-
-    /// <summary>
-    /// What the program printed, or the expected output itself, without the lines that are weekday rows in the
-    /// expected output. Day names are the part of the output that differs most between systems: Windows gives
-    /// one letter where Linux and macOS give two. Everything else can be compared on every system.
-    /// </summary>
-    public static string WithoutWeekdayRows(string output)
-    {
-        string[] expected = ExpectedOutput.Split('\n');
-        string[] lines = output.Split('\n');
-        Assert.That(lines, Has.Length.EqualTo(expected.Length), "the number of lines printed");
-        return string.Join("\n", lines.Where((_, index) => !WeekdayRows.Contains(expected[index])));
     }
 
     /// <summary>The built program. It is built with the solution, in the configuration these tests were built in.</summary>

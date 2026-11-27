@@ -33,22 +33,15 @@ Q-04 (more than one state on a date) is settled: one state per day, and the firs
   warnings as errors would fail. It also needs a replacement to point to.
 - **Evidence needed:** A finished replacement API, and a view on whether warning existing users during 1.x is
   acceptable.
-- **Decide in:** the 1.x release decision. None has been added. The README and the XML comments of the legacy
+- **Decide in:** the 2.0 scope audit. None has been added. The README and the XML comments of the legacy
   class now recommend the modern API in words, which warns nobody's build.
 - **Recommendation:** None yet. Until it is decided, add no `[Obsolete]` attributes.
 
 Q-06 (a compatibility profile for titles) is settled: there is none, and none is needed
 ([D-45](decisions.md#d-45-no-public-compatibility-profile)).
 
-## Q-07: What ships in 1.x, and when?
-
-- **Why it matters:** Development builds are `1.1.0-dev`, and 2.0 is the version planned for NuGet and for
-  Campertron. Whether any 1.x version or prerelease is published in between, and what it contains, is not
-  decided.
-- **Evidence needed:** A release-readiness audit of what `master` builds, and whether anyone needs the modern
-  API before 2.0. The API, its documentation and the README are complete for a single month.
-- **Decide in:** the 1.x release decision in [roadmap.md](roadmap.md).
-- **Recommendation:** None. Any publication needs explicit approval regardless.
+Q-07 (what ships in 1.x) is settled: nothing is published before 2.0
+([D-55](decisions.md#d-55-the-next-published-version-is-20)).
 
 ## Q-08: What exactly changes in 2.0?
 
@@ -71,7 +64,7 @@ Q-09 (parity fixtures for Campertron's unused value stream) is settled: there ar
   version's page would show the newest image and link to the newest files, or to nothing if one is moved.
 - **Evidence needed:** Whether a release gets a tag before it is packed, so the readme could point at it; how
   other packages handle it.
-- **Decide in:** release-readiness validation.
+- **Decide in:** the 2.0 scope and readiness audit.
 - **Recommendation:** None yet. While nothing is published from this README, `master` is right.
 
 ## Q-11: Is private vulnerability reporting turned on?
@@ -80,25 +73,9 @@ Q-09 (parity fixtures for Campertron's unused value stream) is settled: there ar
   reporting is off for the repository, so the file says there is no private channel and asks for a public
   issue without details.
 - **Evidence needed:** Shaun's choice. It is a repository setting, which needs his approval each time.
-- **Decide in:** release-readiness validation, or whenever Shaun turns it on.
-- **Recommendation:** Turn it on before the next release and point `SECURITY.md` at it in the same change.
+- **Decide in:** the 2.0 scope and readiness audit, or whenever Shaun turns it on.
+- **Recommendation:** Turn it on before 2.0 is published and point `SECURITY.md` at it in the same change.
 
-## Q-12: Should weekday labels be the same on every operating system?
-
-- **Why it matters:** With a real culture, the default labels (`WeekdayLabelStyle.Shortest`) are that culture's
-  shortest day names as .NET reports them, and .NET takes them from the operating system. On Linux and macOS
-  `en-US` gives `Mo Tu We Th Fr Sa Su`; on Windows it gives ` M  T  W  T  F  S  S`, where three pairs of days
-  share a letter. The README's first example therefore prints a different weekday row on Windows. The grid,
-  the titles and everything under the invariant culture are the same everywhere. Whatever a release ships as
-  the default becomes part of its compatibility contract.
-- **Evidence so far:** The Windows CI job of the user-facing material phase (2026-11-27, .NET 11): for `en-US`
-  the shortest names were `S M T W T F S` and for `fr-FR` `D L M M J V S`; the abbreviated names (`Sun`,
-  `dim.`), the month names and the year-month pattern matched Linux. Not known: other cultures, other Windows
-  versions, and whether the runtime's NLS and ICU modes differ in this.
-- **Evidence needed:** The same data for more cultures on the three systems, and what a consumer wants:
-  Campertron supplies its own labels and is unaffected.
-- **Options, none decided:** leave it as documented (the README and the XML comments now say it); add a label
-  style that is the same everywhere; or define what `Shortest` gives when a culture's shortest names are one
-  letter. The last two change public API or behavior of unpublished code, which is still free to change.
-- **Decide in:** before the 1.x release decision. See [roadmap.md](roadmap.md#next-action).
-- **Recommendation:** Decide it as its own small phase before release readiness.
+Q-12 (whether weekday labels should be the same on every operating system) is settled: culture-derived labels
+may differ between systems, nothing in the library changes, and supplied labels are the stable option
+([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).

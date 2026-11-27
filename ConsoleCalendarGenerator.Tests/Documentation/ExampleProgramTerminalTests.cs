@@ -25,12 +25,12 @@ public class ExampleProgramTerminalTests
     [Test]
     public void OnATerminal_TheTextIsTheExpectedOutput_WithColorAdded()
     {
-        ExampleProgram.AssumeTheCultureDataTheExpectedOutputWasWrittenWith();
+        ExampleProgram.AssumeTheMonthNamesTheExpectedOutputWasWrittenWith();
 
         ChildResult result = RunOnPseudoTerminal();
 
         Assert.That(TerminalOutput.ColorSequence.Matches(result.StandardOutput), Has.Count.GreaterThan(30));
-        Assert.That(TerminalOutput.WithoutTerminalControl(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutput));
+        Assert.That(TerminalOutput.WithoutTerminalControl(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutputOnThisMachine));
     }
 
     /// <summary>Nothing but color changes is sent after the program's first line: no clearing, no cursor movement.</summary>

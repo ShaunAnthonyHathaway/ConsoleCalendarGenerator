@@ -7,24 +7,30 @@ namespace ConsoleCalendarGeneratorExample;
 /// One method for each thing the library does. The code between a "// &lt;Name&gt;" comment and its
 /// "// &lt;/Name&gt;" comment is an example in README.md, word for word. The tests compare the two, compile this
 /// file against both builds of the library, and compare what the program prints with expected-output.txt.
+///
+/// Every example but one supplies its weekday labels, directly or through the options of the first example, so
+/// that it prints the same text on every operating system. <see cref="Culture"/> is the exception on purpose:
+/// it shows the day names .NET has for a culture, which are not the same on every system.
 /// </summary>
 internal static class Examples
 {
-    /// <summary>A month as text, with the title and the weekday labels in a chosen culture.</summary>
-    public static void QuickStart()
+    /// <summary>A month as text: a title in a chosen culture, and weekday labels that are the same everywhere.</summary>
+    public static MonthRenderOptions QuickStart()
     {
         // <QuickStart>
         MonthRenderOptions options = MonthRenderOptions.Default
-            .WithCulture(CultureInfo.GetCultureInfo("en-US"));
+            .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+            .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
 
         RenderedMonth month = MonthRenderer.Render(2027, 3, options);
 
         Console.WriteLine(month.ToText());
         // </QuickStart>
+        return options;
     }
 
-    /// <summary>The culture decides the language, and nothing else.</summary>
-    public static void Culture()
+    /// <summary>The culture's own day names as labels. What they are depends on the system's culture data.</summary>
+    public static MonthRenderOptions Culture()
     {
         // <Culture>
         MonthRenderOptions french = MonthRenderOptions.Default
@@ -32,45 +38,42 @@ internal static class Examples
 
         Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
         // </Culture>
+        return french;
+    }
+
+    /// <summary>The same culture with labels of the caller's own, which are the same on every system.</summary>
+    public static void OwnLabels(MonthRenderOptions french)
+    {
+        // <OwnLabels>
+        MonthRenderOptions frenchWithLabels = french
+            .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
+
+        Console.WriteLine(MonthRenderer.Render(2027, 3, frenchWithLabels).ToText());
+        // </OwnLabels>
     }
 
     /// <summary>The first day of the week is chosen separately from the culture.</summary>
-    public static void FirstDayOfWeek()
+    public static void FirstDayOfWeek(MonthRenderOptions options)
     {
         // <FirstDayOfWeek>
-        MonthRenderOptions sundayFirst = MonthRenderOptions.Default
-            .WithCulture(CultureInfo.GetCultureInfo("en-US"))
-            .WithFirstDayOfWeek(DayOfWeek.Sunday);
+        MonthRenderOptions sundayFirst = options.WithFirstDayOfWeek(DayOfWeek.Sunday);
 
         Console.WriteLine(MonthRenderer.Render(2027, 3, sundayFirst).ToText());
         // </FirstDayOfWeek>
     }
 
-    /// <summary>Labels of the caller's own, which are the same whatever culture data the machine has.</summary>
-    public static void OwnLabels()
-    {
-        // <OwnLabels>
-        MonthRenderOptions ownLabels = MonthRenderOptions.Default
-            .WithCulture(CultureInfo.GetCultureInfo("en-US"))
-            .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
-
-        Console.WriteLine(MonthRenderer.Render(2027, 3, ownLabels).ToText());
-        // </OwnLabels>
-    }
-
     /// <summary>Days in a state show its marker, and the title says what the marker means.</summary>
-    public static RenderedMonth MarkedDates()
+    public static RenderedMonth MarkedDates(MonthRenderOptions options)
     {
         // <MarkedDates>
         var holiday = new DayState("holiday", "*");
         DateTime[] holidays = { new DateTime(2027, 3, 5), new DateTime(2027, 3, 17), new DateTime(2027, 3, 26) };
 
-        MonthRenderOptions options = MonthRenderOptions.Default
-            .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+        MonthRenderOptions withMarkers = options
             .WithCellWidth(3)
             .WithTitleSuffix(" (* = holiday)");
 
-        RenderedMonth month = MonthRenderer.Render(2027, 3, options, holidays, holiday);
+        RenderedMonth month = MonthRenderer.Render(2027, 3, withMarkers, holidays, holiday);
 
         Console.WriteLine(month.ToText());
         // </MarkedDates>

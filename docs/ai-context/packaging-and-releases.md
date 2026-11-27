@@ -193,5 +193,5 @@ Planned, **not authorized**. See [decisions.md](decisions.md#d-20-20-is-to-be-pu
 11. Prepare a factual handoff for the separate Campertron project and chat.
 
 For 2.0, `AssemblyVersion` becomes `2.0.0.0` and the package-validation baseline has to be reconsidered, because
-2.0 breaks compatibility with 1.0.0 on purpose. Whether a 1.x version is published before 2.0, and which, is
-undecided; see [open-questions.md](open-questions.md#q-07-what-ships-in-1x-and-when).
+2.0 breaks compatibility with 1.0.0 on purpose. No 1.x version and no prerelease is published before 2.0
+([D-55](decisions.md#d-55-the-next-published-version-is-20)).

@@ -17,7 +17,8 @@ Until a new version is published, the modern API is available by building this r
 
 - A month as text that depends only on the options you pass: nothing is read from the current culture, the
   console or the clock.
-- Titles and weekday labels in any culture you choose; any first day of the week.
+- Titles and weekday labels in any culture you choose, or weekday labels of your own; any first day of the
+  week.
 - Marked dates that show in the text itself, with a marker such as `*`, so they never depend on color alone.
 - Optional console colors through a theme.
 - Output to any `TextWriter`, or to the console with the caller's colors put back afterwards.
@@ -43,7 +44,8 @@ using System.Globalization;
 using ConsoleCalendarGenerator;
 
 MonthRenderOptions options = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("en-US"));
+    .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+    .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
 
 RenderedMonth month = MonthRenderer.Render(2027, 3, options);
 
@@ -66,36 +68,18 @@ instance.
 **Choose a culture.** The default culture is the invariant culture, so that the output does not depend on the
 machine. Under it the title above would read `2027 March`. Pass the culture you want, as the example does.
 
-**On Windows the labels above are single letters** (` M  T  W  T  F  S  S`), because the names come from the
-culture data of the system. See [Names come from the system](#names-come-from-the-system).
+**Supply the weekday labels** when the text has to be the same on every operating system, as the example does.
+There are always seven, Sunday first, whichever day the week starts on. Without them the labels are the
+culture's own day names, which differ between systems; see
+[The culture's own day names](#the-cultures-own-day-names).
 
 ## Culture and first day of week
 
-The culture decides the language of the title and of the weekday labels:
+The culture decides the language of the title. The first day of the week is a separate choice: weeks start on
+Monday unless you say otherwise, whatever the culture. Starting from the `options` of the quick start:
 
 ```csharp
-MonthRenderOptions french = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("fr-FR"));
-
-Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
-```
-
-```text
-     mars 2027
-lu ma me je ve sa di
- 1  2  3  4  5  6  7
- 8  9 10 11 12 13 14
-15 16 17 18 19 20 21
-22 23 24 25 26 27 28
-29 30 31
-```
-
-The culture does **not** decide the first day of the week. Weeks start on Monday unless you say otherwise:
-
-```csharp
-MonthRenderOptions sundayFirst = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("en-US"))
-    .WithFirstDayOfWeek(DayOfWeek.Sunday);
+MonthRenderOptions sundayFirst = options.WithFirstDayOfWeek(DayOfWeek.Sunday);
 
 Console.WriteLine(MonthRenderer.Render(2027, 3, sundayFirst).ToText());
 ```
@@ -115,40 +99,60 @@ To follow a culture's own convention, pass `culture.DateTimeFormat.FirstDayOfWee
 The grid is always the Gregorian calendar, and the title always names the Gregorian month and year it shows,
 also for cultures whose own calendar is a different one.
 
-### Names come from the system
+### The culture's own day names
 
-The library asks .NET for a culture's month and day names, and .NET takes them from the culture data of the
-operating system. The same culture can therefore give different text on different systems. The output on this
-page is from Linux, and macOS gives the same. On Windows the shortest day names are single letters, so the
-weekday row of the first example is ` M  T  W  T  F  S  S` there, and the French one is ` L  M  M  J  V  S  D`.
-
-Three things are the same on every system: the invariant culture, the layout of the days, and labels you
-supply yourself, Sunday first:
+If you supply no labels, the culture supplies them as well as the title:
 
 ```csharp
-MonthRenderOptions ownLabels = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("en-US"))
-    .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
+MonthRenderOptions french = MonthRenderOptions.Default
+    .WithCulture(CultureInfo.GetCultureInfo("fr-FR"));
 
-Console.WriteLine(MonthRenderer.Render(2027, 3, ownLabels).ToText());
+Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
 ```
 
-This prints the weekday row `Mo Tu We Th Fr Sa Su` everywhere.
+On Linux and macOS this prints:
+
+```text
+     mars 2027
+lu ma me je ve sa di
+ 1  2  3  4  5  6  7
+ 8  9 10 11 12 13 14
+15 16 17 18 19 20 21
+22 23 24 25 26 27 28
+29 30 31
+```
+
+On Windows the weekday row is ` L  M  M  J  V  S  D`. Both are right. The labels are the culture's shortest day
+names as .NET reports them, and .NET takes them from the globalization data of the operating system, which
+differs between systems and can change with their versions. For English the same happens: two letters on
+Linux and macOS, one letter on Windows. Culture-derived labels are therefore not guaranteed to be identical
+everywhere.
+
+When they have to be, supply them:
+
+```csharp
+MonthRenderOptions frenchWithLabels = french
+    .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
+
+Console.WriteLine(MonthRenderer.Render(2027, 3, frenchWithLabels).ToText());
+```
+
+This prints the text shown above on every system.
 
 ## Marked dates
 
-A `DayState` is a name and a marker. Days in that state show the marker directly before the day number:
+A `DayState` is a name and a marker. Days in that state show the marker directly before the day number.
+Again starting from the `options` of the quick start:
 
 ```csharp
 var holiday = new DayState("holiday", "*");
 DateTime[] holidays = { new DateTime(2027, 3, 5), new DateTime(2027, 3, 17), new DateTime(2027, 3, 26) };
 
-MonthRenderOptions options = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+MonthRenderOptions withMarkers = options
     .WithCellWidth(3)
     .WithTitleSuffix(" (* = holiday)");
 
-RenderedMonth month = MonthRenderer.Render(2027, 3, options, holidays, holiday);
+RenderedMonth month = MonthRenderer.Render(2027, 3, withMarkers, holidays, holiday);
 
 Console.WriteLine(month.ToText());
 ```
@@ -275,8 +279,8 @@ April 2027 needs 5 weeks. Its first week:
 |---|---|---|
 | `WithCulture` | invariant culture | Language of the title and the labels |
 | `WithFirstDayOfWeek` | Monday | Never taken from the culture |
-| `WithWeekdayLabelStyle` | `Shortest` | Or `Abbreviated`; the culture's day names |
-| `WithWeekdayLabels` | none | Seven labels of your own, Sunday first |
+| `WithWeekdayLabelStyle` | `Shortest` | Or `Abbreviated`; the culture's day names, as the system has them |
+| `WithWeekdayLabels` | none | Seven labels of your own, Sunday first; the same on every system |
 | `WithCellWidth` | 2 | 2 to 100; days and labels are right-aligned |
 | `WithColumnGap` | 1 | 0 to 100 spaces between columns |
 | `WithIndent` | none | Text before every line |
@@ -341,8 +345,9 @@ tested on Linux, Windows and macOS.
 ## Limitations
 
 - One month at a time. The modern API has no year view; the legacy `GenerateYear` still exists.
-- Month and day names are what the system's culture data says, so they are not identical on every operating
-  system. See [Names come from the system](#names-come-from-the-system).
+- Day names taken from a culture are what the system's globalization data says, so they are not guaranteed
+  to be identical on every operating system. Labels you supply are. See
+  [The culture's own day names](#the-cultures-own-day-names).
 - A day has at most one state.
 - The Gregorian calendar only.
 - Colors are the sixteen `ConsoleColor` values, foreground only. The library writes no escape sequences of its

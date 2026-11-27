@@ -4,8 +4,10 @@
 
 - **Published on nuget.org:** `ConsoleCalendarGenerator` 1.0.0 only (verified 2026-11-27). It contains a single
   `netstandard2.1` assembly, placeholder metadata, and no readme, license, symbols or documentation.
-- **Built from `master`:** `ConsoleCalendarGenerator` `1.1.0-dev`. It is produced locally and in CI for
-  validation and has never been published.
+- **Built from `master`:** `ConsoleCalendarGenerator` `2.0.0-dev`, a development version of 2.0 with assembly
+  and file version `2.0.0.0`
+  ([D-65](decisions.md#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)). It is produced
+  locally and in CI for validation and has never been published. No prerelease is published.
 - **There is no publication workflow.** Nothing in the repository can push a package, create a tag or create a
   release.
 
@@ -16,9 +18,10 @@ All package settings are in `ConsoleCalendarGenerator/ConsoleCalendarGenerator.c
 | | |
 |---|---|
 | Package ID | `ConsoleCalendarGenerator`, exactly this casing. It must not change. |
-| Version | `VersionPrefix` 1.1.0 with `VersionSuffix` dev, giving `1.1.0-dev` |
-| Assembly version | `1.0.0.0` for all of 1.x; see [compatibility.md](compatibility.md#versions) |
-| File version | follows the package version (`1.1.0.0`) |
+| Version | `VersionPrefix` 2.0.0 with `VersionSuffix` dev, giving `2.0.0-dev` |
+| Assembly version | `2.0.0.0`, the major version alone, for all of 2.x; see [compatibility.md](compatibility.md#versions) |
+| File version | follows the version prefix (`2.0.0.0`) |
+| Informational version | the package version and the commit, such as `2.0.0-dev+<commit>` |
 | Library builds | `lib/net10.0/` and `lib/netstandard2.1/`, each with `ConsoleCalendarGenerator.dll` and `.xml` |
 | Dependencies | none |
 | Metadata | author Shaun Hathaway, description, MIT license expression, project and repository URLs, repository commit, tags, copyright |
@@ -29,7 +32,11 @@ Points that are easy to get wrong:
 
 - **Never build a package numbered 1.0.0.** That version is published. `eng/verify-package.sh` and
   `eng/consumer-smoke.sh` both refuse it.
-- **The version suffix is removed only as part of an approved release.**
+- **The version suffix is removed only as part of an approved release.** Until then the version stays
+  `2.0.0-dev`; the final number is not set early.
+- **The version is stated in four places that change together:** the project file, `VersionIdentityTests`,
+  `eng/verify-package.sh` and `eng/consumer-smoke/AssetProbe/expected-output.txt`. Each of the last three fails
+  when the project file says something else.
 - **The XML documentation files cover every public type and member,** the legacy class included. A missing
   comment fails the build, and nothing suppresses that. See
   [D-29](decisions.md#d-29-modern-public-api-is-documented-when-it-is-added) and
@@ -37,7 +44,7 @@ Points that are easy to get wrong:
 - **The packed readme says what is published.** It is the repository's README, which states that 1.0.0 is the
   only published version and that the modern API is not published yet. That is true of `master` and would be
   false inside a released package: the README is updated in the change that prepares a release. See
-  [roadmap.md](roadmap.md#next-action).
+  [roadmap.md](roadmap.md#next-action). It does not say that 2.0 is published, and must not before it is.
 - **The readme must satisfy nuget.org,** which is stricter than GitHub; see
   [The readme on nuget.org](#the-readme-on-nugetorg).
 - **The `net10.0` build is marked trim- and AOT-compatible** (`IsAotCompatible`), which also turns on the
@@ -86,8 +93,18 @@ At the end of every `dotnet pack` of the library, the SDK's package validation r
 - a renamed parameter (`ApiCompatEnableRuleCannotChangeParameterName`), because that breaks named arguments.
 
 Adding API passes. Removing, renaming or changing it fails with a `CP` error such as `CP0002` (member missing),
-`CP0009` (sealed) or `CP0017` (parameter renamed). Do not add a suppression file to make a break pass; a real
-break is a 2.0 decision. Package validation checks API shape only; behavior is what the tests check.
+`CP0009` (sealed) or `CP0017` (parameter renamed). Package validation checks API shape only; behavior is what
+the tests check.
+
+**This stays exactly so for 2.0**
+([D-66](decisions.md#d-66-package-validation-stays-against-100-with-no-suppression)). The five corrections
+change behavior and no signature, so 2.0 passes the comparison with 1.0.0 as it is. Do not add a suppression
+file, turn a rule off or move the baseline to make something pass; no API break is approved.
+`VersionIdentityTests` fails if any of that appears in the project.
+
+Checked in a scratch copy during the 2.0 groundwork, with nothing of it committed: the package with the 2.0
+identity passes; removing a public member fails with `CP0002`; renaming a parameter fails with `CP0017`; and
+the library with all five corrections applied passes.
 
 ### Network and cache behavior
 
@@ -106,7 +123,8 @@ dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configura
 ### When the baseline changes
 
 Raise `PackageValidationBaselineVersion` only after a newer version has actually been published and is meant to
-be the compatibility baseline. Within 1.x, 1.0.0 remains the floor everything must stay compatible with.
+be the compatibility baseline. Until 2.0 is published, 1.0.0 is the only version there is to compare with, and
+it remains the baseline for the 2.0 package itself.
 
 ## Package verification
 
@@ -115,8 +133,11 @@ bash eng/verify-package.sh artifacts/package
 ```
 
 Checks the packed files without building anything: exactly one `.nupkg` and one `.snupkg` and nothing else in
-the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0 and matches the
-file names; that the readme's images are files of this repository served from an allowed host and that it has
+the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0, is the
+development version `2.0.0-dev` and matches the file names; in both library builds, the assembly version and the
+file version `2.0.0.0` and an informational version made of the package version and the commit the nuspec
+names; that neither build, its documentation nor its symbols contains anything of the test project, the frozen
+source of 1.0.0 included; that the readme's images are files of this repository served from an allowed host and that it has
 no relative links; the documentation files, including that both document every public type of the modern
 namespace and the legacy class with each of its constructors and methods; and Source Link in both PDBs.
 
@@ -139,7 +160,7 @@ repository that is deleted afterwards:
 - The package is copied to a local feed. NuGet source mapping allows `ConsoleCalendarGenerator` from that feed
   only, never from nuget.org.
 - The NuGet package cache is a temporary folder as well, so the development package never enters the machine's
-  real cache. This matters: a cached `1.1.0-dev` would hide later rebuilds of the same version.
+  real cache. This matters: a cached `2.0.0-dev` would hide later rebuilds of the same version.
 
 | Consumer | Must receive | Check |
 |---|---|---|
@@ -149,7 +170,10 @@ repository that is deleted afterwards:
 | The sample program that accompanied 1.0.0, unchanged | | compiles |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
-Each application creates a `MonthLayout`, builds `MonthRenderOptions`, renders a month, counts its segments by
+Each application first prints which build of the library it was given and which version that build says it
+is. The version has to be the version of the package file that was installed, with assembly and file version
+`2.0.0.0`, so an application that was somehow given another package fails. Each application then creates a
+`MonthLayout`, builds `MonthRenderOptions`, renders a month, counts its segments by
 kind and prints its text; defines a `DayState`, renders a marked month, finds the state on its segment, asks a
 `CalendarTheme` for colors, writes the month with `MonthWriter` to a `StringWriter` and with
 `ConsoleMonthWriter` without colors; and then draws a month with the legacy class. Both APIs are therefore exercised from the
@@ -180,18 +204,27 @@ explicitly scoped to do so.
 
 Planned, **not authorized**. See [decisions.md](decisions.md#d-20-20-is-to-be-published-and-verified-on-nuget).
 
-1. Complete the implementation.
-2. Complete the user documentation and examples.
+1. Complete the implementation: the five corrections, one pull request each
+   ([roadmap.md](roadmap.md#remaining-sequence)).
+2. Complete the user documentation, the migration guidance and the examples. In the same change, point the
+   README's image and file links at the tag `v2.0.0`
+   ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)) and set the final version.
 3. Run a release-readiness audit.
 4. Validate the final `.nupkg` and `.snupkg` contents.
 5. Test clean consumers from a local feed.
 6. Verify migration from 1.0.0.
 7. Obtain separate approval for the tag.
 8. Obtain separate approval for the GitHub release.
-9. Obtain separate approval for NuGet publication.
+9. Obtain separate approval for NuGet publication, which is a manual push of the exact artifacts that were
+   validated in step 4, not of a rebuild
+   ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)).
 10. Verify the package from nuget.org in a clean consumer.
 11. Prepare a factual handoff for the separate Campertron project and chat.
 
-For 2.0, `AssemblyVersion` becomes `2.0.0.0` and the package-validation baseline has to be reconsidered, because
-2.0 breaks compatibility with 1.0.0 on purpose. No 1.x version and no prerelease is published before 2.0
-([D-55](decisions.md#d-55-the-next-published-version-is-20)).
+`AssemblyVersion` is already `2.0.0.0`. The package-validation baseline stays 1.0.0: 2.0 differs from 1.0.0 in
+behavior only ([D-66](decisions.md#d-66-package-validation-stays-against-100-with-no-suppression)). No 1.x
+version and no prerelease is published before 2.0
+([D-55](decisions.md#d-55-the-next-published-version-is-20)). Repository settings are a phase of their own,
+approved separately, and are not changed by any of the steps above. Still open for the release:
+how the push is authenticated ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)) and whether
+1.0.0 is deprecated afterwards ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).

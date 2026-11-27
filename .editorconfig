@@ -12,6 +12,12 @@ dotnet_sort_system_directives_first = true
 csharp_new_line_before_open_brace = all
 csharp_style_namespace_declarations = file_scoped:suggestion
 
+# The source of version 1.0.0, frozen as a historical reference for the tests. It is evidence, not code to
+# maintain: tools must not format it, and analyzers have nothing to say about it. A test fails if one
+# character of it changes.
+[ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs]
+generated_code = true
+
 [*.{csproj,props,targets,config,json,yml,yaml}]
 indent_size = 2
 

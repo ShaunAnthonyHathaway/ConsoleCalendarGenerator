@@ -106,7 +106,9 @@ build_probe() {
 # check_output <what> <expected library build> <actual output>
 check_output() {
   local expected
-  expected="$(sed "s/{LIBRARY_BUILD}/$2/" "$templates/AssetProbe/expected-output.txt" | tr -d '\r')"
+  # The version the library must say it was built as is the version of the package that was installed, so an
+  # application that was given any other package, such as a cached or a published one, fails here.
+  expected="$(sed -e "s/{LIBRARY_BUILD}/$2/" -e "s/{PACKAGE_VERSION}/$version/" "$templates/AssetProbe/expected-output.txt" | tr -d '\r')"
   if [ "$3" != "$expected" ]; then
     echo "Expected:" >&2
     echo "$expected" >&2
@@ -125,7 +127,7 @@ run_probe() {
   output="$(dotnet "$work/probe-$framework/bin/Release/$framework/AssetProbe.dll" | tr -d '\r')" \
     || fail "the $framework application did not run"
   check_output "the $framework application" "$expected_build" "$output"
-  echo "ok: a $framework application gets the $expected_build build and draws the expected calendar"
+  echo "ok: a $framework application gets the $expected_build build of $version and draws the expected calendar"
 }
 
 run_probe net10.0 ".NETCoreApp,Version=v10.0"

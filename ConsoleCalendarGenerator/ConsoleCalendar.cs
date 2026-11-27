@@ -6,9 +6,9 @@ using ConsoleCalendarGenerator;
 namespace CalendarGenerator
 {
     // The API published in ConsoleCalendarGenerator 1.0.0, kept for existing callers. Its public surface, its
-    // output, every single call it makes on the console and its exceptions are a compatibility contract for the
-    // whole 1.x line, including what is plainly wrong; see docs/ai-context/compatibility.md. Nothing here may be
-    // "corrected".
+    // output, every single call it makes on the console and its exceptions are a compatibility contract,
+    // including what is plainly wrong; see docs/ai-context/compatibility.md. Version 2.0 corrects five listed
+    // behaviors, each in a change of its own; none is made yet. Nothing else here may be "corrected".
     //
     // Where each day goes comes from MonthLayout, the modern layout model. Everything else about how 1.0.0 draws
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave

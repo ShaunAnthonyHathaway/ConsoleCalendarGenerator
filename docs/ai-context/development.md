@@ -30,6 +30,11 @@ The expected result is **0 warnings and 0 errors**. CI builds Release with `-war
 build there. Do not add warning suppressions to get past it; fix the cause. Nothing is suppressed at present,
 and `XmlDocumentationTests` fails if a suppression of the documentation warnings appears.
 
+One file is exempt from "fix the cause": `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs`,
+the frozen source of 1.0.0, is never edited ([testing.md](testing.md#the-frozen-source-of-100)). It builds
+without warnings today. Should a later SDK warn about it, silence that warning for that one file, in its
+section of `.editorconfig`, and nowhere else.
+
 A public type or member without an XML documentation comment is such a warning (`CS1591`) everywhere in the
 library, the legacy class included. New public API is documented in the change that adds it.
 
@@ -92,8 +97,9 @@ tracked or new unignored files.
   `IsPackable` off (the library turns it on), and `ContinuousIntegrationBuild` on GitHub Actions. Put a setting
   here only if every project should have it; anything else belongs in a project file.
 - **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. They are not enforced in CI.
-  `ConsoleCalendar.cs` keeps its byte order mark and its block-scoped namespace from 1.0.0. Nothing in the file
-  affects the build.
+  `ConsoleCalendar.cs` keeps its byte order mark and its block-scoped namespace from 1.0.0. One section marks
+  the frozen source of 1.0.0 as generated code, which is how tools are told to leave a file alone: `dotnet
+  format` skips it and the analyzers do not report on it. Nothing else in the file affects the build.
 - **Implicit usings** are off in the library, so its dependencies stay visible across both targets, and on in the
   example and the tests.
 

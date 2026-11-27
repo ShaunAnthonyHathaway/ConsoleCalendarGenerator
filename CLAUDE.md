@@ -10,13 +10,15 @@ console applications. It is .NET only.
 ## Current state
 
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
-- **`master`:** builds an unpublished development package, `1.1.0-dev`.
+- **`master`:** builds an unpublished development package of 2.0, `2.0.0-dev`, with assembly and file version
+  `2.0.0.0`. The final version number is not set, and no prerelease is published.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
     is a compatibility facade: it takes the position of every day from `MonthLayout` and keeps everything else
     about how 1.0.0 draws a month (title, colors, the exact console calls, exceptions) in private code. Its
-    behavior is identical to published 1.0.0, which the tests verify.
+    behavior is identical to published 1.0.0, which the tests verify. Version 2.0 corrects five of its
+    behaviors (rule 2); **none of the five is implemented yet**.
   - The layout model, in `ConsoleCalendarGenerator/Layout/`: `MonthLayout`, `MonthLayoutWeek` and
     `MonthLayoutCell`. It places the days of a month in weeks and weekday columns and does nothing else.
   - Text rendering, in `ConsoleCalendarGenerator/Rendering/`: `MonthRenderOptions`, `MonthRenderer` and the
@@ -32,7 +34,13 @@ console applications. It is .NET only.
   of the modern API for a single month, the legacy facade and the Campertron parity fixtures are complete. The
   fixtures (in `ConsoleCalendarGenerator.Tests/Parity/Campertron/`) show that the public modern API reproduces
   Campertron's live calendar renderer; no production code was needed for that. The user-facing material is
-  complete as well (see the next point). Everything about releases is **planned and not implemented**.
+  complete as well (see the next point). The 2.0 groundwork is complete: the 2.0 policy below, the version
+  identity, and the two things in the next point. Everything about releases is **planned and not implemented**.
+- **The 1.0.0 reference and the migration tests (test code only):**
+  `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
+  **Never edit it**; a test compares it byte for byte with the original. The tests in
+  `ConsoleCalendarGenerator.Tests/Migration/` run the library and that source side by side and require the
+  library to do what 1.0.0 did, apart from the corrections that have been implemented.
 - **Public documents:** `README.md` (also the readme of the package), `CHANGELOG.md`, `CONTRIBUTING.md` and
   `SECURITY.md`, all at the root, and one image in `docs/images/`. Every public type and member has XML
   documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
@@ -43,8 +51,9 @@ console applications. It is .NET only.
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
   start and the example supply theirs, so they print the same text on all three systems. One example keeps the
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
-- **Publication (decided, D-55):** nothing is published before 2.0. No 1.x release or prerelease is authorized.
-- **Next phase:** the formal roadmap and 2.0 scope and readiness audit. See
+- **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
+  approval. No 1.x release, no prerelease, no tag and no release is authorized.
+- **Next phase:** the first of the five corrections, the constructor colors (D-57). See
   [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
@@ -79,17 +88,27 @@ The build must finish with 0 warnings. None of these commands publishes anything
 1. **Look before acting.** Check `git status`, the current branch and recent history, and read the files you are
    about to change. If the repository and these documents disagree, the repository is right: fix the document in
    the same pull request.
-2. **Published 1.0.0 behavior is preserved throughout 1.x.** The public API, the output and the side effects of
-   `CalendarGenerator.ConsoleCalendar` must not change. See [compatibility.md](docs/ai-context/compatibility.md).
-3. **Characterized defects are not quietly fixed in 1.x.** Some tested behavior is wrong on purpose, most visibly
-   the constructor arguments that color the wrong element. Tests named `Characterized1xBehavior` record it. Do not
-   "correct" the code or those tests.
-4. **Breaking corrections belong in 2.0.**
+2. **2.0 corrects exactly five behaviors of `CalendarGenerator.ConsoleCalendar`, and everything else about it is
+   protected.** The five (D-57 to D-61): constructor arguments color the element they are named for; a null list
+   throws `ArgumentNullException` for `dates`, still before the month and year are checked; the last row of a
+   month ends with the console's line terminator; every month is followed by exactly one blank line; the title
+   names the Gregorian month. Every other output, console call, color, exception and side effect stays as in
+   1.0.0. See [compatibility.md](docs/ai-context/compatibility.md).
+3. **An approved difference is made with all four of these, or not at all:** a decision in `decisions.md`, a
+   focused pull request for that one difference, a migration test, and changelog and migration documentation.
+   Do not implement, test as done or document as done a correction before its own pull request. Tests named
+   `Characterized1xBehavior` record 1.0.0 behavior that is wrong on purpose; one changes only in the pull request
+   for the correction it pins.
+4. **No other breaking change.** No public signature and no existing parameter name changes (the setters keep
+   `TitleColor`), nothing is removed, nothing is marked obsolete. The modern API is unchanged for 2.0: nothing
+   added, removed or changed. Package validation against 1.0.0 stays on with no suppression. What 1.0.0 did
+   stays recorded: the frozen source and the tests in `Historical/` are never changed to match the library.
 5. **Publication needs Shaun's explicit approval, each time.** That covers tags, GitHub releases, NuGet
    publication, any manual workflow dispatch or rerun that could publish, publication recovery, and repository
    settings. See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
-   done in Shaun's separate Campertron project and chat.
+   done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
+   fixtures and what the modern API renders for them do not change.
 7. **No Python.** Do not propose, build or document a Python version or interoperability layer.
 8. **One focused phase per pull request,** scoped by Shaun beforehand. Do not start the next phase unprompted.
 9. **Keep these documents true.** A change that makes any of them wrong updates them in the same pull request.

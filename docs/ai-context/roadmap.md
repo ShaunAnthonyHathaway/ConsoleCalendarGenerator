@@ -22,46 +22,82 @@ phase's pull request is #2.
 | Legacy facade | Rebuilt `CalendarGenerator.ConsoleCalendar` on `MonthLayout`, with its own grid algorithm removed and every published behavior kept in private code. Shown identical to the original implementation call by call. | #9 | `9e036cc` |
 | Campertron parity fixtures | Recorded 47 calls of Campertron's live calendar renderer at its commit `3ded294` and added tests that reproduce them with the public modern API. Tests and documentation only; no production code changed. | #10 | `3cbeb29` |
 | User-facing material | Replaced the README, the example application and the screenshots; removed the duplicated docs; added `CHANGELOG.md`, `CONTRIBUTING.md` and `SECURITY.md`; documented the legacy class in XML and removed the last warning suppression; added tests that keep the README, the example and the documentation file true. No runtime behavior or public API changed. | #11 | `59e4b45` |
-| Deterministic quick start | Settled Q-12 in documentation: the README's quick start and the example program supply their weekday labels and print the same text on Linux, Windows and macOS; one example keeps the culture's own labels and says they depend on the system. Example, README, tests and these notes only. | #12 | see `git log` |
+| Deterministic quick start | Settled Q-12 in documentation: the README's quick start and the example program supply their weekday labels and print the same text on Linux, Windows and macOS; one example keeps the culture's own labels and says they depend on the system. Example, README, tests and these notes only. | #12 | `083924f` |
+| 2.0 scope and readiness audit | Read-only review of where the project stood, what 2.0 should contain and what a release needs. Delivered to Shaun outside the repository; what he approved of it is recorded as D-56 to D-69. | none | none |
+| 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
-legacy class is unchanged in all of them.
+behavior of the legacy class is unchanged in all of them.
 
-## Remaining sequence (planned)
+## Remaining sequence
 
-In this order. Each item is one or more focused pull requests.
+The 2.0 implementation sequence, in this order. Each item is one focused pull request unless it says otherwise,
+and each needs its own brief from Shaun before it starts.
 
-1. **Roadmap and 2.0 scope and readiness audit.** A formal review of where the project stands, what 2.0
-   contains, and what has to be true before it can be released.
-2. **2.0 breaking corrections.**
-3. **2.0 documentation, migration guidance, release readiness, NuGet publication and verification.**
+1. **Constructor colors** ([D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for)).
+2. **A null list** ([D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)).
+3. **The line terminator of the last row**
+   ([D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator)).
+4. **One blank line after every month**
+   ([D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)).
+5. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
+6. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
+   migration notes, the links to the tag `v2.0.0`
+   ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), the final version number, and
+   a release-readiness audit.
+7. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
+   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
+   readiness audit names.
+8. **Publication and verification:** a manual push of the exact validated artifacts
+   ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)), each step approved
+   separately, then verification from nuget.org and a factual handoff for the Campertron project.
+
+Where this order comes from: the groundwork came first and the constructor correction is next, both stated in
+the brief for the groundwork. The corrections after it are listed in the order in which the approved decisions
+number them, one per pull request as [D-56](decisions.md#d-56-20-corrects-exactly-five-legacy-behaviors-and-protects-everything-else)
+requires; the brief for each one is what fixes its place. Items 6 to 8 are the planned release steps of
+[packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
 What this sequence does and does not say:
 
-- **Nothing is published before 2.0.** No 1.x release and no prerelease is authorized
-  ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
-- Publishing 2.0 on NuGet is planned. It is **not authorized yet**. See
-  [packaging-and-releases.md](packaging-and-releases.md).
+- **Nothing is published before 2.0, and nothing before its final approval.** No 1.x release and no prerelease
+  is authorized ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
+- Publishing 2.0 on NuGet is planned. It is **not authorized yet**. No tag, release or publication is.
 - Changing Campertron is not part of this roadmap. After a published 2.0 package has been verified, Campertron's
   adoption of it is handled in Shaun's separate Campertron project and chat.
+- Nothing is added to the modern API on the way, and no whole-year rendering
+  ([D-63](decisions.md#d-63-the-modern-api-is-unchanged-for-20-and-renders-single-months)).
 
 ## Next action
 
-**The formal roadmap and 2.0 scope and readiness audit** (item 1), and only after Shaun has scoped it. Read
-[packaging-and-releases.md](packaging-and-releases.md), [compatibility.md](compatibility.md) and
-[open-questions.md](open-questions.md) first. What it has to deal with, none of it decided here:
+**The constructor color correction** (item 1,
+[D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for)), and only after Shaun
+has scoped it. Read [compatibility.md](compatibility.md), above all
+[How a correction is made](compatibility.md#how-a-correction-is-made), and
+[testing.md](testing.md#the-migration-tests) first.
 
-- **What 2.0 changes** ([Q-08](open-questions.md#q-08-what-exactly-changes-in-20)), and whether legacy members
-  are marked obsolete ([Q-05](open-questions.md#q-05-when-do-legacy-members-become-obsolete)).
-- **The version on `master`.** It builds `1.1.0-dev` with assembly version `1.0.0.0` and the 1.x compatibility
-  rules, although no 1.x version will be published.
-- **The README is packed into the package and currently says the modern API is not published.** Its "Status"
-  and "Installation" sections, the "Unreleased" heading of `CHANGELOG.md`, the supported versions in
-  `SECURITY.md` and the version checks in `Documentation/PublicDocumentationTests` all have to change in the
-  change that prepares the release, and not before.
-- **The README's image is served from the `master` branch.** A published package would show whatever that file
-  is at the time; whether to point a release at a tag is open
-  ([Q-10](open-questions.md#q-10-what-do-the-links-of-a-published-readme-point-at)).
+What that pull request starts from:
+
+- `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests` requires it, and fails as soon as the
+  constructors change, until the correction is given its `Corrected` function in
+  `Migration/ApprovedCorrection.cs`.
+- The 1.0.0 behavior of the constructors is pinned in `Legacy/ConstructorColorTests` (tests named
+  `Characterized1xBehavior`), in `XmlDocumentationTests`, in the two color digests
+  (`Published100BaselineTests`, `PreFacadeBaselineTests`), in the XML comments of the four constructors, in the
+  README's "Legacy API" section, in `CHANGELOG.md` and in `ExampleProgramTests`, which forbids those
+  constructors in the example. Each has to be looked at; `Historical/` is not touched.
+- An argument that is not a defined color fails when its element is first drawn, so the correction also moves
+  that failure. Two scenarios of the migration matrix show it.
+
+What the later items have to deal with, none of it to be done earlier:
+
+- **The README is packed into the package and currently says the modern API is not published** and that the
+  legacy API works exactly as in 1.0.0. Its "Status", "Installation" and "Legacy API" sections, the
+  "Unreleased" heading of `CHANGELOG.md`, the supported versions in `SECURITY.md` and the version checks in
+  `Documentation/PublicDocumentationTests` change with the corrections they describe or in the change that
+  prepares the release, and not before.
+- **The README's image and file links point at the `master` branch** until the change that prepares the release
+  switches them to the tag ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)).
 - **There is no private channel for security reports**
   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)). Turning one on is a repository
   setting and needs Shaun.
@@ -69,7 +105,11 @@ What this sequence does and does not say:
 - That the console writer puts the caller's colors back is not verified on Windows
   ([D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes)); the
   README says so.
+- How the publication is authenticated and whether 1.0.0 is deprecated afterwards are open
+  ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated),
+  [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
 
-Settled and not to be reopened there: culture-derived weekday labels may differ between operating systems, and
-supplied labels are the stable option
+Settled and not to be reopened: the five corrections and nothing else; no renamed setter parameters, no
+`[Obsolete]`, no removed legacy class; `netstandard2.1` stays; culture-derived weekday labels may differ
+between operating systems, and supplied labels are the stable option
 ([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).

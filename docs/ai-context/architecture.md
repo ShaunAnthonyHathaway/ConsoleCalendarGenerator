@@ -14,7 +14,7 @@ built. Do not treat anything in the second part as existing code unless it says 
 | `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` | The public documents. The README is also the readme of the package. |
 | `docs/images/` | The images the README shows. One at present. |
 | `docs/ai-context/` | These maintenance notes. Not user documentation. |
-| `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). |
+| `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). Its `Historical/Published100/ConsoleCalendar.cs` is the frozen source of 1.0.0, which is never edited. |
 | `eng/` | `verify-package.sh`, `consumer-smoke.sh` and the two small projects the smoke script builds. |
 | `.github/workflows/ci.yml` | The only workflow. |
 | `Directory.Build.props`, `.editorconfig`, `global.json` | Shared build settings, formatting rules, SDK pin. See [development.md](development.md). |
@@ -29,8 +29,10 @@ model; the modern API uses nothing of the legacy class.
 
 ### The legacy class
 
-`CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface and the
-behavior that must be preserved are in [compatibility.md](compatibility.md).
+`CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface, the
+behavior that must be preserved and the five behaviors that 2.0 corrects are in
+[compatibility.md](compatibility.md). None of the five is implemented: what follows describes 1.0.0 and
+`master` alike.
 
 It is a compatibility facade. Its public members are the published ones; what is behind them was rebuilt so
 that the library has a single place that decides where a day goes.
@@ -340,7 +342,8 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
   the README copies from them. Tests compare the copies
   ([D-49](decisions.md#d-49-the-readmes-code-and-output-are-the-example-programs)).
 - **The sample that accompanied 1.0.0** is no longer the example. A byte-for-byte copy is frozen at
-  `eng/consumer-smoke/OriginalSample/Program.cs` and must keep compiling and running against every 1.x package.
+  `eng/consumer-smoke/OriginalSample/Program.cs` and must keep compiling and running against every later
+  package, 2.0 included.
   It waits for key presses and writes terminal reset sequences, which is why it runs only in the smoke script.
 - **XML documentation** on every public type and member is the API reference. There is no generated site.
 
@@ -358,7 +361,8 @@ segment lists, and with the layout for every month from 1900 through 2100. The s
 do the same for marked months and colors; the console writer is observed through a recording `Console.Out`,
 through a child process with redirected output, and on a pseudo-terminal. The facade tests compare every call
 the legacy class makes with a record of the original implementation, and its grid with the layout. The
-documentation tests read the repository's own files: they compare the README with the example program, run
+migration tests run the legacy class and the frozen source of 1.0.0 through the same scenarios and compare
+everything a caller can observe. The documentation tests read the repository's own files: they compare the README with the example program, run
 that program, check links and images against the checkout, and check the built XML documentation file against
 the public API. The project can be built against either library build. Details: [testing.md](testing.md).
 
@@ -386,9 +390,11 @@ Every layer in the table exists, for a single month: see the sections above. The
 as a facade ([The legacy class](#the-legacy-class)). What remains is in [roadmap.md](roadmap.md) and
 [open-questions.md](open-questions.md).
 
-New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays as the
-compatibility API. It shares the layout with the modern API and nothing else, because everything else it does
-is a published behavior that the modern layers deliberately do not have.
+New code goes in the `ConsoleCalendarGenerator` namespace, and for 2.0 there is none: the modern API is
+unchanged ([D-63](decisions.md#d-63-the-modern-api-is-unchanged-for-20-and-renders-single-months)).
+`CalendarGenerator.ConsoleCalendar` stays as the compatibility API. It shares the layout with the modern API
+and nothing else, because everything else it does is a published behavior that the modern layers deliberately
+do not have.
 
 | Layer | Responsibility | Touches the live console | Status |
 |---|---|---|---|
@@ -406,9 +412,10 @@ Constraints:
 - Options and results are immutable where practical.
 - The renderer is pure and safe to call from several threads.
 - Line endings are explicit in the rendering result, not inherited by accident from a console.
-- The new API is additive: it must not change anything `CalendarGenerator.ConsoleCalendar` does today.
-- Titles in the new renderer should name the month that the (Gregorian) grid shows. A compatibility profile is
-  allowed where exact parity with existing output is needed.
+- The new API is additive: it must not change anything `CalendarGenerator.ConsoleCalendar` does. The five
+  corrections of 2.0 are made inside that class and add nothing to the modern API.
+- Titles in the new renderer name the month that the (Gregorian) grid shows. There is no compatibility
+  profile ([D-45](decisions.md#d-45-no-public-compatibility-profile)).
 
 **ANSI.** An ANSI escape-sequence renderer is not planned. `Console.ForegroundColor` already produces the right
 thing on each platform, and segments let a consumer do its own. Revisit only if real evidence of need appears.

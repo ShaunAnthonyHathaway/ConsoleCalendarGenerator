@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using CalendarGenerator;
+using ConsoleCalendarGenerator.Tests.Migration;
 using ConsoleCalendarGenerator.Tests.Support;
 
 namespace ConsoleCalendarGenerator.Tests.Facade;
@@ -18,12 +19,15 @@ namespace ConsoleCalendarGenerator.Tests.Facade;
 ///
 /// Everything here uses the invariant culture or cultures built in the test, so the values are the same on every
 /// system. If one stops matching, the legacy class changed. Do not record them again from the current code.
+///
+/// The scenarios take the implementation to run, so that Historical/Published100DigestTests.cs can put the
+/// frozen source of 1.0.0 through the same code and compare it with the same two values.
 /// </summary>
 [TestFixture]
 public class PreFacadeBaselineTests
 {
-    private const string CallsBeforeTheFacade = "718a48c018593e81c16fd1c15739889effeeca101db9549edc63792980113c7d";
-    private const string ColorsBeforeTheFacade = "7693515e206b0278351d66cf6f8ca1692cc810497265913838ed39435a83f78b";
+    internal const string CallsBeforeTheFacade = "718a48c018593e81c16fd1c15739889effeeca101db9549edc63792980113c7d";
+    internal const string ColorsBeforeTheFacade = "7693515e206b0278351d66cf6f8ca1692cc810497265913838ed39435a83f78b";
 
     /// <summary>The method, the text and the order of every call on the console's writer, and every exception.</summary>
     [Test]
@@ -42,10 +46,13 @@ public class PreFacadeBaselineTests
             "The legacy class sets colors differently than the original implementation. The tests in Legacy/ show where.");
     }
 
-    internal static string Digest(bool colors)
+    internal static string Digest(bool colors) => Digest(colors, LegacySubject.Library);
+
+    /// <summary>The same for either implementation of the legacy calendar.</summary>
+    internal static string Digest(bool colors, LegacySubject subject)
     {
         var all = new StringBuilder();
-        foreach ((string name, string calls, string colorsOfCalls) in Scenarios())
+        foreach ((string name, string calls, string colorsOfCalls) in Scenarios(subject))
         {
             all.Append(name).Append('=').Append(colors ? colorsOfCalls : calls).Append((char)1);
         }
@@ -72,9 +79,9 @@ public class PreFacadeBaselineTests
         new DateTime(9999, 12, 31),
     };
 
-    private static IEnumerable<(string Name, string Calls, string Colors)> Scenarios()
+    private static IEnumerable<(string Name, string Calls, string Colors)> Scenarios(LegacySubject subject)
     {
-        var plain = new ConsoleCalendar();
+        ILegacyCalendar plain = subject.Create();
 
         // Every month of 201 years, and of the first and the last year, without selected dates.
         yield return Run("1900-2100", () =>
@@ -135,15 +142,15 @@ public class PreFacadeBaselineTests
         // The five constructors, and setters, with the caller's colors set beforehand.
         var constructed = new[]
         {
-            new ConsoleCalendar(),
-            new ConsoleCalendar(ConsoleColor.Red),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta, ConsoleColor.DarkYellow),
+            subject.Create(),
+            subject.Create(ConsoleColor.Red),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta, ConsoleColor.DarkYellow),
         };
         for (int index = 0; index < constructed.Length; index++)
         {
-            ConsoleCalendar calendar = constructed[index];
+            ILegacyCalendar calendar = constructed[index];
             yield return Run("constructor " + index, () => calendar.GenerateYear(2024, Selection()),
                 foreground: ConsoleColor.DarkCyan, background: ConsoleColor.DarkBlue);
             yield return Run("constructor " + index + " getters", () => Console.Out.Write(string.Join(",",
@@ -151,7 +158,7 @@ public class PreFacadeBaselineTests
         }
         yield return Run("setters", () =>
         {
-            var calendar = new ConsoleCalendar();
+            ILegacyCalendar calendar = subject.Create();
             calendar.SetTitleColor(ConsoleColor.DarkGreen);
             calendar.SetDayOfWeekColor(ConsoleColor.DarkRed);
             calendar.SetDateColor(ConsoleColor.Gray);
@@ -177,13 +184,13 @@ public class PreFacadeBaselineTests
         foreach (int value in new[] { 16, 99 })
         {
             var undefined = (ConsoleColor)value;
-            yield return Run("undefined title " + value, () => With(c => c.SetTitleColor(undefined)).GenerateMonth(1, 2023, Selection()));
-            yield return Run("undefined weekday " + value, () => With(c => c.SetDayOfWeekColor(undefined)).GenerateMonth(1, 2023, Selection()));
-            yield return Run("undefined date " + value, () => With(c => c.SetDateColor(undefined)).GenerateMonth(1, 2023, Selection()));
-            yield return Run("undefined selected, the 1st " + value, () => With(c => c.SetSelectedDateColor(undefined)).GenerateMonth(1, 2023, Selection()));
-            yield return Run("undefined selected, later " + value, () => With(c => c.SetSelectedDateColor(undefined)).GenerateMonth(10, 2023, Selection()));
-            yield return Run("undefined selected, unused " + value, () => With(c => c.SetSelectedDateColor(undefined)).GenerateMonth(5, 2023, Selection()));
-            yield return Run("undefined in a year " + value, () => With(c => c.SetSelectedDateColor(undefined)).GenerateYear(2023, Selection()));
+            yield return Run("undefined title " + value, () => With(subject, c => c.SetTitleColor(undefined)).GenerateMonth(1, 2023, Selection()));
+            yield return Run("undefined weekday " + value, () => With(subject, c => c.SetDayOfWeekColor(undefined)).GenerateMonth(1, 2023, Selection()));
+            yield return Run("undefined date " + value, () => With(subject, c => c.SetDateColor(undefined)).GenerateMonth(1, 2023, Selection()));
+            yield return Run("undefined selected, the 1st " + value, () => With(subject, c => c.SetSelectedDateColor(undefined)).GenerateMonth(1, 2023, Selection()));
+            yield return Run("undefined selected, later " + value, () => With(subject, c => c.SetSelectedDateColor(undefined)).GenerateMonth(10, 2023, Selection()));
+            yield return Run("undefined selected, unused " + value, () => With(subject, c => c.SetSelectedDateColor(undefined)).GenerateMonth(5, 2023, Selection()));
+            yield return Run("undefined in a year " + value, () => With(subject, c => c.SetSelectedDateColor(undefined)).GenerateYear(2023, Selection()));
         }
 
         // Invalid months, years and lists, alone and together.
@@ -206,9 +213,9 @@ public class PreFacadeBaselineTests
         yield return Run("null list, year", () => plain.GenerateYear(2023, null!));
     }
 
-    private static ConsoleCalendar With(Action<ConsoleCalendar> change)
+    private static ILegacyCalendar With(LegacySubject subject, Action<ILegacyCalendar> change)
     {
-        var calendar = new ConsoleCalendar();
+        ILegacyCalendar calendar = subject.Create();
         change(calendar);
         return calendar;
     }

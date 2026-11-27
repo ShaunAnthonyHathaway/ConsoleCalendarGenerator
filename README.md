@@ -25,7 +25,7 @@ CalendarExample1.GenerateMonth(4, 2023, new List<DateTime>() { new DateTime(2023
 CalendarExample1.SetDateColor(ConsoleColor.DarkYellow);
 CalendarExample1.GenerateMonth(5, 2023, new List<DateTime>() { new DateTime(2023, 5, 1), new DateTime(2023, 5, 8), new DateTime(2023, 5, 11) });
 ```
-![ss1](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/ConsoleCalendarGenerator/docs/ss1.png?raw=true)
+![ss1](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/ConsoleCalendarGenerator/docs/ss1.png)
 
 ```c#
 //generate a month at a time with a selected date list
@@ -47,11 +47,11 @@ CalendarExample2.GenerateMonth(3, 2023, HitDates);
 CalendarExample2.GenerateMonth(4, 2023, HitDates);
 CalendarExample2.GenerateMonth(5, 2023, HitDates);
 ```
-![ss2](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/ConsoleCalendarGenerator/docs/ss2.png?raw=true)
+![ss2](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/ConsoleCalendarGenerator/docs/ss2.png)
 
 ```c#
 //Generate a year with no selected dates
 CalendarExample2.SetTitleColor(ConsoleColor.DarkMagenta);
 CalendarExample2.GenerateYear(2023);
 ```
-![ss3](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/ConsoleCalendarGenerator/docs/ss3.png?raw=true)
+![ss3](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/ConsoleCalendarGenerator/docs/ss3.png)

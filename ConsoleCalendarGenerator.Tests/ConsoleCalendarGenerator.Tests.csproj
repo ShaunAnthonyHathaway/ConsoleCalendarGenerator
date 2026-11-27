@@ -2,11 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <IsPackable>false</IsPackable>
     <!-- Program.cs supplies the entry point: the tests start this assembly as a child process. -->
     <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <!--
+    The library is built for net10.0 and netstandard2.1, and a net11.0 project would normally only ever see the
+    net10.0 build. LibraryTargetFramework chooses which build the tests run against:
+
+      dotnet test                                              (net10.0, the default)
+      dotnet test -p:LibraryTargetFramework=netstandard2.1
+
+    The second form builds into its own folders, so the two never overwrite each other.
+  -->
+  <PropertyGroup>
+    <LibraryTargetFramework Condition="'$(LibraryTargetFramework)' == ''">net10.0</LibraryTargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(LibraryTargetFramework)' != 'net10.0'">
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\$(Configuration)\$(TargetFramework)-with-$(LibraryTargetFramework)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)-with-$(LibraryTargetFramework)\</IntermediateOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +36,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConsoleCalendarGenerator\ConsoleCalendarGenerator.csproj" />
+    <ProjectReference Include="..\ConsoleCalendarGenerator\ConsoleCalendarGenerator.csproj"
+                      SetTargetFramework="TargetFramework=$(LibraryTargetFramework)"
+                      GlobalPropertiesToRemove="LibraryTargetFramework" />
+    <!-- Read by LibraryBuildTests, which fails if the tests are not running against the build asked for. -->
+    <AssemblyMetadata Include="LibraryTargetFramework" Value="$(LibraryTargetFramework)" />
   </ItemGroup>
 
 </Project>

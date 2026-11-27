@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Settings shared by every project in this repository. Anything specific to one project stays in its project file. -->
+  <PropertyGroup>
+    <!-- One language version for every target framework, so the library's two builds compile the same source the same way. -->
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <!-- Run the .NET analyzers at their default severity for every target, including netstandard2.1, where they are off by default. -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!-- Only the library is a NuGet package. It opts in in its own project file. -->
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Compilation is deterministic by default. On CI this also replaces local source paths in the symbols with
+      repository-relative ones, so the same commit produces the same binaries on any build machine.
+    -->
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

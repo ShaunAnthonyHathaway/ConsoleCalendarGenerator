@@ -1,9 +1,73 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <!-- netstandard2.1 is what 1.0.0 shipped and stays for existing consumers. net10.0 is the current asset. -->
+    <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!--
+      Turns on the trim, single-file and Native AOT analyzers for the net10.0 build and marks that assembly as
+      trimmable. eng/consumer-smoke.sh publishes a Native AOT application against the package to back the claim.
+    -->
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))">true</IsAotCompatible>
+
+    <!--
+      The XML documentation file ships in the package. The public members are not documented yet, and CS1591
+      (missing XML comment) is silenced until they are, rather than filled with placeholder text. Remove this
+      line together with the first real documentation pass.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <IsPackable>true</IsPackable>
+    <PackageId>ConsoleCalendarGenerator</PackageId>
+
+    <!--
+      Development version. 1.0.0 is the only published version; nothing built from this repository may carry
+      that number. The suffix is removed only as part of an approved release.
+    -->
+    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionSuffix>dev</VersionSuffix>
+    <!--
+      The assembly version stays at the major version for the whole 1.x line, as published in 1.0.0. The file
+      version follows the package version, so builds can still be told apart.
+    -->
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>$(VersionPrefix).0</FileVersion>
+
+    <Authors>Shaun Hathaway</Authors>
+    <Copyright>Copyright (c) 2023 Shaun Hathaway</Copyright>
+    <Description>Draws month and year calendars in .NET console applications, with configurable colors and highlighted dates.</Description>
+    <PackageTags>console;calendar;terminal;cli;date</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Symbols go in a separate .snupkg. Source Link comes with the SDK and points the symbols at this repository. -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <!--
+    Package validation runs at the end of every "dotnet pack" of this project and fails it when the public API is
+    no longer compatible with the published 1.0.0 package, or when the two builds in the package differ.
+    Restoring this project downloads ConsoleCalendarGenerator 1.0.0 from nuget.org once, into the NuGet package
+    cache, to compare against. To pack without it: dotnet pack -p:EnablePackageValidation=false
+  -->
+  <PropertyGroup Label="Package validation">
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion>
+    <!-- Renaming a parameter breaks callers that use named arguments, so that counts as a break too. -->
+    <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 
 </Project>

@@ -26,6 +26,13 @@ internal static class ApiSurface
                     case MethodInfo method:
                         members.Add("  " + Modifiers(method) + Name(method.ReturnType) + " " + method.Name + "(" + Parameters(method) + ")");
                         break;
+                    case FieldInfo { IsSpecialName: true }:
+                        // The hidden field that stores an enum's value. It is the same for every enum.
+                        break;
+                    case FieldInfo { IsLiteral: true } constant:
+                        // The value of an enum member is part of the compiled contract, so it is listed too.
+                        members.Add("  " + constant.Name + " = " + Convert.ToInt64(constant.GetRawConstantValue(), System.Globalization.CultureInfo.InvariantCulture));
+                        break;
                     default:
                         members.Add("  " + member.MemberType.ToString().ToLowerInvariant() + " " + member.Name);
                         break;
@@ -39,6 +46,11 @@ internal static class ApiSurface
 
     private static string DescribeType(Type type)
     {
+        if (type.IsEnum)
+        {
+            // What an enum derives from and implements is decided by the runtime, not by the library.
+            return "public enum " + type.FullName + " : " + Name(Enum.GetUnderlyingType(type));
+        }
         string kind = type.IsInterface ? "interface" : type.IsEnum ? "enum" : type.IsValueType ? "struct" : "class";
         string modifiers = type.IsAbstract && type.IsSealed ? "static " : type.IsAbstract ? "abstract " : type.IsSealed ? "sealed " : string.Empty;
         string bases = string.Join(", ", new[] { type.BaseType }.Where(t => t != null).Select(t => Name(t!))

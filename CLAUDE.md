@@ -11,16 +11,20 @@ console applications. It is .NET only.
 
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
 - **`master`:** builds an unpublished development package, `1.1.0-dev`.
-- **Production code:** two parts, in one assembly.
+- **Production code:** three parts, in one assembly. The second and third are the modern API, in the
+  `ConsoleCalendarGenerator` namespace. The legacy class uses neither.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. Its
     behavior is identical to published 1.0.0, which the tests verify.
   - The layout model, in `ConsoleCalendarGenerator/Layout/`: `MonthLayout`, `MonthLayoutWeek` and
-    `MonthLayoutCell` in the `ConsoleCalendarGenerator` namespace. It places the days of a month in weeks and
-    weekday columns and does nothing else. The legacy class does not use it.
-- **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation) and the
-  layout model are complete. Text rendering and everything after it is **planned and not implemented**.
-- **Next phase:** options and text rendering. See [roadmap.md](docs/ai-context/roadmap.md). Start it only when
-  Shaun has scoped it.
+    `MonthLayoutCell`. It places the days of a month in weeks and weekday columns and does nothing else.
+  - Text rendering, in `ConsoleCalendarGenerator/Rendering/`: `MonthRenderOptions`, `MonthRenderer` and the
+    result types `RenderedMonth`, `RenderedLine` and `RenderedSegment`. It turns a month into lines of text
+    made of segments that say what each piece of text is. It writes nothing and has no colors.
+- **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation), the layout
+  model and text rendering are complete. Day states, markers, themes and output are **planned and not
+  implemented**.
+- **Next phase:** day states, text markers, theme and color mapping, and output writing. See
+  [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

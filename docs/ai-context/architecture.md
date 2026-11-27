@@ -9,7 +9,7 @@ built. Do not treat anything in the second part as existing code unless it says 
 
 | Path | What it is |
 |---|---|
-| `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs` and the layout model in `Layout/`. |
+| `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs`, the layout model in `Layout/` and text rendering in `Rendering/`. |
 | `ConsoleCalendarGenerator/docs/` | A stale duplicate of the README and the four README screenshots. Not packed. To be replaced in the user-facing material phase. |
 | `ConsoleCalendarGeneratorExample/` | A small interactive console program that uses the library. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). |
@@ -18,11 +18,11 @@ built. Do not treat anything in the second part as existing code unless it says 
 | `Directory.Build.props`, `.editorconfig`, `global.json` | Shared build settings, formatting rules, SDK pin. See [development.md](development.md). |
 | `docs/ai-context/`, `CLAUDE.md` | This documentation. |
 
-### The library: a legacy class and a layout model
+### The library: a legacy class and a modern API
 
 The assembly has two public namespaces. `CalendarGenerator` holds the legacy class and nothing else.
 `ConsoleCalendarGenerator`, which matches the assembly and the package, holds the modern API; so far that is the
-layout model. Neither uses the other.
+layout model and text rendering. The legacy class and the modern API do not use each other.
 
 ### The legacy class
 
@@ -52,7 +52,7 @@ Consequences of this design that the planned work exists to remove:
 ### The layout model
 
 Three types in `ConsoleCalendarGenerator/Layout/`, namespace `ConsoleCalendarGenerator`. They are the first layer
-of the approved direction below and the only part of it that exists.
+of the approved direction below.
 
 ```text
 public sealed class MonthLayout
@@ -75,7 +75,7 @@ public sealed class MonthLayoutCell
 What it answers: which dates belong to the month, which week and weekday column each is in, how many weeks are
 needed, and which cells are empty. What it deliberately knows nothing about: text, cell width, gaps, weekday or
 month names, culture, titles, indentation, alignment, colors, markers, day states, the console and line endings.
-Those belong to the layers that are still planned.
+Those belong to the layers above it.
 
 What every layout guarantees (the tests check the first five for every one of the 839,916 layouts there are,
 and the last two on samples):
@@ -97,6 +97,109 @@ reasons for these choices are in [decisions.md](decisions.md#layout-model).
 The legacy class always starts weeks on Monday and does not use the layout model. It will only when it becomes a
 facade, after the rendering layers exist and can be shown to reproduce its output.
 
+### Text rendering
+
+Nine types in `ConsoleCalendarGenerator/Rendering/`, namespace `ConsoleCalendarGenerator`. They are the second and
+third layers of the approved direction: deterministic text, and segments that carry meaning instead of color.
+Rendering performs no input or output and does not use the console.
+
+```text
+public static class MonthRenderer
+    static RenderedMonth Render(int year, int month, MonthRenderOptions options)
+
+public sealed class MonthRenderOptions            immutable; start from Default, change with the With methods
+    static MonthRenderOptions Default
+    CultureInfo Culture                           WithCulture(CultureInfo)
+    DayOfWeek FirstDayOfWeek                      WithFirstDayOfWeek(DayOfWeek)
+    WeekdayLabelStyle WeekdayLabelStyle           WithWeekdayLabelStyle(WeekdayLabelStyle)
+    IReadOnlyList<string>? WeekdayLabels          WithWeekdayLabels(IEnumerable<string>)
+    int CellWidth                                 WithCellWidth(int)
+    int ColumnGap                                 WithColumnGap(int)
+    int GridWidth                                 computed: 7 cells and 6 gaps
+    string Indent                                 WithIndent(string)
+    string TitleFormat                            WithTitleFormat(string)
+    string TitleSuffix                            WithTitleSuffix(string)
+    TitleAlignment TitleAlignment                 WithTitleAlignment(TitleAlignment)
+
+public sealed class RenderedMonth
+    MonthLayout Layout
+    IReadOnlyList<RenderedLine> Lines             title, weekday labels, then one line per week
+    string ToText()                               lines joined by "\n"
+    string ToText(string newLine)                 "\n" or "\r\n"
+    string ToString()                             the same as ToText()
+
+public sealed class RenderedLine
+    RenderedLineKind Kind
+    IReadOnlyList<RenderedSegment> Segments
+    string Text                                   the segments joined; no terminator
+    string ToString()                             Text
+
+public sealed class RenderedSegment
+    RenderedSegmentKind Kind
+    string Text                                   never empty, never a line break
+    DayOfWeek? DayOfWeek                          set for the three kinds of cell
+    DateTime? Date                                set for Day
+    string ToString()                             Text
+
+public enum RenderedLineKind      Title = 0, WeekdayLabels = 1, Week = 2
+public enum RenderedSegmentKind   Indent = 0, Padding = 1, Title = 2, TitleSuffix = 3, WeekdayLabel = 4, Gap = 5, EmptyDay = 6, Day = 7
+public enum WeekdayLabelStyle     Shortest = 0, Abbreviated = 1
+public enum TitleAlignment        Left = 0, Center = 1
+```
+
+**Defaults** (`MonthRenderOptions.Default`), and what each `With` method accepts:
+
+| Setting | Default | Accepted | Otherwise |
+|---|---|---|---|
+| `Culture` | invariant culture | any culture; a read-only copy is taken | null: `ArgumentNullException` |
+| `FirstDayOfWeek` | Monday | the seven `DayOfWeek` values | `ArgumentOutOfRangeException` |
+| `WeekdayLabelStyle` | `Shortest` | `Shortest`, `Abbreviated`; clears supplied labels | `ArgumentOutOfRangeException` |
+| `WeekdayLabels` | null (labels come from the culture) | exactly seven, Sunday first, each non-empty with no line break; copied | null: `ArgumentNullException`; else `ArgumentException` |
+| `CellWidth` | 2 | 2 through 100 | `ArgumentOutOfRangeException` |
+| `ColumnGap` | 1 | 0 through 100 | `ArgumentOutOfRangeException` |
+| `Indent` | empty | any text with no line break | null: `ArgumentNullException`; else `ArgumentException` |
+| `TitleFormat` | `"Y"` | a valid .NET date format string, not empty, no line break | null: `ArgumentNullException`; empty or line break: `ArgumentException`; invalid: `FormatException` |
+| `TitleSuffix` | empty | any text with no line break | null: `ArgumentNullException`; else `ArgumentException` |
+| `TitleAlignment` | `Center` | `Left`, `Center` | `ArgumentOutOfRangeException` |
+
+`Render` checks `year`, then `month` (`ArgumentOutOfRangeException`, as in the layout), then `options`
+(`ArgumentNullException`).
+
+**Culture.** The culture supplies language only: month names, day names and the year-and-month pattern. The
+grid is always Gregorian and the title always names the Gregorian month and year shown, so for a culture whose
+own calendar is another one (Persian, Thai Buddhist) the culture's Gregorian names and patterns are used:
+`th-TH` says 2023, not 2566. The culture never decides the first day of the week, and the days are always
+written with the digits 0 to 9. The options keep a read-only copy of the culture, so later changes to the
+caller's object do nothing. `CurrentCulture` and `CurrentUICulture` are never read.
+
+**Title.** `TitleFormat` is applied to the first day of the month, as a value with a zero offset from UTC so
+that no format can bring in the machine's time zone. The default `"Y"` gives `2023 May` under the invariant
+culture and `May 2023` under `en-US`. Text in quotation marks is copied unchanged, so a caller can produce any
+exact title. `TitleSuffix` follows directly, as its own segment. Centered, the title and suffix together get
+half of the spare width before them, rounded down; a title as wide as the grid or wider starts at the left edge
+and is never cut. A format that produces no text, with no suffix, leaves an empty title line with no segments.
+
+**Weekday labels.** From the culture (`Shortest` or `Abbreviated` day names) or supplied by the caller. Supplied
+labels are indexed by `DayOfWeek`, Sunday first, and are shown starting from the first day of the week.
+
+**Cells and spacing.** Every label and day cell is exactly `CellWidth` wide. Text shorter than the cell is
+right-aligned; a label longer than the cell is cut to the cell width. The shape of the grid therefore depends on
+the options alone, never on the culture's names: `GridWidth` is seven cells and six gaps. Widths are counted in
+text elements (`StringInfo`), so a surrogate pair or a letter with combining marks counts as one and is never
+split; no claim is made about how many columns a terminal uses for a text element. The cells after the last day
+of the month are not rendered, so no label or week line ends with padding. The indent starts every line that
+has content and is not part of the grid width.
+
+**Lines and segments.** A segment is the unit a later layer styles. For every line, the segment texts joined in
+order are exactly the line's text; no segment is empty; none contains a line break. The cells of a week are one
+segment each, padding included: `Day` (with its date and weekday) or `EmptyDay` (weekday only), with `Gap`
+segments between. A day's date is in `Date`; nothing has to be parsed from text. Lines have no terminators.
+`ToText()` joins them with `"\n"` on every platform, with nothing after the last line.
+
+Reasons: [decisions.md](decisions.md#rendering). Deliberate extension points for the next phase: a state or a
+marker belongs on the `Day` segment, whose text is the whole cell, so a marker can go inside the cell beside
+the number without changing how lines are assembled; cells three or more wide leave room for one.
+
 ### The example
 
 `ConsoleCalendarGeneratorExample/Program.cs` is the sample that accompanied 1.0.0. It waits for key presses and
@@ -110,8 +213,9 @@ One NUnit project on `net11.0`. The legacy tests replace `Console.Out` with a re
 colors back where the platform allows, start the test assembly as a child process to observe the real console
 streams, and compare against digests recorded from the published 1.0.0 assembly. The layout tests need none of
 that: they compare layouts with hand-written grids and with an independent reference for every month from
-January 0001 through December 9999. The project can be built against either library build. Details:
-[testing.md](testing.md).
+January 0001 through December 9999. The rendering tests compare rendered months with hand-written text and
+segment lists, and with the layout for every month from 1900 through 2100. The project can be built against
+either library build. Details: [testing.md](testing.md).
 
 ### Build, package and CI
 
@@ -127,15 +231,16 @@ January 0001 through December 9999. The project can be built against either libr
 
 `eng/consumer-smoke.sh` copies the packed package to a local feed in a temporary folder, restores into a
 temporary package cache with nuget.org forbidden for this package, and builds and runs small applications from
-`eng/consumer-smoke/` against it. Each application uses the layout model and the legacy class. It proves which
-library build each kind of consumer receives. Details:
+`eng/consumer-smoke/` against it. Each application uses the layout model, the renderer and the legacy class. It
+proves which library build each kind of consumer receives. Details:
 [packaging-and-releases.md](packaging-and-releases.md#consumer-smoke-tests).
 
 ## Approved direction
 
-The first layer, calendar layout, exists; see [The layout model](#the-layout-model). None of the other types
-exist. Their names and signatures are **not decided**; see [open-questions.md](open-questions.md). What is
-decided is the separation and the constraints.
+The first three layers exist: calendar layout ([The layout model](#the-layout-model)), and text rendering with
+styled segments ([Text rendering](#text-rendering)). None of the other types exist. Their names and signatures
+are **not decided**; see [open-questions.md](open-questions.md). What is decided is the separation and the
+constraints.
 
 New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays and becomes
 a facade over the new code.
@@ -143,8 +248,8 @@ a facade over the new code.
 | Layer | Responsibility | Touches the live console | Status |
 |---|---|---|---|
 | Calendar layout | A month as weeks and days for a given first weekday. No text. | No | Implemented: `MonthLayout` |
-| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No | Planned |
-| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No | Planned |
+| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No | Implemented without day states: `MonthRenderer` |
+| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No | Implemented without day states: `RenderedSegment` |
 | State markers | A day's state can be shown with a text marker, so state is never conveyed by color alone. Optional. | No | Planned |
 | Theme | Maps segment roles and states to console colors. | No | Planned |
 | Output | Writes rendered lines to a `TextWriter`, applying colors through something the caller can replace. | Only this layer | Planned |

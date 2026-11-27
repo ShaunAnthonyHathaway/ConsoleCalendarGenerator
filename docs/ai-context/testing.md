@@ -2,9 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **340 tests**: 153 characterization tests of the legacy API, 186 tests of
-the layout model and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with
-NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk 18.12.0.
+`ConsoleCalendarGenerator.Tests` holds **615 tests**: 153 characterization tests of the legacy API, 184 tests of
+the layout model, 275 tests of text rendering, 2 tests of the modern public surface and 1 test about the build
+setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk
+18.12.0.
 
 ### Purpose
 
@@ -15,8 +16,8 @@ definition of "unchanged" for the whole 1.x line. See [compatibility.md](compati
 A test whose name contains `Characterized1xBehavior` pins down something that is not the intended design. Do not
 correct it.
 
-The layout tests are ordinary specification tests: they say what `MonthLayout` must do, and a failure there
-means the code is wrong.
+The layout and rendering tests are ordinary specification tests: they say what the modern API must do, and a
+failure there means the code is wrong.
 
 ### Organization
 
@@ -41,7 +42,19 @@ means the code is wrong.
 | `Layout/LayoutValidationTests` | 20 | Exception type, parameter name, value and checking order for invalid arguments |
 | `Layout/LayoutImmutabilityTests` | 6 | That the collections cannot be cast and changed, and that nothing public can be set |
 | `Layout/LayoutDeterminismTests` | 8 | The same result every time, under any culture, from many threads, with no effect on the console or the process |
-| `Layout/LayoutApiTests` | 2 | The modern public surface by reflection, and that the assembly exports nothing else |
+| `Rendering/DefaultRenderingTests` | 17 | The defaults, and the exact text for months of every length, every weekday of the 1st, and four, five and six weeks |
+| `Rendering/FirstDayOfWeekRenderingTests` | 21 | The exact text and the label weekdays for each of the seven first days of the week |
+| `Rendering/SegmentTests` | 14 | The exact segments of each kind of line, the rules every segment obeys, and that results cannot be changed |
+| `Rendering/CultureRenderingTests` | 37 | What the culture decides and what it does not, Gregorian titles under Persian and Thai cultures, every culture of the runtime, and independence from the current cultures |
+| `Rendering/WeekdayLabelTests` | 40 | The two label styles, supplied labels and their order, copying, fitting labels into cells without splitting characters, and invalid labels |
+| `Rendering/TitleTests` | 46 | Title formats, the suffix, left and centered placement, the indent, a title with no text, and invalid formats |
+| `Rendering/CellSizingTests` | 39 | The exact text for several cell widths and gaps, right alignment, the grid width, and the sizes refused |
+| `Rendering/TextConversionTests` | 16 | The text with each line terminator, and the terminators refused |
+| `Rendering/RenderOptionsTests` | 18 | That options are immutable, that every change renders differently, and that the same settings render the same |
+| `Rendering/RenderValidationTests` | 16 | Exception type, parameter name, value and checking order for `Render` |
+| `Rendering/RenderDeterminismTests` | 7 | The same result every time and from many threads with different cultures, with no effect on the console or the process |
+| `Rendering/RenderedLayoutTests` | 4 | That every month from 1900 through 2100, for every first day of the week, shows exactly what its layout says |
+| `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 
 `Support/` holds the helpers. The ones to know:
@@ -61,14 +74,18 @@ means the code is wrong.
   itself tested against dates whose weekday is known and against `DateTime` for every month.
 - `LayoutPicture`: writes a layout out as lines of text so that a test can spell out the grid it expects. It is
   a test aid, not the library's rendering.
+- `Rendered`: the lines of a rendered month as strings, and its segments described as `Kind[text] weekday date`,
+  so that a test can spell out the text and the segments it expects.
+- `ProcessState`: a snapshot of the process-wide state that pure code must leave alone, and a way to run code
+  under given current cultures and put them back.
 
 ### What a run executes
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 335 pass | 2 Windows-only | 3 pass |
-| macOS | 335 pass | 2 Windows-only | not part of CI |
-| Windows | 309 pass | 28 that need Linux or macOS | not part of CI |
+| Linux | 610 pass | 2 Windows-only | 3 pass |
+| macOS | 610 pass | 2 Windows-only | not part of CI |
+| Windows | 583 pass | 29 that need Linux or macOS | not part of CI |
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -82,15 +99,22 @@ The library writes to the process-wide console and reads the process-wide cultur
   that one leaking test does not fail the ones after it.
 - Tests never change environment variables of the test process. A child process gets its own.
 
-The layout tests touch no global state and would be safe to run in parallel, but they live in the same
-non-parallel assembly and run one after another like the rest. Two of them use `Parallel.For` inside the test to
-create and read layouts from several threads. The whole layout folder takes a few seconds; the slowest test is
-the one that checks every layout there is.
+The layout and rendering tests touch no global state and would be safe to run in parallel, but they live in the
+same non-parallel assembly and run one after another like the rest. A few of them use `Parallel.For` inside the
+test to create and read results from several threads. Tests that check independence from the current cultures
+set them through `ProcessState.UnderCultures`, which puts them back. The two folders together take a few
+seconds; the slowest test is the one that checks every layout there is.
+
+Rendering tests that use a real culture (`en-US`, `de-DE`, `th-TH`, `fa-IR` and so on) compare with what the
+runtime reports for that culture, and assert literally only what cannot reasonably change, such as the year in
+a title. They use `Assume.That` for the culture's availability, so on a system without that culture's data they
+are reported as inconclusive rather than failed. Exact text is tested with the invariant culture and with
+cultures built in the test.
 
 ### Platform-specific tests
 
-- **Linux and macOS only (28):** 26 tests that read console colors back (25 legacy, and 1 that checks the layout
-  leaves the colors alone), and 2 that assert line-feed-only output.
+- **Linux and macOS only (29):** 27 tests that read console colors back (25 legacy, and 1 each that check the
+  layout and the renderer leave the colors alone), and 2 that assert line-feed-only output.
   On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
@@ -143,6 +167,16 @@ reordered, off by one, given the wrong parameter name, the wrong exception type 
 collections handed out as its array; an array shared between layouts; dates with a time of day or a kind; a
 write to the console; a wrong weekday on empty cells; an inverted `IsEmpty`; and a settable property.
 
+The rendering tests were checked the same way: 53 deliberate changes to a scratch copy of the renderer, the
+options and the result types, each of which failed the suite. Among them: centering that rounds the other way,
+ignores the suffix or counts UTF-16 code units; rendered trailing cells; a gap before the first column;
+left-aligned cells; labels that are not cut, or cut by code unit; a title or labels taken from the current
+culture or from the culture's own calendar; a title formatted from a plain date; supplied labels indexed by
+column; segments missing their weekday or date; each validation check removed or off by one; a culture or labels
+that are not copied; collections handed out as arrays or lists; a different default first day or alignment; a
+final line terminator; any line terminator accepted; and a write to the console. One change cannot be seen on
+Linux and is left to the Windows job: a default text that uses the platform's line terminator.
+
 ## Rules for adding tests
 
 - **Never weaken a legacy test** to make a change pass. A failing characterization test means the behavior
@@ -167,15 +201,16 @@ write to the console; a wrong weekday on empty cells; an inverted `IsEmpty`; and
 
 Nothing in this section exists yet.
 
-### Renderer
+### States, markers, theme and output
 
-- Because rendering will be pure, its tests should need no console capture, no culture scoping beyond an
-  explicit `CultureInfo` argument, and no platform conditions. They should be safe to run in parallel in
-  principle, though the assembly stays non-parallel while it also holds the legacy tests.
-- Rendering: exact text, exact segment boundaries and roles, cell width, indent, alignment, no trailing spaces,
-  explicit line endings.
-- The layout is already covered; renderer tests should not repeat it. `LayoutPicture` is for layout tests and
-  must not turn into a second renderer.
+- Day states and markers extend the renderer, which is pure, so their tests need no console capture and no
+  platform conditions: exact text with a marker in the cell, the state on the `Day` segment, and what happens
+  to a date outside the month or given twice.
+- A theme maps segment kinds and states to colors without writing anything, and is tested as a plain function.
+- Only the writer touches a `TextWriter` or the console. Its tests record what is written and in which color,
+  as the legacy tests do, and are the only new tests that may need the console helpers or a platform condition.
+- Unmarked rendering is already covered; those tests must keep passing unchanged, and new tests should not
+  repeat them. `LayoutPicture` and `Rendered` are for reading results and must not turn into a second renderer.
 - Both library builds, as now.
 - When the legacy class becomes a facade, every test in `Legacy/` must pass without being edited. That is the
   acceptance test for that phase.

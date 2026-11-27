@@ -103,13 +103,25 @@ readme="$(unzip -p "$package" README.md)"
 other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E '!\[[^]]*\]\(https://' || true)"
 [ -z "$other_images" ] || fail "the packaged readme has an image that is not an absolute https URL: $other_images"
 
+# Every public type of the modern namespace. A new public type is added to this list in the change that adds it.
+modern_types="MonthLayout MonthLayoutCell MonthLayoutWeek MonthRenderOptions MonthRenderer RenderedLine RenderedLineKind RenderedMonth RenderedSegment RenderedSegmentKind TitleAlignment WeekdayLabelStyle"
+
 for framework in net10.0 netstandard2.1; do
   # grep -c reads its whole input, so unzip is never cut off mid-write (which "set -o pipefail" would report).
   unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | grep -c '<name>ConsoleCalendarGenerator</name>' > /dev/null \
     || fail "lib/$framework/ConsoleCalendarGenerator.xml is not the library's documentation file"
-  # The modern API is documented in the source. Its comments must reach the package, for both builds.
-  unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | grep -c 'name="M:ConsoleCalendarGenerator.MonthLayout.Create(' > /dev/null \
-    || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document the modern API"
+  # The modern API is documented in the source. The comments for every one of its types must reach the
+  # package, for both builds. (That no member of those types lacks a comment is enforced when compiling.)
+  documentation="$(unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | tr -d '\r')"
+  for type in $modern_types; do
+    grep -q "<member name=\"T:ConsoleCalendarGenerator.$type\">" <<< "$documentation" \
+      || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document ConsoleCalendarGenerator.$type"
+  done
+  for member in 'M:ConsoleCalendarGenerator.MonthLayout.Create(' 'M:ConsoleCalendarGenerator.MonthRenderer.Render(' \
+      'P:ConsoleCalendarGenerator.MonthRenderOptions.Default"' 'F:ConsoleCalendarGenerator.RenderedSegmentKind.Day"'; do
+    grep -q -F "<member name=\"$member" <<< "$documentation" \
+      || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document $member"
+  done
   # Source Link: the symbols must say where on GitHub the exact sources are.
   unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" \
     | grep -a -c 'https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/' > /dev/null \

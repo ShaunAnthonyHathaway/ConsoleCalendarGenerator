@@ -129,11 +129,7 @@ public class PublicDocumentationTests
     public void TheConstructorCorrection_IsDescribedForUsers(string document, string heading)
     {
         string text = Repository.Read(document);
-        int start = text.IndexOf("\n" + heading + "\n", StringComparison.Ordinal);
-        Assert.That(start, Is.GreaterThan(0), heading);
-        int end = text.IndexOf("\n## ", start, StringComparison.Ordinal);
-        int nextSection = text.IndexOf("\n### ", start + 1, StringComparison.Ordinal);
-        string section = text.Substring(start, (nextSection > 0 && nextSection < end ? nextSection : end) - start);
+        string section = SectionOf(text, heading);
 
         using (Assert.EnterMultipleScope())
         {
@@ -147,6 +143,37 @@ public class PublicDocumentationTests
             Assert.That(section, Ordinal.Contains("not a defined `ConsoleColor`"), "the failure that moved");
             Assert.That(text, Does.Not.Match("sets the weekday row's color, not the title's|kept for compatibility"));
         }
+    }
+
+    /// <summary>
+    /// The exception for a null list is corrected (D-58), and both documents say so: the exception thrown now,
+    /// the parameter it names, and the one 1.0.0 threw.
+    /// </summary>
+    [TestCase("README.md", "### Changes from 1.0.0")]
+    [TestCase("CHANGELOG.md", "### Breaking changes")]
+    public void TheNullListCorrection_IsDescribedForUsers(string document, string heading)
+    {
+        string section = SectionOf(Repository.Read(document), heading);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(section, Ordinal.Contains("`ArgumentNullException`"));
+            Assert.That(section, Ordinal.Contains("`NullReferenceException`"), "what 1.0.0 threw");
+            Assert.That(section, Ordinal.Contains("`dates`"), "the parameter the exception names");
+            Assert.That(section, Ordinal.Contains("`GenerateMonth"));
+            Assert.That(section, Ordinal.Contains("`GenerateYear"));
+            Assert.That(section, Ordinal.Contains("empty list"), "what to pass instead");
+        }
+    }
+
+    /// <summary>The text from a third-level heading to the next heading of the same or a higher level.</summary>
+    private static string SectionOf(string text, string heading)
+    {
+        int start = text.IndexOf("\n" + heading + "\n", StringComparison.Ordinal);
+        Assert.That(start, Is.GreaterThan(0), heading);
+        int end = text.IndexOf("\n## ", start, StringComparison.Ordinal);
+        int nextSection = text.IndexOf("\n### ", start + 1, StringComparison.Ordinal);
+        return text.Substring(start, (nextSection > 0 && nextSection < end ? nextSection : end) - start);
     }
 
     [Test]

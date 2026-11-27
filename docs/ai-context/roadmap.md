@@ -25,7 +25,8 @@ phase's pull request is #2.
 | Deterministic quick start | Settled Q-12 in documentation: the README's quick start and the example program supply their weekday labels and print the same text on Linux, Windows and macOS; one example keeps the culture's own labels and says they depend on the system. Example, README, tests and these notes only. | #12 | `083924f` |
 | 2.0 scope and readiness audit | Read-only review of where the project stood, what 2.0 should contain and what a release needs. Delivered to Shaun outside the repository; what he approved of it is recorded as D-56 to D-69. | none | none |
 | 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | `09ffd05` |
-| Constructor colors (D-57) | The first runtime change of 2.0: in the four constructors that take colors, each argument colors the element it is named for. Only the assignments and the comments of those constructors changed in the library. The migration tests recognize exactly that difference from 1.0.0; the 1.0.0 behavior stays recorded against the frozen source. Also defined one exact scenario for running the original sample, and a check that a program compiled against 1.0.0 runs with the new library unrebuilt. | #14 | see `git log` |
+| Constructor colors (D-57) | The first runtime change of 2.0: in the four constructors that take colors, each argument colors the element it is named for. Only the assignments and the comments of those constructors changed in the library. The migration tests recognize exactly that difference from 1.0.0; the 1.0.0 behavior stays recorded against the frozen source. Also defined one exact scenario for running the original sample, and a check that a program compiled against 1.0.0 runs with the new library unrebuilt. | #14 | `fcc6d5c` |
+| Null list (D-58) | The second runtime change of 2.0: the two methods that take a list throw `ArgumentNullException` for `dates` when it is null, where 1.0.0 threw `NullReferenceException`. Still first, with nothing written and nothing touched. Only a null check in each of the two methods and their comments changed in the library. The migration tests recognize exactly that difference; the one recorded digest that covers null lists became an explicit comparison with the frozen source. | #15 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 behavior of the legacy class was unchanged in every phase before the constructor colors.
@@ -35,28 +36,27 @@ behavior of the legacy class was unchanged in every phase before the constructor
 The 2.0 implementation sequence, in this order. Each item is one focused pull request, and each needs its own
 brief from Shaun before it starts.
 
-The order of the corrections is the one Shaun approved when he reviewed the groundwork: the constructor colors,
-which are done; then the null list; then the line terminator and the blank line, together; then the Gregorian
+The order of the corrections is the one Shaun approved when he reviewed the groundwork: the constructor colors
+and the null list, which are done; then the line terminator and the blank line, together; then the Gregorian
 title.
 
-1. **A null list** ([D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)).
-2. **The line terminator of the last row and one blank line after every month,** in one pull request
+1. **The line terminator of the last row and one blank line after every month,** in one pull request
    ([D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator),
    [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)). Both are about how a month
    ends, in the same few lines of the class.
-3. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
-4. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
+2. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
+3. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
    migration notes, the links to the tag `v2.0.0`
    ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), the final version number, and
    a release-readiness audit.
-5. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
+4. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
    ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
    readiness audit names.
-6. **Publication and verification:** a manual push of the exact validated artifacts
+5. **Publication and verification:** a manual push of the exact validated artifacts
    ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)), each step approved
    separately, then verification from nuget.org and a factual handoff for the Campertron project.
 
-Items 4 to 6 are the planned release steps of
+Items 3 to 5 are the planned release steps of
 [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
 What this sequence does and does not say:
@@ -71,29 +71,40 @@ What this sequence does and does not say:
 
 ## Next action
 
-**The null-list correction** (item 1,
-[D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)), and only after Shaun has scoped
+**The line terminator and the blank line, together** (item 1,
+[D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) and
+[D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)), and only after Shaun has scoped
 it. Read [compatibility.md](compatibility.md), above all
 [How a correction is made](compatibility.md#how-a-correction-is-made), and
-[testing.md](testing.md#the-migration-tests) first. The constructor-color pull request is the worked example
-of every step.
+[testing.md](testing.md#the-migration-tests) first. The pull requests for the constructor colors and for the
+null list are the two worked examples: one states its correction as an equivalent use of 1.0.0, the other as a
+change of the observation.
 
 What that pull request starts from:
 
-- Apart from the constructor colors, `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests` requires
-  it, and fails as soon as a null list is treated differently, until the correction is given its function in
-  `Migration/ApprovedCorrection.cs`. For this one that is `Corrected`: no use of 1.0.0 throws
-  `ArgumentNullException`.
-- The 1.0.0 behavior is pinned in `Legacy/ValidationTests` (three tests, two of them named
-  `Characterized1xBehavior`), in the call digest of `Facade/PreFacadeBaselineTests`, which covers null lists
-  and cannot be kept by the means that kept it through the constructor colors
-  ([testing.md](testing.md#when-a-correction-changes-a-recorded-digest)), in `XmlDocumentationTests`, which
-  requires the documented exception to be `NullReferenceException`, in the XML comments of the two methods
-  that take a list, and in the behavior list of [compatibility.md](compatibility.md#behavior-of-the-legacy-class).
-  A scratch run of this correction during the groundwork failed exactly the first two of these; the others
-  follow from the comments changing. Each has to be looked at; `Historical/` is not touched.
-- The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` get one more
-  entry each. The original sample passes no null list, so `expected-text.txt` does not change.
+- Apart from the constructor colors and the exception for a null list, `master` behaves exactly as 1.0.0 does.
+  `LegacyMigrationTests` requires it, and fails as soon as a month ends differently, until each of the two
+  corrections is given its function in `Migration/ApprovedCorrection.cs`. Both are changes of the observation:
+  no use of 1.0.0 ends a month the corrected way. They are two decisions and stay two entries, applied in
+  order, although one pull request implements them.
+- This is the first correction that changes text, and it changes the end of every month drawn. A scratch run of
+  all five corrections together during the groundwork failed, among others, tests in `Legacy/LineEndingTests`,
+  `Legacy/GenerateYearTests` and `Facade/FacadeCompatibilityTests` and the published text digest. The helper
+  `Support/LegacyReference`, which builds the expected text of a month for many legacy tests, encodes both
+  1.0.0 behaviors and has to be looked at first.
+- The three library-side digests that are left cannot survive it
+  ([D-71](decisions.md#d-71-a-recorded-digest-is-never-bent-to-let-a-correction-through),
+  [testing.md](testing.md#when-a-correction-changes-a-recorded-digest)).
+- The original sample draws months that end on a Sunday, so what it writes changes:
+  `eng/consumer-smoke/OriginalSample/expected-text.txt` is split into what 1.0.0 writes and what 2.0 writes
+  ([packaging-and-releases.md](packaging-and-releases.md#the-original-sample)), and the comparison of the raw
+  terminal bytes with the published 1.0.0, which today allows color sequences to differ, has to allow exactly
+  the new difference as well.
+- The example program draws March 2027 with the legacy class. It ends on a Wednesday, so its text is not
+  expected to change where the console's terminator is a line feed; on Windows its last row will end
+  differently. Check the example's expected output and the README's legacy output block on all three systems.
+- The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` get their
+  entries. `Historical/` is not touched.
 
 What the later items have to deal with, none of it to be done earlier:
 

@@ -53,6 +53,14 @@ behavior. The public API of the class does not change, so programs compile and l
     failure now comes at another point: an invalid `TitleColor` fails before anything is written, where 1.0.0
     wrote the title first, and an invalid `DayOfWeekColor` fails after the title is written, where 1.0.0
     wrote nothing.
+- **A null list of dates throws `ArgumentNullException` with the parameter name `dates`.** That applies to
+  `GenerateMonth(Month, Year, dates)` and `GenerateYear(Year, dates)`. In 1.0.0 they threw
+  `NullReferenceException`.
+  - The list is still checked before the month and the year, and still before anything is written or any
+    color is set.
+  - A program that catches `NullReferenceException` around these calls no longer catches this. Catch
+    `ArgumentNullException`, or pass an empty list, which selects no dates.
+  - Nothing changes for a list that is not `null`.
 
 ### Compatibility
 

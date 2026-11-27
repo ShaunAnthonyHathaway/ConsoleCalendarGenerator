@@ -202,9 +202,41 @@ public class XmlDocumentationTests
             string?[] exceptions = Documentation.Value[IdOf(method)].Elements("exception").Select(element => (string?)element.Attribute("cref")).ToArray();
 
             Assert.That(exceptions, Has.Member("T:System.ArgumentOutOfRangeException"), IdOf(method));
+            Assert.That(exceptions, Has.No.Member("T:System.NullReferenceException"), IdOf(method) + ": that was 1.0.0");
             if (method.GetParameters().Any(parameter => parameter.Name == "dates"))
             {
-                Assert.That(exceptions, Has.Member("T:System.NullReferenceException"), IdOf(method));
+                Assert.That(exceptions, Has.Member("T:System.ArgumentNullException"), IdOf(method));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The two methods that take a list: a null list is documented as refused with ArgumentNullException, first
+    /// and before anything is written, which is what version 2.0 does (D-58). The comment also says what 1.0.0
+    /// threw, and the parameter itself is documented as not to be null.
+    /// </summary>
+    [Test]
+    public void TheLegacyMethodsThatTakeAList_DocumentThatANullListIsRefused_AndSayWhat100Threw()
+    {
+        MethodInfo[] withAList = typeof(ConsoleCalendar).GetMethods(Declared)
+            .Where(method => method.GetParameters().Any(parameter => parameter.Name == "dates"))
+            .ToArray();
+
+        Assert.That(withAList.Select(method => method.Name), Is.EquivalentTo(new[] { "GenerateMonth", "GenerateYear" }));
+        foreach (MethodInfo method in withAList)
+        {
+            XElement member = Documentation.Value[IdOf(method)];
+            XElement refused = member.Elements("exception").Single(element => (string?)element.Attribute("cref") == "T:System.ArgumentNullException");
+            string parameter = TextOf(member.Elements("param").Single(element => (string?)element.Attribute("name") == "dates"));
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(refused.Elements("paramref").Select(reference => (string?)reference.Attribute("name")), Has.Member("dates"), IdOf(method));
+                Assert.That(TextOf(refused), Ordinal.Contains("checked first"), IdOf(method));
+                Assert.That(TextOf(refused), Ordinal.Contains("nothing is written"), IdOf(method));
+                Assert.That(TextOf(refused), Ordinal.Contains("Version 1.0.0 threw"), IdOf(method));
+                Assert.That(refused.Elements("see").Select(see => (string?)see.Attribute("cref")), Has.Member("T:System.NullReferenceException"), IdOf(method));
+                Assert.That(parameter, Ordinal.Contains("must not be"), IdOf(method));
             }
         }
     }

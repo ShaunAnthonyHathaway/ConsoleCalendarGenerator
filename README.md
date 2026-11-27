@@ -333,8 +333,8 @@ The XML documentation of the class describes the rest.
 ### Changes from 1.0.0
 
 The next version, 2.0, corrects a few things this class got wrong in 1.0.0. No constructor, method or parameter
-name changes, so existing programs compile and load as before; what changes is what they draw. So far there is
-one correction.
+name changes, so existing programs compile and load as before; what changes is how they behave in the cases
+below. So far there are two corrections.
 
 **Constructor colors.** In the constructors that take colors, each argument now colors what it is named for:
 `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the
@@ -352,6 +352,11 @@ What that means for a program written for 1.0.0:
 - A value that is not a defined `ConsoleColor` is still accepted by every constructor and still fails only
   when its element is drawn. For the first and the fourth argument that is now another element, so the
   failure comes at another point.
+
+**A null list.** `GenerateMonth` and `GenerateYear` now throw `ArgumentNullException`, naming the parameter
+`dates`, when the list of dates is `null`. In 1.0.0 they threw `NullReferenceException`. As before, the list is
+looked at first and nothing is written. A program that catches `NullReferenceException` around these calls has
+to catch the new exception instead, or better, not pass `null`: an empty list selects no dates.
 
 ## Supported frameworks
 

@@ -29,6 +29,15 @@ namespace ConsoleCalendarGenerator.Tests.Facade;
 /// the constructors, which Legacy/ConstructorColorTests.cs and Migration/ConstructorColorMigrationTests.cs
 /// cover; they say that with the same colors held, the library still makes every call the original made, in
 /// the same color.
+///
+/// Since version 2.0 corrected the exception for a null list (D-58), the library no longer reproduces the value
+/// for the calls: that value includes the type of the exception that ended each scenario, and eighteen of the
+/// scenarios pass a null list. The value is not recorded again, and the library is not made to look as if it
+/// still threw the old exception. Instead the library is compared with the frozen source of 1.0.0 scenario by
+/// scenario, in the same text the value is a hash of: every scenario must be identical, except that those
+/// eighteen end with ArgumentNullException where 1.0.0 ended with NullReferenceException, with the same nothing
+/// written before. The recorded value itself stays tied to 1.0.0 by Historical/Published100DigestTests.cs. The
+/// value for the colors does not include the exception and is still reproduced.
 /// </summary>
 [TestFixture]
 public class PreFacadeBaselineTests
@@ -36,12 +45,39 @@ public class PreFacadeBaselineTests
     internal const string CallsBeforeTheFacade = "718a48c018593e81c16fd1c15739889effeeca101db9549edc63792980113c7d";
     internal const string ColorsBeforeTheFacade = "7693515e206b0278351d66cf6f8ca1692cc810497265913838ed39435a83f78b";
 
-    /// <summary>The method, the text and the order of every call on the console's writer, and every exception.</summary>
+    private const string EndedByNullReference = " -> System.NullReferenceException";
+    private const string EndedByArgumentNull = " -> System.ArgumentNullException";
+
+    /// <summary>
+    /// The method, the text and the order of every call on the console's writer, and every exception, scenario
+    /// by scenario: what the frozen source of 1.0.0 gives, which is what the recorded value is a hash of, with
+    /// the one approved difference written out.
+    /// </summary>
     [Test]
-    public void EveryCallOnTheConsolesWriter_IsWhatItWasBeforeTheFacade_GivenTheConstructorColorsOf100()
+    public void EveryCallOnTheConsolesWriter_IsWhatTheOriginalMade_ScenarioByScenario_ApartFromTheExceptionForANullList()
     {
-        Assert.That(Digest(colors: false, LegacySubject.LibraryWithTheConstructorColorsOf100), Is.EqualTo(CallsBeforeTheFacade),
-            "The legacy class writes differently than the original implementation. The tests in Legacy/ show where.");
+        (string Name, string Calls, string Colors)[] original = Scenarios(LegacySubject.Published100).ToArray();
+        (string Name, string Calls, string Colors)[] library = Scenarios(LegacySubject.LibraryWithTheConstructorColorsOf100).ToArray();
+
+        Assert.That(library.Select(scenario => scenario.Name), Is.EqualTo(original.Select(scenario => scenario.Name)));
+        int withANullList = 0;
+        for (int index = 0; index < original.Length; index++)
+        {
+            string expected = original[index].Calls;
+            if (expected.EndsWith(EndedByNullReference, StringComparison.Ordinal))
+            {
+                // 1.0.0 threw this only for a null list, and it wrote nothing first.
+                Assert.That(expected, Is.EqualTo(EndedByNullReference), original[index].Name);
+                Assert.That(original[index].Name, Ordinal.Contains("null"), "only the scenarios that pass a null list ended this way");
+                expected = EndedByArgumentNull;
+                withANullList++;
+            }
+
+            Assert.That(library[index].Calls, Is.EqualTo(expected), original[index].Name);
+        }
+        Assert.That(withANullList, Is.EqualTo(18), "13 months and 3 years that are invalid as well, and one valid month and year");
+        Assert.That(original.Count(scenario => scenario.Name.Contains("null", StringComparison.Ordinal)), Is.EqualTo(18));
+        Assert.That(original, Has.Length.EqualTo(100), "the scenarios the recorded value covers");
     }
 
     /// <summary>The foreground and background color in effect for every one of those calls, and afterwards.</summary>
@@ -83,7 +119,7 @@ public class PreFacadeBaselineTests
         new DateTime(9999, 12, 31),
     };
 
-    private static IEnumerable<(string Name, string Calls, string Colors)> Scenarios(LegacySubject subject)
+    internal static IEnumerable<(string Name, string Calls, string Colors)> Scenarios(LegacySubject subject)
     {
         ILegacyCalendar plain = subject.Create();
 

@@ -75,19 +75,28 @@ namespace CalendarGenerator
         /// <param name="dates">
         /// The dates to show as selected, for the whole year in one list. See
         /// <see cref="GenerateMonth(int, int, List{DateTime})"/> for how a date selects a day. The list is not changed.
+        /// It may be empty and must not be <see langword="null"/>.
         /// </param>
         /// <remarks>
         /// This is the same as calling <see cref="GenerateMonth(int, int, List{DateTime})"/> for the months 1 to 12
         /// with the same list. There is no heading for the year.
         /// </remarks>
-        /// <exception cref="NullReferenceException">
-        /// <paramref name="dates"/> is <see langword="null"/>. Nothing is written.
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
+        /// <paramref name="Year"/> is invalid as well, and nothing is written. Version 1.0.0 threw
+        /// <see cref="NullReferenceException"/> here; version 2.0 corrects that.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
         /// </exception>
         public void GenerateYear(int Year, List<DateTime> dates)
         {
+            // Checked here as well as in GenerateMonth, so that this method answers for its own argument.
+            if (dates == null)
+            {
+                throw new ArgumentNullException(nameof(dates));
+            }
+
             // Twelve months one after the other, with no heading for the year.
             for (int month = 1; month <= 12; month++)
             {
@@ -114,7 +123,8 @@ namespace CalendarGenerator
         /// <param name="dates">
         /// The dates to show as selected. A date selects a day of the month when its year, month and day are the same;
         /// its time of day and its <see cref="DateTime.Kind"/> are ignored. Dates in other months or years, repeated
-        /// dates and the order of the list make no difference. The list is not changed.
+        /// dates and the order of the list make no difference. The list is not changed. It may be empty and must not be
+        /// <see langword="null"/>.
         /// </param>
         /// <remarks>
         /// <para>
@@ -142,8 +152,10 @@ namespace CalendarGenerator
         /// on Windows, the output contains both forms.
         /// </para>
         /// </remarks>
-        /// <exception cref="NullReferenceException">
-        /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, and nothing is written.
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
+        /// <paramref name="Month"/> or <paramref name="Year"/> is invalid as well, and nothing is written. Version 1.0.0
+        /// threw <see cref="NullReferenceException"/> here; version 2.0 corrects that.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Month"/> is less than 1 or greater than 12, or <paramref name="Year"/> is less than 1 or
@@ -155,10 +167,17 @@ namespace CalendarGenerator
         /// </exception>
         public void GenerateMonth(int Month, int Year, List<DateTime> dates)
         {
-            // The order of these first two steps is what callers observe when arguments are invalid. The list is
-            // read first, so a null list fails with NullReferenceException even when the month or the year is
-            // invalid as well. Then the runtime checks the month and the year, and its exception is the one that
-            // reaches the caller. Both happen before anything is written or any color is set.
+            // The order of these first steps is what callers observe when arguments are invalid. The list comes
+            // first: a null list is refused even when the month or the year is invalid as well. Version 1.0.0 had
+            // no check and failed with NullReferenceException when it began to read the list; version 2.0 throws
+            // ArgumentNullException at the same point (D-58). Then the runtime checks the month and the year, and
+            // its exception is the one that reaches the caller. All of it happens before anything is written or
+            // any color is set.
+            if (dates == null)
+            {
+                throw new ArgumentNullException(nameof(dates));
+            }
+
             bool[] isSelected = SelectedDays(Month, Year, dates);
             int lastDay = DateTime.DaysInMonth(Year, Month);
 

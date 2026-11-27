@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://github.com/ShaunAnthonyHathaway/Campertron",
+    "commit": "3ded294c37642243359bcee2563d7227295a7f40",
+    "file": "CampertronLibrary/function/Base/Calendar.cs",
+    "symbol": "CampertronLibrary.function.Base.Calendar.Lines(int Year, int Month, IEnumerable<DateTime> Dates, CultureInfo Culture, string Indent, ConsoleColor MarkColor)",
+    "returns": "a list of styled lines, each a list of spans; a span is text and an optional ConsoleColor"
+  },
+  "fixedByTheSource": {
+    "firstDayOfWeek": "Monday",
+    "weekdayRow": " Mo  Tu  We  Th  Fr  Sa  Su",
+    "cellWidth": 3,
+    "columnGap": 1,
+    "marker": "*",
+    "titleFormat": "Y",
+    "titleSuffix": " (* = open)",
+    "titleAlignment": "Left"
+  },
+  "liveCallSites": {
+    "file": "CampertronLibrary/function/Base/ConsoleResults.cs",
+    "indent": "  ",
+    "markColor": "Cyan",
+    "maximumWidth": 80
+  },
+  "files": [
+    "month-shapes.json",
+    "marked-dates.json",
+    "indent-and-color.json",
+    "cultures.json"
+  ]
+}

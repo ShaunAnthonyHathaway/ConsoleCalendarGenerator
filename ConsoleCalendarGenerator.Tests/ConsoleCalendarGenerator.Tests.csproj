@@ -35,6 +35,14 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
+  <!--
+    The parity fixtures are embedded in the test assembly, so the tests read them without depending on where the
+    assembly is, and without Campertron or the network. They are test data and are never packed.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Parity\Campertron\Fixtures\*.json" LogicalName="ParityFixtures.Campertron.%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ConsoleCalendarGenerator\ConsoleCalendarGenerator.csproj"
                       SetTargetFramework="TargetFramework=$(LibraryTargetFramework)"

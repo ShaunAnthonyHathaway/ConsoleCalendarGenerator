@@ -19,7 +19,8 @@ phase's pull request is #2.
 | Layout model | Added `MonthLayout`, `MonthLayoutWeek` and `MonthLayoutCell`, a pure model of a month as weeks and weekday columns for any first day of the week. | #6 | `fbf7885` |
 | Options and text rendering | Added `MonthRenderOptions`, `MonthRenderer` and the result types `RenderedMonth`, `RenderedLine` and `RenderedSegment`: deterministic text and segments that say what each piece of text is, with no states, colors or output. | #7 | `1e71486` |
 | States, themes and output | Added `DayState` with visible markers, two `Render` overloads that put states on days, `CalendarTheme`, and the writers `MonthWriter` and `ConsoleMonthWriter`. | #8 | `64995b6` |
-| Legacy facade | Rebuilt `CalendarGenerator.ConsoleCalendar` on `MonthLayout`, with its own grid algorithm removed and every published behavior kept in private code. Shown identical to the original implementation call by call. | #9 | see `git log` |
+| Legacy facade | Rebuilt `CalendarGenerator.ConsoleCalendar` on `MonthLayout`, with its own grid algorithm removed and every published behavior kept in private code. Shown identical to the original implementation call by call. | #9 | `9e036cc` |
+| Campertron parity fixtures | Recorded 47 calls of Campertron's live calendar renderer at its commit `3ded294` and added tests that reproduce them with the public modern API. Tests and documentation only; no production code changed. | #10 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 legacy class is unchanged in all of them.
@@ -28,15 +29,14 @@ legacy class is unchanged in all of them.
 
 In this order. Each item is one or more focused pull requests.
 
-1. **Campertron parity fixtures,** inside this repository only. See [testing.md](testing.md#planned-tests).
-2. **User-facing material.** Full replacement of the README, the example, the duplicated docs, the screenshots
+1. **User-facing material.** Full replacement of the README, the example, the duplicated docs, the screenshots
    and the rest of the user-facing material, plus XML documentation of the legacy class. It must show explicit
    culture selection prominently, because the default culture is the invariant one
    ([D-32](decisions.md#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process)).
-3. **Release-readiness validation.**
-4. **1.x release decision,** and any prerelease work Shaun approves.
-5. **2.0 breaking corrections.**
-6. **2.0 documentation, migration guidance, release readiness, NuGet publication and verification.**
+2. **Release-readiness validation.**
+3. **1.x release decision,** and any prerelease work Shaun approves.
+4. **2.0 breaking corrections.**
+5. **2.0 documentation, migration guidance, release readiness, NuGet publication and verification.**
 
 What this sequence does and does not say:
 
@@ -49,18 +49,17 @@ What this sequence does and does not say:
 
 ## Next action
 
-Recommended: **Campertron parity fixtures** (item 1), and only after Shaun has reviewed the legacy facade and
-scoped that phase. No further compatibility correction is known to be needed first: the facade matched the
-original implementation in every one of 12,986 compared scenarios and byte for byte on a terminal. Read
-[testing.md](testing.md#planned-tests) and
-[architecture.md](architecture.md#what-campertron-needs-from-the-package) first, and re-read Campertron's
-current code. Things that phase will meet, none of them decided here:
+Recommended: **the user-facing material** (item 1), and only after Shaun has reviewed the parity fixtures and
+scoped that phase. Parity revealed no gap in the package: every recorded case is reproduced with the public
+API as it is, so no correction is needed first. Read [decisions.md](decisions.md) (D-11, D-21, D-29, D-32) and
+[packaging-and-releases.md](packaging-and-releases.md) first. What that phase has to deal with, none of it
+decided here:
 
-- Campertron's renderer is expected to map onto the package as: `MonthRenderOptions` with cells three wide, a
-  left-aligned `"Y"` title with the legend as `TitleSuffix`, an indent, and one `DayState` whose marker is `*`;
-  `CalendarTheme.GetColor` for the color of each segment. That mapping is an expectation from reading the code,
-  not a tested fact; the fixtures are what test it.
-- Campertron's title follows the culture's own calendar and the package's is always Gregorian
-  ([D-45](decisions.md#d-45-no-public-compatibility-profile)). Fixtures under cultures with the Gregorian
-  calendar are expected to match; under `fa-IR` or `th-TH` the titles differ on purpose.
-- Campertron itself is never modified from this repository.
+- The README and the example still describe the 1.0.0 API only and show the constructor defect; the
+  screenshots show it too. `ConsoleCalendarGenerator/docs/` is a stale copy of the README.
+- The default culture is the invariant one, so the first modern example a reader sees should select a culture
+  explicitly, and say why ([D-32](decisions.md#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process)).
+- The legacy class has no XML documentation; `CS1591` is switched off for its file until it has
+  ([D-11](decisions.md#d-11-public-xml-documentation-is-deferred)).
+- The readme is packed into the NuGet package, and its images must be absolute `https` URLs.
+- Whether legacy members are marked obsolete (Q-05) and what ships in 1.x (Q-07) are still open.

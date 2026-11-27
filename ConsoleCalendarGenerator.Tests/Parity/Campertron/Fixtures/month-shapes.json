@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "about": "Months of every shape, with no dates marked.",
+  "cases": [
+    {
+      "id": "february-2021",
+      "covers": "28 days from a Monday: exactly four weeks",
+      "title": "exact",
+      "input": {
+        "year": 2021,
+        "month": 2,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2021 February (* = open)", "spans": [["2021 February (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "  1   2   3   4   5   6   7", "spans": [["", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "  8   9  10  11  12  13  14", "spans": [["", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": " 15  16  17  18  19  20  21", "spans": [["", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": " 22  23  24  25  26  27  28", "spans": [["", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] }
+      ]
+    },
+    {
+      "id": "may-2023",
+      "covers": "31 days from a Monday: five weeks",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 May (* = open)", "spans": [["2023 May (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "  1   2   3   4   5   6   7", "spans": [["", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "  8   9  10  11  12  13  14", "spans": [["", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": " 15  16  17  18  19  20  21", "spans": [["", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": " 22  23  24  25  26  27  28", "spans": [["", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": " 29  30  31", "spans": [["", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "august-2023",
+      "covers": "31 days from a Tuesday",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 8,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 August (* = open)", "spans": [["2023 August (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "      1   2   3   4   5   6", "spans": [["    ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null]] },
+        { "text": "  7   8   9  10  11  12  13", "spans": [["", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null]] },
+        { "text": " 14  15  16  17  18  19  20", "spans": [["", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null]] },
+        { "text": " 21  22  23  24  25  26  27", "spans": [["", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null]] },
+        { "text": " 28  29  30  31", "spans": [["", null], [" 28", null], [" ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "february-2023",
+      "covers": "28 days from a Wednesday: five weeks",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 2,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 February (* = open)", "spans": [["2023 February (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "          1   2   3   4   5", "spans": [["        ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null]] },
+        { "text": "  6   7   8   9  10  11  12", "spans": [["", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null]] },
+        { "text": " 13  14  15  16  17  18  19", "spans": [["", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null]] },
+        { "text": " 20  21  22  23  24  25  26", "spans": [["", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null]] },
+        { "text": " 27  28", "spans": [["", null], [" 27", null], [" ", null], [" 28", null]] }
+      ]
+    },
+    {
+      "id": "february-2024",
+      "covers": "29 days from a Thursday: a leap year",
+      "title": "exact",
+      "input": {
+        "year": 2024,
+        "month": 2,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2024 February (* = open)", "spans": [["2024 February (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "              1   2   3   4", "spans": [["            ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null]] },
+        { "text": "  5   6   7   8   9  10  11", "spans": [["", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null]] },
+        { "text": " 12  13  14  15  16  17  18", "spans": [["", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null]] },
+        { "text": " 19  20  21  22  23  24  25", "spans": [["", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null]] },
+        { "text": " 26  27  28  29", "spans": [["", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null]] }
+      ]
+    },
+    {
+      "id": "june-2023",
+      "covers": "30 days from a Thursday",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 6,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 June (* = open)", "spans": [["2023 June (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "              1   2   3   4", "spans": [["            ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null]] },
+        { "text": "  5   6   7   8   9  10  11", "spans": [["", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null]] },
+        { "text": " 12  13  14  15  16  17  18", "spans": [["", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null]] },
+        { "text": " 19  20  21  22  23  24  25", "spans": [["", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null]] },
+        { "text": " 26  27  28  29  30", "spans": [["", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null], [" ", null], [" 30", null]] }
+      ]
+    },
+    {
+      "id": "september-2023",
+      "covers": "30 days from a Friday",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 9,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 September (* = open)", "spans": [["2023 September (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "                  1   2   3", "spans": [["                ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null]] },
+        { "text": "  4   5   6   7   8   9  10", "spans": [["", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null]] },
+        { "text": " 11  12  13  14  15  16  17", "spans": [["", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null]] },
+        { "text": " 18  19  20  21  22  23  24", "spans": [["", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null]] },
+        { "text": " 25  26  27  28  29  30", "spans": [["", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null], [" ", null], [" 30", null]] }
+      ]
+    },
+    {
+      "id": "april-2023",
+      "covers": "30 days from a Saturday, ending on a Sunday: the last row is full",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 4,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 April (* = open)", "spans": [["2023 April (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "                      1   2", "spans": [["                    ", null], ["  1", null], [" ", null], ["  2", null]] },
+        { "text": "  3   4   5   6   7   8   9", "spans": [["", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null]] },
+        { "text": " 10  11  12  13  14  15  16", "spans": [["", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null]] },
+        { "text": " 17  18  19  20  21  22  23", "spans": [["", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null]] },
+        { "text": " 24  25  26  27  28  29  30", "spans": [["", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null], [" ", null], [" 30", null]] }
+      ]
+    },
+    {
+      "id": "january-2023",
+      "covers": "31 days from a Sunday: six weeks",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 1,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "2023 January (* = open)", "spans": [["2023 January (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "                          1", "spans": [["                        ", null], ["  1", null]] },
+        { "text": "  2   3   4   5   6   7   8", "spans": [["", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null]] },
+        { "text": "  9  10  11  12  13  14  15", "spans": [["", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null]] },
+        { "text": " 16  17  18  19  20  21  22", "spans": [["", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null]] },
+        { "text": " 23  24  25  26  27  28  29", "spans": [["", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null]] },
+        { "text": " 30  31", "spans": [["", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "january-0001",
+      "covers": "the first month a DateTime can represent",
+      "title": "exact",
+      "input": {
+        "year": 1,
+        "month": 1,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "0001 January (* = open)", "spans": [["0001 January (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "  1   2   3   4   5   6   7", "spans": [["", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "  8   9  10  11  12  13  14", "spans": [["", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": " 15  16  17  18  19  20  21", "spans": [["", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": " 22  23  24  25  26  27  28", "spans": [["", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": " 29  30  31", "spans": [["", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "december-9999",
+      "covers": "the last month a DateTime can represent",
+      "title": "exact",
+      "input": {
+        "year": 9999,
+        "month": 12,
+        "culture": "",
+        "indent": "",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "9999 December (* = open)", "spans": [["9999 December (* = open)", null]] },
+        { "text": " Mo  Tu  We  Th  Fr  Sa  Su", "spans": [[" Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "          1   2   3   4   5", "spans": [["        ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null]] },
+        { "text": "  6   7   8   9  10  11  12", "spans": [["", null], ["  6", null], [" ", null], ["  7", null], [" ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null]] },
+        { "text": " 13  14  15  16  17  18  19", "spans": [["", null], [" 13", null], [" ", null], [" 14", null], [" ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null]] },
+        { "text": " 20  21  22  23  24  25  26", "spans": [["", null], [" 20", null], [" ", null], [" 21", null], [" ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null]] },
+        { "text": " 27  28  29  30  31", "spans": [["", null], [" 27", null], [" ", null], [" 28", null], [" ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    }
+  ]
+}

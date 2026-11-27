@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **848 tests**: 153 characterization tests of the legacy API, 25 tests of
+`ConsoleCalendarGenerator.Tests` holds **1,604 tests**: 153 characterization tests of the legacy API, 25 tests of
 the legacy class as a facade, 184 tests of the layout model, 275 tests of text rendering, 98 tests of day states
-and markers, 52 tests of the theme, 58 tests of the writers, 2 tests of the modern public surface and 1 test
-about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
+and markers, 52 tests of the theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test
+per recorded case), 2 tests of the modern public surface and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
@@ -72,6 +72,14 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Output/ConsoleMonthWriterTests` | 31 | The text and every single write to the console, the color of each, the caller's colors afterwards and after a failure, and calls from several threads |
 | `Output/ConsoleMonthWriterProcessTests` | 3 | The real standard output of a child process, redirected |
 | `Output/ConsoleMonthWriterTerminalTests` | 3 | Color on a terminal (`Terminal` category) |
+| `Parity/Campertron/FixtureIntegrityTests` | 14 | The fixtures themselves: provenance, strict form, consistency, and that they cover what they are meant to |
+| `Parity/Campertron/TextParityTests` | 141 | Every line of every recorded case, character for character |
+| `Parity/Campertron/SpanParityTests` | 233 | Every span of every recorded case: text, order, boundaries and color; which spans are the marked days |
+| `Parity/Campertron/MarkerAccessibilityTests` | 190 | That a marked day is recognizable without color, and that the title explains the marker |
+| `Parity/Campertron/CultureParityTests` | 25 | Titles under Gregorian cultures, the intended difference under `th-TH` and `fa-IR`, and identical rows everywhere |
+| `Parity/Campertron/ParityDeterminismTests` | 51 | The same spans every time and on every thread, whatever the order of the dates |
+| `Parity/Campertron/WidthTests` | 96 | That no line exceeds the width Campertron writes to, and that the indent is part of the line |
+| `Parity/Campertron/ApiSufficiencyTests` | 6 | That the adapter can only have used public API, and that nothing is built against Campertron |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 
@@ -107,9 +115,13 @@ say what the modern API must do, and a failure there means the code is wrong.
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 839 pass | 3 Windows-only | 6 pass |
-| macOS | 839 pass | 3 Windows-only | not part of CI |
-| Windows | 790 pass | 52 that need Linux or macOS | not part of CI |
+| Linux | 1,595 pass | 3 Windows-only | 6 pass |
+| macOS | 1,595 pass | 3 Windows-only | not part of CI |
+| Windows | 1,546 pass | 52 that need Linux or macOS | not part of CI |
+
+The parity tests have no platform conditions. A few of them compare titles that come from the operating
+system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
+system the fixtures were recorded on; the numbers above are for systems where it does not differ.
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -188,6 +200,24 @@ closer than the published digests and cover more:
 
 They use the invariant culture and cultures built in the test only. Like the published digests, they are not to
 be recorded again from the current source.
+
+### The Campertron parity fixtures
+
+`Parity/Campertron/` shows that the public modern API reproduces Campertron's live calendar renderer. Everything
+about the fixtures (where they come from, their format, how the package side is built, what must match and what
+differs on purpose) is in `Parity/Campertron/README.md`. The rules:
+
+- The fixtures are data recorded from Campertron at one commit, named in `Fixtures/manifest.json`. The tests
+  never run Campertron, never reference it and never use the network; the fixture files are embedded in the
+  test assembly.
+- Do not edit a fixture to make a test pass. A failing parity test means the package no longer reproduces the
+  recorded behavior.
+- Record them again only when Campertron's renderer has changed and the new behavior is to become the target,
+  from a copy of Campertron outside this repository. Campertron is never modified from here.
+- `ParityProfile` and `SegmentAdapter` are test code that stands in for a consumer. They use public API only,
+  which `ApiSufficiencyTests` pins, and they must not move into the package.
+- The parity tests were checked like the others: five deliberate breaks of the package, three tampered fixtures
+  and one wrong adapter in a scratch copy, each of which failed them.
 
 ### Other compatibility layers
 
@@ -276,16 +306,5 @@ lock around a month; and the theme ignored.
 
 ## Planned tests
 
-Nothing in this section exists yet.
-
-### Campertron parity fixtures
-
-- Purpose: show, inside this repository, that the package can reproduce the output of Campertron's live
-  `Calendar.Lines` renderer.
-- Fixtures are recorded from Campertron's own code at a stated commit, as text and styled spans, and checked in
-  here as data. Record the Campertron commit with them.
-- Recording them must not modify Campertron. Its `Calendar` and styled-line types are public, so a separate
-  throwaway program can call them.
-- The tests here read the fixtures. They must not need a Campertron checkout or the network.
-- The older, unused value-stream calendar in Campertron is not a parity target; see
-  [open-questions.md](open-questions.md#q-09-should-parity-fixtures-ever-cover-campertrons-unused-value-stream).
+None at present. The next phase is user-facing material; if it adds example programs, the consumer smoke tests
+are where they should be built and run.

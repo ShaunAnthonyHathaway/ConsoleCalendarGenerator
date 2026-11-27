@@ -393,6 +393,13 @@ version's own tag for a released one, so the check of the package needs no chang
 the bundle as the artifact `release-bundle`, kept 90 days, and prints its checksums. Until the version suffix
 is removed, those are the checksums of a development bundle and of nothing else.
 
+What the first CI run with this machinery showed, for the record and not as a criterion: the Linux job and the
+macOS job made the same archive from the same commit, byte for byte, so the compiler's output and the archive
+are both independent of the system there. The Windows job's archive differs, because its readme and
+documentation files have Windows line ends. The package and the symbol package differ between all three jobs:
+`dotnet pack` does not write the same package file twice. That is why a release is built once and its files
+are kept, and not built again and compared.
+
 ### Artifact attestations: not now
 
 GitHub can attest that a file was built by a workflow run of this repository at a commit

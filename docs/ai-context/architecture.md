@@ -196,7 +196,10 @@ half of the spare width before them, rounded down; a title as wide as the grid o
 and is never cut. A format that produces no text, with no suffix, leaves an empty title line with no segments.
 
 **Weekday labels.** From the culture (`Shortest` or `Abbreviated` day names) or supplied by the caller. Supplied
-labels are indexed by `DayOfWeek`, Sunday first, and are shown starting from the first day of the week.
+labels are indexed by `DayOfWeek`, Sunday first, and are shown starting from the first day of the week. The
+culture's names are whatever .NET reports on the machine: for `en-US` the shortest names are two letters on
+Linux and macOS and one letter on Windows
+([D-53](decisions.md#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)).
 
 **Cells and spacing.** Every label and day cell is exactly `CellWidth` wide. Text shorter than the cell is
 right-aligned; a label longer than the cell is cut to the cell width. The shape of the grid therefore depends on

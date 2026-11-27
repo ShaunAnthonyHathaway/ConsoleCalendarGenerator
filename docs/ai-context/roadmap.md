@@ -46,12 +46,20 @@ What this sequence does and does not say:
 
 ## Next action
 
-Recommended: **a release-readiness audit for 1.x** (item 1), ending in the decision whether a 1.1 release comes
-before 2.0 (item 2), and only after Shaun has reviewed the user-facing material and scoped that phase. Writing
-the documentation and validating the example found nothing in the package that needs correcting first: every
-capability the README describes exists and is tested, and every example compiles against both builds. Read
-[packaging-and-releases.md](packaging-and-releases.md) and [open-questions.md](open-questions.md) first. What
-that phase has to deal with, none of it decided here:
+Recommended: **first a small, focused phase on weekday labels across operating systems**
+([Q-12](open-questions.md#q-12-should-weekday-labels-be-the-same-on-every-operating-system)), and then **a
+release-readiness audit for 1.x** (item 1), ending in the decision whether a 1.1 release comes before 2.0
+(item 2). Each only after Shaun has scoped it.
+
+Validating the example on CI found one thing in the package that deserves a decision before a release fixes it
+in place: under a real culture the default weekday labels are single letters on Windows and two letters on
+Linux and macOS, because .NET's day names differ between the systems. Nothing is wrong in the code, and the
+README and the XML comments now say so, but it is the first thing a Windows user of the quick start sees. It
+may end as "leave it", which needs no code. Everything else the README describes exists, is tested, and
+compiles against both builds.
+
+Read [packaging-and-releases.md](packaging-and-releases.md) and [open-questions.md](open-questions.md) first.
+What the release-readiness audit has to deal with, none of it decided here:
 
 - **The README is packed into the package and currently says the modern API is not published.** Its "Status"
   and "Installation" sections, the "Unreleased" heading of `CHANGELOG.md`, the supported versions in

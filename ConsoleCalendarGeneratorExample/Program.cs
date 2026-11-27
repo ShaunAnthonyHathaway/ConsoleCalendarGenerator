@@ -5,6 +5,9 @@ using ConsoleCalendarGeneratorExample;
 //
 // It needs no input, uses fixed dates and explicit cultures, and prints plain text when its output is
 // redirected. Each step is one method in Examples.cs, and README.md shows the same code.
+//
+// The month and day names come from .NET's culture data, so they can differ between operating systems: on
+// Windows, for example, the shortest day names are single letters.
 
 Heading("A month");
 Examples.QuickStart();
@@ -14,6 +17,9 @@ Examples.Culture();
 
 Heading("Another first day of the week");
 Examples.FirstDayOfWeek();
+
+Heading("Labels of your own");
+Examples.OwnLabels();
 
 Heading("Marked dates");
 RenderedMonth marked = Examples.MarkedDates();

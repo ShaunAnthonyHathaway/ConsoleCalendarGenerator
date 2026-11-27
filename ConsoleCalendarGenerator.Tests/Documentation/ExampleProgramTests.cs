@@ -38,21 +38,40 @@ public class ExampleProgramTests
     }
 
     /// <summary>
-    /// Every culture the program uses is named in its code. On Linux the variables below change the culture a
-    /// .NET process starts with; elsewhere they change nothing and the test only repeats the run.
+    /// The same comparison without the weekday rows, whose day names are one letter on Windows and two on Linux
+    /// and macOS. Everything else the program prints is the same on all three, and this test runs on all three.
+    /// </summary>
+    [Test]
+    public void OnEverySystem_EverythingButTheWeekdayRows_IsTheExpectedOutput()
+    {
+        ExampleProgram.AssumeTheMonthNamesTheExpectedOutputWasWrittenWith();
+
+        ChildResult result = ChildProcess.RunProgram(ExampleProgram.AssemblyPath);
+
+        Assert.That(result.ExitCode, Is.Zero, result.StandardError);
+        Assert.That(result.StandardError, Is.Empty);
+        Assert.That(ExampleProgram.WithoutWeekdayRows(WithLineFeeds(result.StandardOutput)),
+            Is.EqualTo(ExampleProgram.WithoutWeekdayRows(ExampleProgram.ExpectedOutput)));
+    }
+
+    /// <summary>
+    /// Every culture the program uses is named in its code, so the culture a process starts with changes
+    /// nothing. On Linux the variables below change that culture; elsewhere they change nothing and the test
+    /// only repeats the run. The comparison is with a run on the same machine, so it holds on every system.
     /// </summary>
     [TestCase("de_DE.UTF-8")]
     [TestCase("ja_JP.UTF-8")]
     [TestCase("C")]
-    public void TheOutput_DoesNotDependOnTheCultureOfTheMachine(string locale)
+    public void TheOutput_DoesNotDependOnTheCultureTheProcessStartsWith(string locale)
     {
-        ExampleProgram.AssumeTheCultureDataTheExpectedOutputWasWrittenWith();
         var environment = new Dictionary<string, string> { ["LANG"] = locale, ["LC_ALL"] = locale };
 
+        ChildResult usual = ChildProcess.RunProgram(ExampleProgram.AssemblyPath);
         ChildResult result = ChildProcess.RunProgram(ExampleProgram.AssemblyPath, environment: environment);
 
         Assert.That(result.ExitCode, Is.Zero, result.StandardError);
-        Assert.That(WithLineFeeds(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutput));
+        Assert.That(usual.StandardOutput, Is.Not.Empty);
+        Assert.That(result.StandardOutput, Is.EqualTo(usual.StandardOutput));
     }
 
     [Test]

@@ -65,11 +65,11 @@ public class ReadmeExamplesTests
     }
 
     [Test]
-    public void TheProgramHasTheNineExamples()
+    public void TheProgramHasTheTenExamples()
     {
         Assert.That(ExampleProgram.Examples().Keys, Is.EqualTo(new[]
         {
-            "QuickStart", "Culture", "FirstDayOfWeek", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "Legacy",
+            "QuickStart", "Culture", "FirstDayOfWeek", "OwnLabels", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "Legacy",
         }));
     }
 

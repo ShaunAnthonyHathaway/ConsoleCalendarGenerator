@@ -115,7 +115,8 @@ What to do when one of them changes:
   ```
 
   Then copy the changed lines into the README's output block. Every output block must be consecutive lines of
-  that file.
+  that file. Record it on Linux or macOS, not on Windows, whose day names differ
+  ([D-53](decisions.md#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)).
 - **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
   same file is shown on nuget.org. The other three documents may use relative links.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a

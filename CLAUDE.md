@@ -38,8 +38,12 @@ console applications. It is .NET only.
   documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
   `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
   `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together.
-- **Next phase:** a release-readiness audit for 1.x, and the decision whether a 1.1 release comes before 2.0.
-  See [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
+- **Known platform difference:** with a real culture, the default weekday labels are single letters on Windows
+  and two letters on Linux and macOS, because .NET's day names differ. It is documented, not changed; whether
+  to change it is open (Q-12 in [open-questions.md](docs/ai-context/open-questions.md)).
+- **Next phase:** not scoped. Recommended: first a small phase that settles Q-12, then a release-readiness
+  audit for 1.x and the decision whether a 1.1 release comes before 2.0. See
+  [roadmap.md](docs/ai-context/roadmap.md). Start nothing until Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

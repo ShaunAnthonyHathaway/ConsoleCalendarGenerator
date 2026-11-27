@@ -82,3 +82,23 @@ Q-09 (parity fixtures for Campertron's unused value stream) is settled: there ar
 - **Evidence needed:** Shaun's choice. It is a repository setting, which needs his approval each time.
 - **Decide in:** release-readiness validation, or whenever Shaun turns it on.
 - **Recommendation:** Turn it on before the next release and point `SECURITY.md` at it in the same change.
+
+## Q-12: Should weekday labels be the same on every operating system?
+
+- **Why it matters:** With a real culture, the default labels (`WeekdayLabelStyle.Shortest`) are that culture's
+  shortest day names as .NET reports them, and .NET takes them from the operating system. On Linux and macOS
+  `en-US` gives `Mo Tu We Th Fr Sa Su`; on Windows it gives ` M  T  W  T  F  S  S`, where three pairs of days
+  share a letter. The README's first example therefore prints a different weekday row on Windows. The grid,
+  the titles and everything under the invariant culture are the same everywhere. Whatever a release ships as
+  the default becomes part of its compatibility contract.
+- **Evidence so far:** The Windows CI job of the user-facing material phase (2026-11-27, .NET 11): for `en-US`
+  the shortest names were `S M T W T F S` and for `fr-FR` `D L M M J V S`; the abbreviated names (`Sun`,
+  `dim.`), the month names and the year-month pattern matched Linux. Not known: other cultures, other Windows
+  versions, and whether the runtime's NLS and ICU modes differ in this.
+- **Evidence needed:** The same data for more cultures on the three systems, and what a consumer wants:
+  Campertron supplies its own labels and is unaffected.
+- **Options, none decided:** leave it as documented (the README and the XML comments now say it); add a label
+  style that is the same everywhere; or define what `Shortest` gives when a culture's shortest names are one
+  letter. The last two change public API or behavior of unpublished code, which is still free to change.
+- **Decide in:** before the 1.x release decision. See [roadmap.md](roadmap.md#next-action).
+- **Recommendation:** Decide it as its own small phase before release readiness.

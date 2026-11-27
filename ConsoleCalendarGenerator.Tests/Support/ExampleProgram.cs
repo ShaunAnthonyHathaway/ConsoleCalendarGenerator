@@ -88,17 +88,42 @@ internal static class ExampleProgram
         })
         {
             RenderedMonth month = MonthRenderer.Render(2027, 3, MonthRenderOptions.Default.WithCulture(CultureInfo.GetCultureInfo(culture)));
-            string actual = month.Lines[0].Text + "\n" + month.Lines[1].Text;
-            if (actual != title + "\n" + labels)
-            {
-                // An inconclusive test is easy to overlook in a test run's summary, so the reason goes to its log.
-                TestContext.Progress.WriteLine(
-                    "Inconclusive: the culture data of this machine renders " + culture + " as \"" + month.Lines[0].Text.Trim()
-                    + "\" and \"" + month.Lines[1].Text + "\", not as \"" + title.Trim() + "\" and \"" + labels + "\".");
-            }
-            Assume.That(actual, Is.EqualTo(title + "\n" + labels),
+            Assume.That(month.Lines[0].Text + "\n" + month.Lines[1].Text, Is.EqualTo(title + "\n" + labels),
                 "The culture data of this machine gives other names for " + culture + " than the expected output was written with.");
         }
+    }
+
+    /// <summary>
+    /// The same for the month names alone. They are what the titles of the expected output are made of, and
+    /// they are the same on Linux, macOS and Windows.
+    /// </summary>
+    public static void AssumeTheMonthNamesTheExpectedOutputWasWrittenWith()
+    {
+        foreach ((string culture, string title) in new[] { ("en-US", "March 2027"), ("fr-FR", "mars 2027") })
+        {
+            RenderedMonth month = MonthRenderer.Render(2027, 3, MonthRenderOptions.Default.WithCulture(CultureInfo.GetCultureInfo(culture)));
+            Assume.That(month.Lines[0].Text.Trim(), Is.EqualTo(title),
+                "The culture data of this machine gives another month name for " + culture + " than the expected output was written with.");
+        }
+    }
+
+    /// <summary>The weekday rows of the expected output whose text is a culture's day names.</summary>
+    private static readonly string[] WeekdayRows =
+    {
+        "Mo Tu We Th Fr Sa Su", "Su Mo Tu We Th Fr Sa", "lu ma me je ve sa di", " Mo  Tu  We  Th  Fr  Sa  Su",
+    };
+
+    /// <summary>
+    /// What the program printed, or the expected output itself, without the lines that are weekday rows in the
+    /// expected output. Day names are the part of the output that differs most between systems: Windows gives
+    /// one letter where Linux and macOS give two. Everything else can be compared on every system.
+    /// </summary>
+    public static string WithoutWeekdayRows(string output)
+    {
+        string[] expected = ExpectedOutput.Split('\n');
+        string[] lines = output.Split('\n');
+        Assert.That(lines, Has.Length.EqualTo(expected.Length), "the number of lines printed");
+        return string.Join("\n", lines.Where((_, index) => !WeekdayRows.Contains(expected[index])));
     }
 
     /// <summary>The built program. It is built with the solution, in the configuration these tests were built in.</summary>

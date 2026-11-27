@@ -338,7 +338,9 @@ listed in [architecture.md](architecture.md#text-rendering).
 - **Decision:** The default culture is the invariant culture and the default first day of the week is Monday.
   The first day of the week is never taken from a culture, including one set with `WithCulture`. Neither
   `CurrentCulture` nor `CurrentUICulture` is ever read.
-- **Reason:** The renderer's promise is the same output for the same input on every machine, which a default
+- **Reason:** The renderer's promise is the same output for the same input on every machine (for the names a
+  real culture supplies this later proved to hold per operating system only; see
+  [D-53](#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)), which a default
   taken from the current culture would break. Monday is ISO 8601 and what both existing renderers, the legacy
   class and Campertron's, draw. Keeping the first day independent of the culture means changing the language
   never moves the days. A caller who wants the culture's own first day passes
@@ -678,3 +680,21 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
   2026-11-27), turning it on is a repository setting that needs Shaun, and no address has been approved for
   publication. A policy that promised confidentiality would be false.
 - **Consequences:** When private reporting is turned on, change `SECURITY.md` in the same change.
+
+### D-53: Names a culture supplies are documented as depending on the system
+
+- **Status:** Approved as documentation of what exists. Whether the behavior should change is open
+  ([Q-12](open-questions.md#q-12-should-weekday-labels-be-the-same-on-every-operating-system)).
+- **Decision:** The README, the XML comments of `MonthRenderOptions` and `WeekdayLabelStyle.Shortest`, and the
+  example say that month and day names come from the culture data of the runtime and the operating system and
+  can differ between systems, with the observed case: single-letter shortest day names on Windows. The README
+  shows how to supply labels that are the same everywhere (`WithWeekdayLabels`), as a tenth example. No
+  behavior changed.
+- **Reason:** The README promised "the same on every machine", and the Windows CI job showed its first
+  example printing a different weekday row there. The promise that holds is narrower: nothing is read from the
+  process, so the same options give the same text on the same system
+  ([D-32](#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process)), and the invariant culture,
+  the layout and supplied labels are the same everywhere.
+- **Consequences:** `expected-output.txt` is the output of Linux and macOS, and the complete comparison with it
+  is inconclusive on Windows; see [testing.md](testing.md#the-documentation-tests). Do not describe output
+  under a real culture as identical on every machine.

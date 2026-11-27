@@ -15,8 +15,8 @@ Until a new version is published, the modern API is available by building this r
 
 ## Features
 
-- A month as text, the same on every machine: nothing is read from the current culture, the console or the
-  clock.
+- A month as text that depends only on the options you pass: nothing is read from the current culture, the
+  console or the clock.
 - Titles and weekday labels in any culture you choose; any first day of the week.
 - Marked dates that show in the text itself, with a marker such as `*`, so they never depend on color alone.
 - Optional console colors through a theme.
@@ -66,6 +66,9 @@ instance.
 **Choose a culture.** The default culture is the invariant culture, so that the output does not depend on the
 machine. Under it the title above would read `2027 March`. Pass the culture you want, as the example does.
 
+**On Windows the labels above are single letters** (` M  T  W  T  F  S  S`), because the names come from the
+culture data of the system. See [Names come from the system](#names-come-from-the-system).
+
 ## Culture and first day of week
 
 The culture decides the language of the title and of the weekday labels:
@@ -111,6 +114,26 @@ To follow a culture's own convention, pass `culture.DateTimeFormat.FirstDayOfWee
 
 The grid is always the Gregorian calendar, and the title always names the Gregorian month and year it shows,
 also for cultures whose own calendar is a different one.
+
+### Names come from the system
+
+The library asks .NET for a culture's month and day names, and .NET takes them from the culture data of the
+operating system. The same culture can therefore give different text on different systems. The output on this
+page is from Linux, and macOS gives the same. On Windows the shortest day names are single letters, so the
+weekday row of the first example is ` M  T  W  T  F  S  S` there, and the French one is ` L  M  M  J  V  S  D`.
+
+Three things are the same on every system: the invariant culture, the layout of the days, and labels you
+supply yourself, Sunday first:
+
+```csharp
+MonthRenderOptions ownLabels = MonthRenderOptions.Default
+    .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+    .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
+
+Console.WriteLine(MonthRenderer.Render(2027, 3, ownLabels).ToText());
+```
+
+This prints the weekday row `Mo Tu We Th Fr Sa Su` everywhere.
 
 ## Marked dates
 
@@ -318,6 +341,8 @@ tested on Linux, Windows and macOS.
 ## Limitations
 
 - One month at a time. The modern API has no year view; the legacy `GenerateYear` still exists.
+- Month and day names are what the system's culture data says, so they are not identical on every operating
+  system. See [Names come from the system](#names-come-from-the-system).
 - A day has at most one state.
 - The Gregorian calendar only.
 - Colors are the sixteen `ConsoleColor` values, foreground only. The library writes no escape sequences of its

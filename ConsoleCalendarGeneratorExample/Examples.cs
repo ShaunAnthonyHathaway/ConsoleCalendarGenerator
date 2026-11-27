@@ -46,6 +46,18 @@ internal static class Examples
         // </FirstDayOfWeek>
     }
 
+    /// <summary>Labels of the caller's own, which are the same whatever culture data the machine has.</summary>
+    public static void OwnLabels()
+    {
+        // <OwnLabels>
+        MonthRenderOptions ownLabels = MonthRenderOptions.Default
+            .WithCulture(CultureInfo.GetCultureInfo("en-US"))
+            .WithWeekdayLabels(new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" });
+
+        Console.WriteLine(MonthRenderer.Render(2027, 3, ownLabels).ToText());
+        // </OwnLabels>
+    }
+
     /// <summary>Days in a state show its marker, and the title says what the marker means.</summary>
     public static RenderedMonth MarkedDates()
     {

@@ -7,7 +7,7 @@ point to its replacement rather than deleting it.
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
 All decisions below date from 2026-11-27, the day the modernization was planned and its first phases, up to and
-including the legacy facade, were merged.
+including the Campertron parity fixtures, were merged.
 
 ## Scope and compatibility
 
@@ -153,7 +153,8 @@ including the legacy facade, were merged.
 
 ### D-16: Campertron parity targets its live renderer
 
-- **Status:** Approved direction. Not implemented.
+- **Status:** Approved. Implemented as fixtures and tests
+  ([D-47](#d-47-campertron-parity-is-shown-with-recorded-fixtures)).
 - **Decision:** Compatibility work targets Campertron's live `Calendar.Lines` renderer. The package is not
   designed around Campertron's older, unused value-stream calendar.
 - **Reason:** `Calendar.Lines` is what Campertron's console actually shows.
@@ -527,8 +528,9 @@ not verified on Windows (D-43). The API and the contracts are listed in
 
 ## Legacy facade
 
-Settled in the legacy facade phase, within the authority Shaun gave that phase. How each published behavior is
-kept is listed in [compatibility.md](compatibility.md#how-the-legacy-class-is-built).
+Settled in the legacy facade phase, within the authority Shaun gave that phase, and accepted by him when he
+reviewed it. How each published behavior is kept is listed in
+[compatibility.md](compatibility.md#how-the-legacy-class-is-built).
 
 ### D-44: The legacy class shares the layout and nothing else
 
@@ -572,3 +574,28 @@ kept is listed in [compatibility.md](compatibility.md#how-the-legacy-class-is-bu
   `Write(string)`, which a caller's own writer can, and cover fewer cases. Rebuilding the class needed a record
   that would notice such a change, and later changes to the class need the same.
 - **Consequences:** These digests, like the published ones, define "unchanged" for the legacy class.
+
+## Campertron parity
+
+Settled in the parity fixtures phase, within the authority Shaun gave that phase. What was recorded and how it
+is compared is described in `ConsoleCalendarGenerator.Tests/Parity/Campertron/README.md`.
+
+### D-47: Campertron parity is shown with recorded fixtures
+
+- **Status:** Approved. Implemented as tests. Resolves the former open question Q-09.
+- **Decision:** What Campertron's live renderer returns is recorded as data: 47 calls of `Calendar.Lines` at
+  Campertron commit `3ded294`, each with its input and the lines and spans it returned, in JSON files that are
+  embedded in the test assembly. The tests reproduce every one with the public modern API and a test-only
+  adapter. Nothing in this repository references, builds against or runs Campertron, and nothing named after
+  Campertron exists in the package. The program that recorded the fixtures is not kept here. There are no
+  fixtures for Campertron's older calendar value stream (`GenerateCalendar`).
+- **Reason:** Recorded data makes the target exact, reviewable and usable offline, and keeps the two
+  repositories independent ([D-19](#d-19-campertron-adoption-happens-elsewhere)). The value stream is still
+  produced in Campertron and pinned by its own tests, but no renderer there consumes it: the console skips it
+  and the results page has no case for it. Matching it would mean shaping the package after plumbing that
+  nothing displays; what becomes of it is for the Campertron project.
+- **Consequences:** The public API proved sufficient: no production code changed, and no profile, option or type
+  was added for a consumer. The fixtures describe one commit. They are recorded again only when Campertron's
+  renderer has changed and the new behavior is to become the target, from a copy outside this repository. Under
+  cultures whose calendar is not Gregorian the titles differ on purpose
+  ([D-45](#d-45-no-public-compatibility-profile)); those two fixtures compare everything except the title.

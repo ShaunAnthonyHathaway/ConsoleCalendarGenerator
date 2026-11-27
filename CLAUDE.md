@@ -29,10 +29,13 @@ console applications. It is .NET only.
   - Output, in `ConsoleCalendarGenerator/Output/`: `MonthWriter` for any `TextWriter`, and `ConsoleMonthWriter`,
     the only modern type that uses the console.
 - **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation), every layer
-  of the modern API for a single month, and the legacy facade are complete. Campertron parity fixtures, the
-  user-facing material and everything about releases are **planned and not implemented**.
-- **Next phase:** Campertron parity fixtures, inside this repository only. See
-  [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
+  of the modern API for a single month, the legacy facade and the Campertron parity fixtures are complete. The
+  fixtures (in `ConsoleCalendarGenerator.Tests/Parity/Campertron/`) show that the public modern API reproduces
+  Campertron's live calendar renderer; no production code was needed for that. The user-facing material and
+  everything about releases are **planned and not implemented**.
+- **Next phase:** the user-facing material: README, example, screenshots, the duplicated docs and XML
+  documentation of the legacy class. See [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has
+  scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

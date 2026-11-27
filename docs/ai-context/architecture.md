@@ -391,19 +391,45 @@ thing on each platform, and segments let a consumer do its own. Revisit only if 
 ### What Campertron needs from the package
 
 Campertron is Shaun's campsite-availability application, in a separate repository. It currently draws its own
-console calendar. The package must eventually offer enough to replace Campertron's **live** renderer,
-`Calendar.Lines` in `CampertronLibrary/function/Base/Calendar.cs`. Campertron itself is changed elsewhere; see
+console calendar. The package must offer enough to replace Campertron's **live** renderer, `Calendar.Lines` in
+`CampertronLibrary/function/Base/Calendar.cs`. Campertron itself is changed elsewhere; see
 [decisions.md](decisions.md#d-19-campertron-adoption-happens-elsewhere).
 
-As observed in Campertron at commit `b23a6b9` (2026-11-27), that renderer:
+As observed in Campertron at commit `3ded294` (2026-11-27; the file is unchanged since the first audit at
+`b23a6b9`), that renderer:
 
 - returns lines of styled spans (text plus an optional `ConsoleColor`) and never writes to the console;
 - takes the year, month, the dates to mark, an explicit `CultureInfo`, an indent string and a mark color;
-- titles the month with the culture's year-month pattern, followed by the legend ` (* = open)`;
+- titles the month with the culture's year-month pattern, followed by the legend ` (* = open)`, at the left;
 - uses a fixed English weekday row, Monday first;
 - right-aligns each day in a three-character cell with one space between cells;
-- marks a day by prefixing `*` inside its cell and coloring the whole cell.
+- marks a day by prefixing `*` inside its cell and coloring the whole cell;
+- builds each week as one span for the indent and any empty cells, then one span per day and one per gap.
 
-The same file also contains an older value-stream calendar that Campertron's console no longer shows. Parity
-work targets `Calendar.Lines`, not that. Re-read Campertron's current code before building parity fixtures; this
-list is a snapshot, not a contract.
+Its two call sites, in `ConsoleResults.cs`, pass an indent of two spaces and `ConsoleColor.Cyan`.
+
+**The package does offer enough, and this is tested.** `ConsoleCalendarGenerator.Tests/Parity/Campertron/` holds
+47 calls recorded from that commit, with the lines and spans each returned, and tests that reproduce them with
+the public modern API alone:
+
+| Campertron | Package |
+|---|---|
+| The culture argument | `WithCulture` |
+| Monday first, the fixed weekday row | `WithFirstDayOfWeek(Monday)`, `WithWeekdayLabels(Su ... Sa)` |
+| Three-character cells, one space between | `WithCellWidth(3)`, `WithColumnGap(1)` |
+| The indent argument | `WithIndent` |
+| Year-month pattern, legend, at the left | `WithTitleFormat("Y")`, `WithTitleSuffix(" (* = open)")`, `WithTitleAlignment(Left)` |
+| `*` before the number of an open day | a `DayState` with the marker `*`, given to the dates |
+| The mark color on the whole cell | `CalendarTheme.None.WithStateColor(name, color)` and `GetColor(segment)` |
+| Lines of spans | a short adapter over `RenderedLine.Segments`, in the tests |
+
+The text of every line and the text, order and color of every span are identical, for every recorded case
+under the invariant culture and under cultures whose calendar is Gregorian. One difference is intended: under
+`th-TH` and `fa-IR` Campertron titles the month in the culture's own calendar and the package titles the
+Gregorian month it draws; everything below the title is still identical. The full list of what must match, what
+is the consumer's own business and what differs on purpose is in the README beside the fixtures.
+
+The same file also contains an older value-stream calendar (`GenerateCalendar`). Campertron still produces it,
+but nothing in Campertron displays it, and there are no fixtures for it
+([D-47](decisions.md#d-47-campertron-parity-is-shown-with-recorded-fixtures)). The list above is a snapshot of
+one commit, not a contract: if Campertron's renderer changes, the fixtures say what it was, not what it is.

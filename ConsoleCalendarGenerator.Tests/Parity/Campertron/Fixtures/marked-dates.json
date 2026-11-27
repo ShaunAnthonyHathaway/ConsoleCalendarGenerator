@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 1,
+  "about": "Which days are marked, for every kind of input.",
+  "cases": [
+    {
+      "id": "none",
+      "covers": "no dates",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": []
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "first-day",
+      "covers": "the first day of the month",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-01T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1   2   3   4   5   6   7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "last-day",
+      "covers": "the last day of the month",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-31T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30 *31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], ["*31", "Cyan"]] }
+      ]
+    },
+    {
+      "id": "one-digit-day",
+      "covers": "a one-digit day: the marker and the number leave one space in the cell",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-05T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4  *5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], [" *5", "Cyan"], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "two-digit-day",
+      "covers": "a two-digit day: the marker and the number fill the cell",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-17T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16 *17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], ["*17", "Cyan"], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "two-digit-monday",
+      "covers": "a two-digit day in the first column",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-15T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "  *15  16  17  18  19  20  21", "spans": [["  ", null], ["*15", "Cyan"], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "sunday",
+      "covers": "a day in the last column",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-07T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6  *7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], [" *7", "Cyan"]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "several",
+      "covers": "several days, among them neighbours",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-01T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-09T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-10T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-22T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-31T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1   2   3   4   5   6   7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8  *9 *10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], [" *9", "Cyan"], [" ", null], ["*10", "Cyan"], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "  *22  23  24  25  26  27  28", "spans": [["  ", null], ["*22", "Cyan"], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30 *31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], ["*31", "Cyan"]] }
+      ]
+    },
+    {
+      "id": "every-day",
+      "covers": "every day of the month",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-01T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-02T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-03T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-04T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-05T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-06T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-07T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-08T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-09T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-10T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-11T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-12T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-13T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-14T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-15T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-16T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-18T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-19T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-20T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-21T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-22T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-23T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-24T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-25T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-26T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-27T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-28T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-29T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-30T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-31T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1  *2  *3  *4  *5  *6  *7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], [" *2", "Cyan"], [" ", null], [" *3", "Cyan"], [" ", null], [" *4", "Cyan"], [" ", null], [" *5", "Cyan"], [" ", null], [" *6", "Cyan"], [" ", null], [" *7", "Cyan"]] },
+        { "text": "   *8  *9 *10 *11 *12 *13 *14", "spans": [["  ", null], [" *8", "Cyan"], [" ", null], [" *9", "Cyan"], [" ", null], ["*10", "Cyan"], [" ", null], ["*11", "Cyan"], [" ", null], ["*12", "Cyan"], [" ", null], ["*13", "Cyan"], [" ", null], ["*14", "Cyan"]] },
+        { "text": "  *15 *16 *17 *18 *19 *20 *21", "spans": [["  ", null], ["*15", "Cyan"], [" ", null], ["*16", "Cyan"], [" ", null], ["*17", "Cyan"], [" ", null], ["*18", "Cyan"], [" ", null], ["*19", "Cyan"], [" ", null], ["*20", "Cyan"], [" ", null], ["*21", "Cyan"]] },
+        { "text": "  *22 *23 *24 *25 *26 *27 *28", "spans": [["  ", null], ["*22", "Cyan"], [" ", null], ["*23", "Cyan"], [" ", null], ["*24", "Cyan"], [" ", null], ["*25", "Cyan"], [" ", null], ["*26", "Cyan"], [" ", null], ["*27", "Cyan"], [" ", null], ["*28", "Cyan"]] },
+        { "text": "  *29 *30 *31", "spans": [["  ", null], ["*29", "Cyan"], [" ", null], ["*30", "Cyan"], [" ", null], ["*31", "Cyan"]] }
+      ]
+    },
+    {
+      "id": "duplicates",
+      "covers": "the same date three times",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-17T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16 *17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], ["*17", "Cyan"], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "unordered",
+      "covers": "dates in no particular order",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-22T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-01T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-31T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-10T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-09T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1   2   3   4   5   6   7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8  *9 *10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], [" *9", "Cyan"], [" ", null], ["*10", "Cyan"], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "  *22  23  24  25  26  27  28", "spans": [["  ", null], ["*22", "Cyan"], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30 *31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], ["*31", "Cyan"]] }
+      ]
+    },
+    {
+      "id": "time-of-day",
+      "covers": "dates with a time of day",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-17T13:45:30.1234567", "kind": "Unspecified" },
+          { "date": "2023-05-05T23:59:59.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4  *5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], [" *5", "Cyan"], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16 *17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], ["*17", "Cyan"], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "kinds",
+      "covers": "dates of every DateTimeKind, near midnight",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-05-01T00:00:01.0000000", "kind": "Utc" },
+          { "date": "2023-05-17T23:59:59.0000000", "kind": "Local" },
+          { "date": "2023-05-31T12:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1   2   3   4   5   6   7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16 *17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], ["*17", "Cyan"], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30 *31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], ["*31", "Cyan"]] }
+      ]
+    },
+    {
+      "id": "other-months",
+      "covers": "dates in the months before and after: none is marked",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-04-30T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-06-01T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-06-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-04-17T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "other-years",
+      "covers": "the same month in other years: none is marked",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2022-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2024-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "0001-05-17T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "9999-05-17T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "    1   2   3   4   5   6   7", "spans": [["  ", null], ["  1", null], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8   9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], ["  9", null], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30  31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], [" 31", null]] }
+      ]
+    },
+    {
+      "id": "mixed",
+      "covers": "dates in and out of the month, repeated, unordered and with times",
+      "title": "exact",
+      "input": {
+        "year": 2023,
+        "month": 5,
+        "culture": "",
+        "indent": "  ",
+        "markColor": "Cyan",
+        "dates": [
+          { "date": "2023-06-09T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-31T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-09T08:00:00.0000000", "kind": "Utc" },
+          { "date": "2022-05-10T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-09T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-05-01T00:00:00.0000000", "kind": "Unspecified" },
+          { "date": "2023-04-01T00:00:00.0000000", "kind": "Unspecified" }
+        ]
+      },
+      "lines": [
+        { "text": "  2023 May (* = open)", "spans": [["  2023 May (* = open)", null]] },
+        { "text": "   Mo  Tu  We  Th  Fr  Sa  Su", "spans": [["   Mo  Tu  We  Th  Fr  Sa  Su", null]] },
+        { "text": "   *1   2   3   4   5   6   7", "spans": [["  ", null], [" *1", "Cyan"], [" ", null], ["  2", null], [" ", null], ["  3", null], [" ", null], ["  4", null], [" ", null], ["  5", null], [" ", null], ["  6", null], [" ", null], ["  7", null]] },
+        { "text": "    8  *9  10  11  12  13  14", "spans": [["  ", null], ["  8", null], [" ", null], [" *9", "Cyan"], [" ", null], [" 10", null], [" ", null], [" 11", null], [" ", null], [" 12", null], [" ", null], [" 13", null], [" ", null], [" 14", null]] },
+        { "text": "   15  16  17  18  19  20  21", "spans": [["  ", null], [" 15", null], [" ", null], [" 16", null], [" ", null], [" 17", null], [" ", null], [" 18", null], [" ", null], [" 19", null], [" ", null], [" 20", null], [" ", null], [" 21", null]] },
+        { "text": "   22  23  24  25  26  27  28", "spans": [["  ", null], [" 22", null], [" ", null], [" 23", null], [" ", null], [" 24", null], [" ", null], [" 25", null], [" ", null], [" 26", null], [" ", null], [" 27", null], [" ", null], [" 28", null]] },
+        { "text": "   29  30 *31", "spans": [["  ", null], [" 29", null], [" ", null], [" 30", null], [" ", null], ["*31", "Cyan"]] }
+      ]
+    }
+  ]
+}

@@ -61,12 +61,5 @@ Q-06 (a compatibility profile for titles) is settled: there is none, and none is
   the title under non-Gregorian cultures in the legacy class; whether the legacy class and its namespace remain;
   whether `netstandard2.1` remains a target.
 
-## Q-09: Should parity fixtures ever cover Campertron's unused value stream?
-
-- **Why it matters:** Campertron still contains an older calendar whose output its console no longer shows but
-  whose text its own tests pin down. Parity work targets the live renderer only
-  ([D-16](decisions.md#d-16-campertron-parity-targets-its-live-renderer)).
-- **Evidence needed:** Whether the Campertron project wants to replace that code with the package, which is a
-  question for that project.
-- **Decide in:** the parity fixtures phase.
-- **Recommendation:** No, unless the Campertron project asks for it.
+Q-09 (parity fixtures for Campertron's unused value stream) is settled: there are none
+([D-47](decisions.md#d-47-campertron-parity-is-shown-with-recorded-fixtures)).

@@ -164,7 +164,8 @@ public class ConstructorColorMigrationTests
     /// <summary>
     /// The correction touches colors only, wherever the calendar is drawn: across a year, with another line
     /// terminator, under cultures with other month names, in a month that ends on a Sunday, and when the call
-    /// fails for a reason that has nothing to do with colors.
+    /// fails for a reason that has nothing to do with colors. (A null list was among these until 2.0 corrected
+    /// its exception too, D-58; the two corrections together are in NullListMigrationTests.)
     /// </summary>
     [Test]
     public void WhateverElseTheScenarioIs_TheDifferenceIsInColorsAlone()
@@ -177,7 +178,6 @@ public class ConstructorColorMigrationTests
             new("a month that ends on a Sunday") { ConstructorArguments = FourArguments, Draw = LegacyDraw.MonthWithDates, Month = 4, Year = 2023, Dates = selection },
             new("other month names") { ConstructorArguments = FourArguments, Draw = LegacyDraw.Year, Year = 2023, Culture = TestCultures.WithMonthNames(month => "Mois" + month) },
             new("another week and UI culture") { ConstructorArguments = FourArguments, Draw = LegacyDraw.Month, Month = 5, Year = 2023, Culture = TestCultures.WithForeignWeek(), UICulture = TestCultures.WithMonthNames(_ => "ui") },
-            new("a null list") { ConstructorArguments = FourArguments, Draw = LegacyDraw.MonthWithDates, Month = 2, Year = 2023, Dates = null },
             new("an invalid month") { ConstructorArguments = FourArguments, Draw = LegacyDraw.Month, Month = 13, Year = 2023 },
             new("an invalid year") { ConstructorArguments = FourArguments.Take(1).ToArray(), Draw = LegacyDraw.Year, Year = 0 },
         };

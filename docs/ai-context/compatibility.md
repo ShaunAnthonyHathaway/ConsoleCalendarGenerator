@@ -40,13 +40,13 @@ rule protected nothing any more and only stood in the way of the corrections.
 | | Decision | 1.0.0 | 2.0 | In the library |
 |---|---|---|---|---|
 | 1 | [D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for) | In the constructors that take colors, `TitleColor` colors the weekday row, the title stays Yellow, and with four arguments `DayOfWeekColor` colors the title. | Each argument controls the element it is named for. | **Yes** (pull request #14) |
-| 2 | [D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates) | A null list throws `NullReferenceException`. | A null list throws `ArgumentNullException` with the parameter name `dates`, still before the month and the year are checked. | Not yet |
+| 2 | [D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates) | A null list throws `NullReferenceException`. | A null list throws `ArgumentNullException` with the parameter name `dates`, still before the month and the year are checked. | **Yes** (pull request #15) |
 | 3 | [D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) | The last row of days of a month ends with a literal `\n`. | It ends with the console's line terminator, like every other line. | Not yet |
 | 4 | [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line) | A month is followed by one blank line, or by two when its last day is a Sunday. | Every month is followed by exactly one blank line. | Not yet |
 | 5 | [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month) | The title names the month of that number in the current culture's own calendar. | The title names the Gregorian month that the grid shows, also under a culture whose calendar is not Gregorian. | Not yet |
 
-**One of the five is implemented: the constructor colors.** In everything else `master` behaves exactly as
-1.0.0 does, and the tests require that. The last column changes in the pull request that implements a
+**Two of the five are implemented: the constructor colors and the null list.** In everything else `master`
+behaves exactly as 1.0.0 does, and the tests require that. The last column changes in the pull request that implements a
 correction.
 
 ### How a correction is made
@@ -190,8 +190,19 @@ disagrees with a test is the thing to fix.
 **Exceptions**
 
 - Month outside 1 to 12, or year outside 1 to 9999: `ArgumentOutOfRangeException`, before anything is written.
-- A null list: `NullReferenceException` **(2.0: D-58)**, before anything is written, and before the month and
-  year are checked. That it comes first, and before anything is written, does not change.
+- **A null list (corrected, D-58):** `ArgumentNullException` with the parameter name `dates`, from
+  `GenerateMonth(Month, Year, dates)` and from `GenerateYear(Year, dates)`. The message is the runtime's for a
+  null argument of that name; the library passes none of its own, and only the type and the parameter name are
+  the contract. In 1.0.0 it was `NullReferenceException`, which names no parameter, thrown by the runtime when
+  the class began to read the list.
+- **The order did not change.** The list comes first, in 1.0.0 because reading it was the first thing done, in
+  2.0 because the check is the first statement: before the month and the year are looked at, so a null list
+  wins over an invalid month, an invalid year or both; before the culture is asked for a month name; and before
+  any color is used, so it also wins over a color that is not defined.
+- **Nothing is touched before it.** No text is written, no call is made on the console's writer, no color is
+  set and none is reset: the caller's foreground and background are as they were. Nothing in the process
+  changes, and the calendar keeps its colors.
+- A list that is not null is never refused, also when it is empty, and everything about it is as in 1.0.0.
 
 **Console side effects**
 
@@ -219,7 +230,7 @@ one behavior a correction is about.
 |---|---|
 | Public members, parameter names, unsealed class | The same declarations as 1.0.0 |
 | Constructor color assignments, each argument to the element it is named for (D-57); getters and setters | Four private fields. The constructors are the one place where the class has been corrected so far |
-| A null list fails first, with `NullReferenceException` | The list is enumerated before anything else, with no null check |
+| A null list fails first, with `ArgumentNullException` for `dates` (D-58) | A null check as the first statement of the two methods that take a list, where 1.0.0 had none and failed on reading the list |
 | An invalid month or year fails with the runtime's own `ArgumentOutOfRangeException` | The same `DateTime.DaysInMonth(Year, Month)` call, in the same position |
 | Which column and which row each day is in; four, five or six rows; Monday first | `MonthLayout.Create(Year, Month, DayOfWeek.Monday)` |
 | A date selects a day by year, month and day; the list is not changed | A private lookup by day of the month |
@@ -267,7 +278,7 @@ Four independent layers. A change has to pass all of them.
 
 1. **Migration tests** (`ConsoleCalendarGenerator.Tests/Migration/`), which run the library and the frozen
    source of 1.0.0 through the same scenarios and require the library to do exactly what 1.0.0 did, apart from
-   the corrections that have been implemented. At present that is the constructor colors.
+   the corrections that have been implemented. At present those are the constructor colors and the null list.
 2. **Characterization tests** (`ConsoleCalendarGenerator.Tests/Legacy/`), including digests recorded from the
    published 1.0.0 assembly, and `ConsoleCalendarGenerator.Tests/Facade/`, with digests of every console call
    recorded from the original implementation before it was rebuilt, and a comparison of the drawn grid with

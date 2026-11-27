@@ -31,16 +31,16 @@ model; the modern API uses nothing of the legacy class.
 
 `CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface, the
 behavior that must be preserved and the five behaviors that 2.0 corrects are in
-[compatibility.md](compatibility.md). One of the five is implemented, the constructor colors; apart from which
-element a constructor argument colors, what follows describes 1.0.0 and `master` alike.
+[compatibility.md](compatibility.md). Two of the five are implemented, the constructor colors and the exception
+for a null list; apart from those, what follows describes 1.0.0 and `master` alike.
 
 It is a compatibility facade. Its public members are the published ones; what is behind them was rebuilt so
 that the library has a single place that decides where a day goes.
 
 - **State.** Four `ConsoleColor` values: title, weekday row, dates, selected dates. Five constructors set them;
   four getter/setter pairs read and change them. Instances are mutable and not thread-safe.
-- **`GenerateMonth(Month, Year[, dates])`.** Reads `dates` to find the selected days, lets the runtime check the
-  month and the year (`DateTime.DaysInMonth`), creates `MonthLayout.Create(Year, Month, DayOfWeek.Monday)`, and
+- **`GenerateMonth(Month, Year[, dates])`.** Refuses a null list, reads `dates` to find the selected days, lets
+  the runtime check the month and the year (`DateTime.DaysInMonth`), creates `MonthLayout.Create(Year, Month, DayOfWeek.Monday)`, and
   then writes directly to the console: the title line, the fixed weekday row, and one call per cell of the
   layout, walking its weeks and cells in order.
 - **`GenerateYear(Year[, dates])`.** Calls `GenerateMonth` for months 1 through 12.

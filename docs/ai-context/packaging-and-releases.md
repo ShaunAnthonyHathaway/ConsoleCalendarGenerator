@@ -44,7 +44,9 @@ Points that are easy to get wrong:
 - **The packed readme says what is published.** It is the repository's README, which states that 1.0.0 is the
   only published version and that the modern API is not published yet. That is true of `master` and would be
   false inside a released package: the README is updated in the change that prepares a release. See
-  [roadmap.md](roadmap.md#next-action). It does not say that 2.0 is published, and must not before it is.
+  [roadmap.md](roadmap.md#next-action). It does not say that 2.0 is published, and must not before it is. It may
+  name 2.0 as the version in development, and says "not published yet" where it first does; a test requires
+  that.
 - **The readme must satisfy nuget.org,** which is stricter than GitHub; see
   [The readme on nuget.org](#the-readme-on-nugetorg).
 - **The `net10.0` build is marked trim- and AOT-compatible** (`IsAotCompatible`), which also turns on the

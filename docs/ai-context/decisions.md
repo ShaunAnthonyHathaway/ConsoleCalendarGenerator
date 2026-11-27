@@ -811,15 +811,28 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-58: A null list throws ArgumentNullException for dates
 
-- **Status:** Approved. **Not implemented.**
+- **Status:** Approved. **Implemented** (pull request #15), the second runtime change of 2.0.
 - **Decision:** `GenerateMonth(Month, Year, dates)` and `GenerateYear(Year, dates)` throw
   `ArgumentNullException` with the parameter name `dates` when the list is null. The list is still checked
-  before the month and the year are validated.
+  before the month and the year are validated, before anything is written, before any color is changed and
+  before the culture is asked for a month name. The exception is constructed the normal .NET way, with the
+  parameter name and no message of the library's own. No overload is added, and the parameter stays the
+  concrete `List<DateTime>`.
 - **Reason:** 1.0.0 throws `NullReferenceException`, which is what a defect in a library looks like, and names
   no parameter.
-- **Consequences:** Code that catches `NullReferenceException` around these calls no longer catches this. That
-  nothing is written first, that the caller's colors are left alone, and that a null list is reported even when
-  the month or the year is invalid as well, all stay.
+- **Consequences:** Code that catches `NullReferenceException` around these calls no longer catches this, also
+  when it was compiled against 1.0.0 and is not rebuilt. That nothing is written first, that the caller's
+  colors are left alone, and that a null list is reported even when the month or the year is invalid as well,
+  all stay. Nothing changes for a list that is not null. The contract is the exception type and the parameter
+  name; the message is the runtime's.
+- **How it is implemented:** a null check as the first statement of each of the two methods, written out
+  (`ArgumentNullException.ThrowIfNull` does not exist on `netstandard2.1`), so both builds compile the same
+  code.
+- **How it is tested:** in the migration tests the correction is stated as a change of the observation: where
+  1.0.0 ended with `NullReferenceException` because it was given a null list, the library ends with
+  `ArgumentNullException` for `dates` and the runtime's message for it, and everything else of the observation
+  is the same. The one recorded digest that covers null lists was handled as
+  [D-71](#d-71-a-recorded-digest-is-never-bent-to-let-a-correction-through) requires.
 
 ### D-59: The last row of a month ends with the console's line terminator
 
@@ -970,5 +983,28 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   reproduced there and explained by one thing, whether the terminal itself echoed the four keys; which of the
   two conditions the earlier 21,742 was measured under was not recorded and is not claimed. On Linux, CI runs
   the scenario with the package, with the published 1.0.0, and with the program compiled against 1.0.0 running
-  the new library unrebuilt. When a later correction changes the text, the file is split into what 1.0.0
+  the new library unrebuilt; Shaun confirmed, reviewing the constructor colors, that this stays automated
+  (`--published-sample` in the Linux smoke step). The raw terminal bytes may differ from the published 1.0.0
+  where a correction deliberately changes a color sequence, and nowhere else. When a later correction changes the text, the file is split into what 1.0.0
   writes and what 2.0 writes, in that pull request.
+
+### D-71: A recorded digest is never bent to let a correction through
+
+- **Status:** Approved by Shaun when he reviewed the constructor colors. Standing rule for the remaining
+  corrections. First applied with the null list.
+- **Decision:** The four values recorded from 1.0.0 are never recorded again, and they stay asserted against
+  the frozen source for good. A library-side comparison with one of them may be kept, computed with equivalent
+  inputs, only while the library still reproduces the value honestly; that was accepted for the constructor
+  colors, where the library is given the colors 1.0.0 gave and the text, the calls and the colors are still
+  pinned. A correction that intentionally changes what a digest covers gets explicit expectations instead: what
+  1.0.0 did and what 2.0 does, side by side, with the approved difference written out. The library is not made
+  to look like 1.0.0 for the purpose, and the comparison is not merely narrowed.
+- **Reason:** A hash can only say "the same" or "not the same". Once a correction changes its input, keeping
+  it green needs either a new value, which would no longer be a record of 1.0.0, or an adapter that hides the
+  correction, which would test the adapter.
+- **Consequences:** For the null list, the library-side hash of the pre-facade calls is replaced by a
+  comparison of the library with the frozen source scenario by scenario, in the text that the value is a hash
+  of: all 100 scenarios must be identical, except that the 18 that pass a null list end with
+  `ArgumentNullException` where 1.0.0 ended with `NullReferenceException`. The other three library-side digests
+  do not cover the exception and are still reproduced. The line terminator and the blank line change the text
+  of every month, so all remaining library-side hashes go the same way in that pull request.

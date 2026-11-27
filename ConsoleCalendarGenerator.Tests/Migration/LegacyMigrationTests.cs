@@ -13,8 +13,9 @@ namespace ConsoleCalendarGenerator.Tests.Migration;
 /// whether it is an accident or a correction made without being recorded.
 /// </para>
 /// <para>
-/// Implemented so far: the constructor colors (D-57). Nothing here says what one of the other four corrections
-/// will do before it is implemented; until then the expectation for it is 1.0.0.
+/// Implemented so far: the constructor colors (D-57) and the exception for a null list (D-58). Nothing here
+/// says what one of the other three corrections will do before it is implemented; until then the expectation
+/// for it is 1.0.0.
 /// </para>
 /// </summary>
 [TestFixture]

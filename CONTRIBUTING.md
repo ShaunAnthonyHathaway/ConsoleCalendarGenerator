@@ -57,9 +57,9 @@ None of these commands publishes anything.
 - **The legacy class changes only where a correction has been decided.** `CalendarGenerator.ConsoleCalendar`
   keeps the public API of version 1.0.0 without exception, and its output and console behavior apart from a
   short list of corrections that the next major version makes, one at a time, each with a recorded decision and
-  a test of its own. Everything else stays, including behavior that looks wrong. Tests named
-  `Characterized1xBehavior` record such behavior, and tests compare the class with the source of 1.0.0. Please
-  do not fix the code or those tests on your own; open an issue instead. The list and the rules are in
+  a test of its own. Everything else stays, including behavior that looks wrong: tests compare the class with
+  the source of 1.0.0 and fail on any other difference. Please do not fix the code or those tests on your own;
+  open an issue instead. The list and the rules are in
   [docs/ai-context/compatibility.md](docs/ai-context/compatibility.md).
 - **The record of version 1.0.0 is never edited.**
   [ConsoleCalendarGenerator.Tests/Historical](ConsoleCalendarGenerator.Tests/Historical) holds the source of

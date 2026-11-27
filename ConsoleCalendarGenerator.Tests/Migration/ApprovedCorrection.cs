@@ -88,12 +88,43 @@ internal sealed class ApprovedCorrection
                 Array.Empty<ConsoleColor>(),
                 ConstructorColorRoles.In20(scenario.ConstructorArguments).Concat(scenario.Setters).ToArray()));
 
-    /// <summary>A null list is refused with ArgumentNullException for the parameter dates. Not implemented.</summary>
+    /// <summary>
+    /// A null list is refused with ArgumentNullException for the parameter dates. Implemented: where 1.0.0
+    /// failed with <see cref="NullReferenceException"/> because it was given a null list, the corrected library
+    /// fails at the same point, with the same nothing written and the same colors left, and only the exception
+    /// is another: its type, the parameter it names, and the message the runtime gives an exception of that type
+    /// for that parameter. No use of 1.0.0 throws that exception, so this is stated as a change of the
+    /// observation. Every scenario that passes a list is returned unchanged.
+    /// </summary>
     public static ApprovedCorrection NullDateList { get; } = new(
         "D-58",
         "A null list throws ArgumentNullException naming the parameter dates, still before the month and the"
         + " year are checked. In 1.0.0 it throws NullReferenceException.",
-        () => MigrationMatrix.NullDateList);
+        () => MigrationMatrix.NullDateList,
+        corrected: (scenario, expected) =>
+            !scenario.PassesANullList || expected.ExceptionType != typeof(NullReferenceException).FullName
+                ? expected
+                : new LegacyObservation(
+                    expected.StoredColors,
+                    expected.Calls,
+                    expected.NewLine,
+                    expected.ForegroundAfter,
+                    expected.BackgroundAfter,
+                    exceptionType: typeof(ArgumentNullException).FullName,
+                    exceptionParameterName: NullDateListParameter,
+                    exceptionMessage: MessageOfArgumentNull(scenario)));
+
+    /// <summary>The name of the parameter that the corrected library names when the list is null.</summary>
+    public const string NullDateListParameter = "dates";
+
+    /// <summary>
+    /// The message the runtime gives <see cref="ArgumentNullException"/> for that parameter under the UI culture
+    /// of a scenario. The library passes no message of its own, so this is the whole of it.
+    /// </summary>
+    private static string MessageOfArgumentNull(LegacyScenario scenario) => Support.ProcessState.UnderCultures(
+        System.Globalization.CultureInfo.InvariantCulture,
+        scenario.UICulture ?? System.Globalization.CultureInfo.InvariantCulture,
+        () => new ArgumentNullException(NullDateListParameter).Message);
 
     /// <summary>The last row of days ends with the console's line terminator. Not implemented.</summary>
     public static ApprovedCorrection LineTerminator { get; } = new(

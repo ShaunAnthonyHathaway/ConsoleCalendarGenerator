@@ -32,8 +32,8 @@ public static class ConsoleMonthWriter
     /// <para>
     /// A segment the theme has a color for is written in that color. Every other segment, and every line
     /// terminator, is written in the foreground color the console had when the call began. Only the foreground
-    /// color is ever set. When the call returns, or fails, the foreground and background colors are what they
-    /// were when it began.
+    /// color is ever set. Before the call returns, or fails, the foreground and background colors the console
+    /// reported when the call began are put back.
     /// </para>
     /// <para>
     /// Where the console's foreground color had not been set, as is usual on Linux and macOS, it cannot be put

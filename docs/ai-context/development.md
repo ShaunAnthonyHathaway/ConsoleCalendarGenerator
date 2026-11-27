@@ -27,11 +27,11 @@ dotnet build ConsoleCalendarGenerator.sln --configuration Release --no-restore -
 ```
 
 The expected result is **0 warnings and 0 errors**. CI builds Release with `-warnaserror`, so a warning fails the
-build there. Do not add warning suppressions to get past it; fix the cause, or record a narrow, explained
-exception the way `CS1591` is handled for the legacy source file in `.editorconfig`.
+build there. Do not add warning suppressions to get past it; fix the cause. Nothing is suppressed at present,
+and `XmlDocumentationTests` fails if a suppression of the documentation warnings appears.
 
 A public type or member without an XML documentation comment is such a warning (`CS1591`) everywhere in the
-library except `ConsoleCalendar.cs`. New public API is documented in the change that adds it.
+library, the legacy class included. New public API is documented in the change that adds it.
 
 To build one library target on its own:
 
@@ -91,13 +91,47 @@ tracked or new unignored files.
   their default level for every target (including `netstandard2.1`, where they are off by default),
   `IsPackable` off (the library turns it on), and `ContinuousIntegrationBuild` on GitHub Actions. Put a setting
   here only if every project should have it; anything else belongs in a project file.
-- **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. They are not enforced in CI,
-  and the example's `Program.cs` does not fully conform. Do not reformat it as a side effect of other work.
-  `ConsoleCalendar.cs` keeps its byte order mark and its block-scoped namespace from 1.0.0. The file has one entry that does affect the build: it turns
-  `CS1591` off for `ConsoleCalendarGenerator/ConsoleCalendar.cs`
-  ([D-11](decisions.md#d-11-public-xml-documentation-is-deferred)).
+- **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. They are not enforced in CI.
+  `ConsoleCalendar.cs` keeps its byte order mark and its block-scoped namespace from 1.0.0. Nothing in the file
+  affects the build.
 - **Implicit usings** are off in the library, so its dependencies stay visible across both targets, and on in the
   example and the tests.
+
+## The README, the example and the screenshot
+
+The public documents are described in [architecture.md](architecture.md#public-documents-and-the-example).
+What to do when one of them changes:
+
+- **An example in the README.** Change it in `ConsoleCalendarGeneratorExample/Examples.cs`, between its
+  `// <Name>` and `// </Name>` comments, and copy the lines into the README unchanged apart from the
+  indentation. The first code block of the README also shows the using directives of `Examples.cs`. A new
+  example needs a method named like its marker, a call in `Program.cs`, and a block in the README; the tests
+  ask for all three.
+- **Output in the README.** Run the program with its output redirected, and replace
+  `ConsoleCalendarGeneratorExample/expected-output.txt` with what it printed, after reading the difference:
+
+  ```bash
+  dotnet run --project ConsoleCalendarGeneratorExample --configuration Release > ConsoleCalendarGeneratorExample/expected-output.txt
+  ```
+
+  Then copy the changed lines into the README's output block. Every output block must be consecutive lines of
+  that file.
+- **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
+  same file is shown on nuget.org. The other three documents may use relative links.
+- **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a
+  terminal, and only needs redoing when the "Colors" example changes what it draws. The tools are not part of
+  the build: util-linux `script` and ImageMagick with Pango.
+  1. Run the built example on a pseudo-terminal and keep the bytes:
+     `TERM=xterm-256color script -qec "dotnet ConsoleCalendarGeneratorExample/bin/Release/net10.0/ConsoleCalendarGeneratorExample.dll" /dev/null`.
+  2. Take the lines between the "Colors" heading and the next heading. Remove the carriage returns.
+  3. Turn each color sequence into Pango markup: the sequence for a bright color opens a
+     `<span foreground="...">`, the reset sequence closes it. The palette used is `#F9F1A5` for bright yellow
+     (code 93), `#61D6D6` for bright cyan (96), `#16C60C` for bright green (92), `#CCCCCC` for the default
+     foreground and `#0C0C0C` for the background. Wrap everything in one span with a monospaced font.
+  4. Render and crop: `magick -background '#0C0C0C' -density 120 pango:@month.pango -trim +repage -bordercolor '#0C0C0C' -border 28x24 -strip PNG24:month-with-theme.png`.
+
+  The text of the image must be exactly what the program wrote. Do not type it in, and do not edit the picture.
+  Keep the alternative text in the README true to what the image shows.
 
 ## Deterministic builds and Source Link
 

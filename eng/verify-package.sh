@@ -99,9 +99,13 @@ echo "Version:        $version"
 
 readme="$(unzip -p "$package" README.md)"
 [ -n "$readme" ] || fail "the packaged readme is empty"
-# nuget.org shows only images with absolute URLs (from a short list of hosts); a relative path would be a broken image.
-other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E '!\[[^]]*\]\(https://' || true)"
-[ -z "$other_images" ] || fail "the packaged readme has an image that is not an absolute https URL: $other_images"
+# nuget.org shows only images with absolute URLs from a short list of hosts; any other image is a broken image
+# there. The images of this readme are files of this repository, served by raw.githubusercontent.com.
+other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E '!\[[^]]+\]\(https://raw\.githubusercontent\.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/[^) ]+\)' || true)"
+[ -z "$other_images" ] || fail "the packaged readme has an image that is not served from this repository's master branch, or has no alternative text: $other_images"
+# nuget.org does not resolve relative links either: every link is absolute or points inside the page.
+relative_links="$(grep -o -E '\]\([^)]*\)' <<< "$readme" | grep -v -E '^\]\((https://|#)' || true)"
+[ -z "$relative_links" ] || fail "the packaged readme has a link that is neither absolute nor inside the page: $relative_links"
 
 # Every public type of the modern namespace. A new public type is added to this list in the change that adds it.
 modern_types="CalendarTheme ConsoleMonthWriter DayState MonthLayout MonthLayoutCell MonthLayoutWeek MonthRenderOptions MonthRenderer MonthWriter RenderedLine RenderedLineKind RenderedMonth RenderedSegment RenderedSegmentKind TitleAlignment WeekdayLabelStyle"
@@ -110,12 +114,30 @@ for framework in net10.0 netstandard2.1; do
   # grep -c reads its whole input, so unzip is never cut off mid-write (which "set -o pipefail" would report).
   unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | grep -c '<name>ConsoleCalendarGenerator</name>' > /dev/null \
     || fail "lib/$framework/ConsoleCalendarGenerator.xml is not the library's documentation file"
-  # The modern API is documented in the source. The comments for every one of its types must reach the
-  # package, for both builds. (That no member of those types lacks a comment is enforced when compiling.)
+  # Every public type and member is documented in the source. The comments for every type must reach the
+  # package, for both builds. (That no public member lacks a comment is enforced when compiling, and
+  # XmlDocumentationTests checks every member of the built documentation file.)
   documentation="$(unzip -p "$package" "lib/$framework/ConsoleCalendarGenerator.xml" | tr -d '\r')"
   for type in $modern_types; do
     grep -q "<member name=\"T:ConsoleCalendarGenerator.$type\">" <<< "$documentation" \
       || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document ConsoleCalendarGenerator.$type"
+  done
+  # The legacy class: the type, each constructor, and both forms of each method.
+  for member in 'T:CalendarGenerator.ConsoleCalendar"' 'M:CalendarGenerator.ConsoleCalendar.#ctor"' \
+      'M:CalendarGenerator.ConsoleCalendar.#ctor(System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.#ctor(System.ConsoleColor,System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.#ctor(System.ConsoleColor,System.ConsoleColor,System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.#ctor(System.ConsoleColor,System.ConsoleColor,System.ConsoleColor,System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GenerateMonth(System.Int32,System.Int32)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GenerateMonth(System.Int32,System.Int32,System.Collections.Generic.List{System.DateTime})"' \
+      'M:CalendarGenerator.ConsoleCalendar.GenerateYear(System.Int32)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GenerateYear(System.Int32,System.Collections.Generic.List{System.DateTime})"' \
+      'M:CalendarGenerator.ConsoleCalendar.GetTitleColor"' 'M:CalendarGenerator.ConsoleCalendar.SetTitleColor(System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GetDayOfWeekColor"' 'M:CalendarGenerator.ConsoleCalendar.SetDayOfWeekColor(System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GetDateColor"' 'M:CalendarGenerator.ConsoleCalendar.SetDateColor(System.ConsoleColor)"' \
+      'M:CalendarGenerator.ConsoleCalendar.GetSelectedDateColor"' 'M:CalendarGenerator.ConsoleCalendar.SetSelectedDateColor(System.ConsoleColor)"'; do
+    grep -q -F "<member name=\"$member" <<< "$documentation" \
+      || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document $member"
   done
   for member in 'M:ConsoleCalendarGenerator.MonthLayout.Create(' 'M:ConsoleCalendarGenerator.MonthRenderer.Render(' \
       'P:ConsoleCalendarGenerator.MonthRenderOptions.Default"' 'F:ConsoleCalendarGenerator.RenderedSegmentKind.Day"' \

@@ -30,16 +30,41 @@ Points that are easy to get wrong:
 - **Never build a package numbered 1.0.0.** That version is published. `eng/verify-package.sh` and
   `eng/consumer-smoke.sh` both refuse it.
 - **The version suffix is removed only as part of an approved release.**
-- **The XML documentation files cover the modern API only.** The legacy class has no comments yet, and `CS1591`
-  is silenced for its source file until it does. Everything else must be documented or the build fails. See
-  [D-11](decisions.md#d-11-public-xml-documentation-is-deferred) and
-  [D-29](decisions.md#d-29-modern-public-api-is-documented-when-it-is-added).
-- **Readme images must be absolute `https` URLs on a host nuget.org allows,** such as
-  `raw.githubusercontent.com`. Relative paths and `github.com/.../blob/...?raw=true` links are not rendered there.
+- **The XML documentation files cover every public type and member,** the legacy class included. A missing
+  comment fails the build, and nothing suppresses that. See
+  [D-29](decisions.md#d-29-modern-public-api-is-documented-when-it-is-added) and
+  [D-51](decisions.md#d-51-the-legacy-class-is-documented-as-it-behaves).
+- **The packed readme says what is published.** It is the repository's README, which states that 1.0.0 is the
+  only published version and that the modern API is not published yet. That is true of `master` and would be
+  false inside a released package: the README is updated in the change that prepares a release. See
+  [roadmap.md](roadmap.md#next-action).
+- **The readme must satisfy nuget.org,** which is stricter than GitHub; see
+  [The readme on nuget.org](#the-readme-on-nugetorg).
 - **The `net10.0` build is marked trim- and AOT-compatible** (`IsAotCompatible`), which also turns on the
   corresponding analyzers. The Native AOT smoke test is what backs that claim; keep it passing.
 - **Source Link and the repository commit** come from the Git checkout. Pack from a clone with the `origin`
   remote, not from an exported copy.
+
+## The readme on nuget.org
+
+nuget.org shows the `README.md` inside the package, and renders it differently from GitHub. Checked on
+2026-11-27 against Microsoft's page "Package readme on NuGet.org" and against the gallery's own renderer
+(`MarkdownService.cs` in the NuGetGallery repository):
+
+| What | On nuget.org | So the README |
+|---|---|---|
+| Images | Shown only from a list of allowed hosts, which includes `raw.githubusercontent.com`. An image with a relative path or from another host is not shown, and only the package owner sees a warning. | uses `https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/docs/images/...` |
+| Links | A link that is not an absolute address is emptied, except a link that starts with `#`. | uses absolute `https` links, and `#heading` links within the page |
+| Headings | Get GitHub-style identifiers, so `#heading` links work. Every heading is shown one level lower. | has one `#` title and `##` sections |
+| Raw HTML | Disabled. HTML comments are removed. | has none |
+| Supported | Headers, images, emphasis, lists, links, block quotes, code spans and fenced code with highlighting, task lists, pipe tables, emoji, auto-links. | uses fenced code, lists, one image and pipe tables |
+
+`eng/verify-package.sh` checks the image and link rules on the packed file, and `DocumentationLinkTests` checks
+them, the HTML rule and that every linked file exists, on the source. Neither renders the file. When the README
+was written it was rendered once, outside the repository, with Markdig and the pipeline of the gallery's
+renderer: every heading link found its heading, and the tables, code blocks and the image came out as
+intended. The preview that nuget.org shows on its upload page is the first real rendering, and looking at it
+is a step of any release.
 
 ## Building the package
 
@@ -91,8 +116,9 @@ bash eng/verify-package.sh artifacts/package
 
 Checks the packed files without building anything: exactly one `.nupkg` and one `.snupkg` and nothing else in
 the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0 and matches the
-file names; readme images; the documentation files, including that both document every public type of the
-modern namespace; and Source Link in both PDBs.
+file names; that the readme's images are files of this repository served from an allowed host and that it has
+no relative links; the documentation files, including that both document every public type of the modern
+namespace and the legacy class with each of its constructors and methods; and Source Link in both PDBs.
 
 The script holds the list of modern public types. A new public type is added to that list in the change that
 adds it; `ModernApiTests` is what fails first when a public type appears.

@@ -8,8 +8,8 @@ verified by tests.
 
 - **1.x is additive.** Every 1.x version must be a drop-in replacement for 1.0.0: same public API, same output,
   same side effects, for source that is recompiled and for binaries that are not.
-- **Known defects stay in 1.x.** Programs have been written against the behavior that exists, and the README's
-  screenshots show it. Changing it silently would change those programs' output.
+- **Known defects stay in 1.x.** Programs have been written against the behavior that exists, and the README
+  and screenshots published with 1.0.0 showed it. Changing it silently would change those programs' output.
 - **New capability arrives as new API,** in the `ConsoleCalendarGenerator` namespace, beside the legacy class.
 - **The legacy class stays available.** `CalendarGenerator.ConsoleCalendar` is not removed or renamed in 1.x.
 - **Breaking corrections belong in 2.0,** and each one is a deliberate, listed decision. The list is not final;
@@ -51,6 +51,10 @@ Details that are part of the contract:
 ## Behavior that must not change by accident
 
 Each line is covered by tests in `ConsoleCalendarGenerator.Tests/Legacy/`.
+
+The XML comments of the class describe the same behavior to users, the constructor defect included
+([D-51](decisions.md#d-51-the-legacy-class-is-documented-as-it-behaves)). They describe the contract; the tests
+define it. A comment that disagrees with a test is the thing to fix.
 
 **Colors and constructors**
 

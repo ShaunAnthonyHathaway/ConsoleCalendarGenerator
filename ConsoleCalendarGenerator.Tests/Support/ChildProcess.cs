@@ -69,6 +69,38 @@ internal static class ChildProcess
         return Run(start);
     }
 
+    /// <summary>
+    /// Another program of this repository, started with no arguments. Its standard input is closed at once, so
+    /// a program that waits for input fails instead of hanging.
+    /// </summary>
+    /// <param name="assemblyPath">The program's main assembly.</param>
+    /// <param name="onPseudoTerminal">Connects standard output to a pseudo-terminal created by <c>script</c> (Linux).</param>
+    /// <param name="environment">Variables to set for the program.</param>
+    public static ChildResult RunProgram(string assemblyPath, bool onPseudoTerminal = false, IReadOnlyDictionary<string, string>? environment = null)
+    {
+        ProcessStartInfo start;
+        if (onPseudoTerminal)
+        {
+            start = NewStartInfo(ScriptProgram ?? throw new InvalidOperationException("script is not installed."));
+            start.ArgumentList.Add("-qec");
+            start.ArgumentList.Add($"'{DotNetHost()}' '{assemblyPath}'");
+            start.ArgumentList.Add("/dev/null");
+            start.Environment["TERM"] = "xterm-256color";
+        }
+        else
+        {
+            start = NewStartInfo(DotNetHost());
+            start.ArgumentList.Add(assemblyPath);
+        }
+        start.Environment.Remove("NO_COLOR");
+        start.Environment.Remove(AnsiRedirectionVariable);
+        foreach (KeyValuePair<string, string> variable in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[variable.Key] = variable.Value;
+        }
+        return Run(start);
+    }
+
     private static ProcessStartInfo NewStartInfo(string fileName) => new(fileName)
     {
         UseShellExecute = false,

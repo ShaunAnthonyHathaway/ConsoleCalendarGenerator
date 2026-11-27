@@ -46,6 +46,15 @@ internal abstract class LegacySubject
     /// <summary>The source of 1.0.0, frozen in Historical/Published100/ConsoleCalendar.cs.</summary>
     public static LegacySubject Published100 { get; } = new Published100Subject();
 
+    /// <summary>
+    /// The library's class, given the colors that 1.0.0 gave a calendar made with the same constructor
+    /// arguments: the parameterless constructor, then the setter for the element each argument colored in 1.0.0
+    /// (<see cref="ConstructorColorRoles.In100"/>). Version 2.0 corrected which element a constructor argument
+    /// colors (D-57) and nothing else about colors, so through this subject the library must still reproduce
+    /// every value that was recorded from 1.0.0 with constructors that take colors.
+    /// </summary>
+    public static LegacySubject LibraryWithTheConstructorColorsOf100 { get; } = new LibraryAs100Subject();
+
     public abstract string Name { get; }
 
     /// <summary>
@@ -103,6 +112,35 @@ internal abstract class LegacySubject
             public void SetDateColor(ConsoleColor color) => _calendar.SetDateColor(color);
 
             public void SetSelectedDateColor(ConsoleColor color) => _calendar.SetSelectedDateColor(color);
+        }
+    }
+
+    private sealed class LibraryAs100Subject : LegacySubject
+    {
+        public override string Name => "the library, with the constructor colors of 1.0.0";
+
+        public override ILegacyCalendar Create(params ConsoleColor[] constructorArguments)
+        {
+            ILegacyCalendar calendar = Library.Create();
+            foreach ((LegacyColorRole role, ConsoleColor color) in ConstructorColorRoles.In100(constructorArguments))
+            {
+                switch (role)
+                {
+                    case LegacyColorRole.Title:
+                        calendar.SetTitleColor(color);
+                        break;
+                    case LegacyColorRole.DayOfWeek:
+                        calendar.SetDayOfWeekColor(color);
+                        break;
+                    case LegacyColorRole.Date:
+                        calendar.SetDateColor(color);
+                        break;
+                    default:
+                        calendar.SetSelectedDateColor(color);
+                        break;
+                }
+            }
+            return calendar;
         }
     }
 

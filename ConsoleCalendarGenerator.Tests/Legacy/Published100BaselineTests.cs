@@ -1,3 +1,4 @@
+using ConsoleCalendarGenerator.Tests.Migration;
 using ConsoleCalendarGenerator.Tests.Support;
 
 namespace ConsoleCalendarGenerator.Tests.Legacy;
@@ -20,6 +21,13 @@ namespace ConsoleCalendarGenerator.Tests.Legacy;
 /// recorded on Linux or macOS.
 ///
 /// Historical/Published100DigestTests.cs compares the frozen source of 1.0.0 with the same two values.
+///
+/// Since version 2.0 corrected which element a constructor argument colors (D-57), the color digest is computed
+/// with the library's calendars given the colors that 1.0.0 gave them: the value is the one recorded from 1.0.0
+/// and is not recorded again. The test therefore no longer says anything about the constructors, which
+/// Legacy/ConstructorColorTests.cs and Migration/ConstructorColorMigrationTests.cs cover; it says that with the
+/// same colors held, everything is still drawn in the colors 1.0.0 drew it in. The text digest uses the
+/// parameterless constructor only and is unaffected.
 /// </summary>
 [TestFixture]
 public class Published100BaselineTests
@@ -34,19 +42,19 @@ public class Published100BaselineTests
     [Test]
     public void TextAndWriteSequence_AreIdenticalToPublished100()
     {
-        Assert.That(BehaviorDigest.TextAndWrites(), Is.EqualTo(PublishedTextAndWrites),
+        Assert.That(BehaviorDigest.TextAndWrites(LegacySubject.Library), Is.EqualTo(PublishedTextAndWrites),
             "The text or the write sequence differs from ConsoleCalendarGenerator 1.0.0. The other legacy tests show where.");
     }
 
     /// <summary>
-    /// The color of every piece of text for a year drawn through each of the five constructors, and the colors
-    /// left behind, compared with the published assembly.
+    /// The color of every piece of text for a year drawn with the colors each of the five constructors of 1.0.0
+    /// gave a calendar, and the colors left behind, compared with the published assembly.
     /// </summary>
     [Test]
     [Platform(Exclude = "Win", Reason = ConsoleState.ColorsObservableOnUnixOnly)]
-    public void ColorSequence_IsIdenticalToPublished100()
+    public void ColorSequence_IsIdenticalToPublished100_GivenTheConstructorColorsOf100()
     {
-        Assert.That(BehaviorDigest.Colors(), Is.EqualTo(PublishedColors),
+        Assert.That(BehaviorDigest.Colors(LegacySubject.LibraryWithTheConstructorColorsOf100), Is.EqualTo(PublishedColors),
             "The color sequence differs from ConsoleCalendarGenerator 1.0.0. The other legacy tests show where.");
     }
 }

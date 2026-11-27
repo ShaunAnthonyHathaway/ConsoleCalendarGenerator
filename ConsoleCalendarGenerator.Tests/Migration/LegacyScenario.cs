@@ -155,6 +155,29 @@ internal sealed class LegacyScenario
         }
     }
 
+    /// <summary>
+    /// The same scenario with another constructor and other setters: the same drawing call, in the same state
+    /// of the process. Used to say what a correction of the constructors changes.
+    /// </summary>
+    public LegacyScenario WithConstructorAndSetters(
+        IReadOnlyList<ConsoleColor> constructorArguments, IReadOnlyList<(LegacyColorRole Role, ConsoleColor Color)> setters) =>
+        new(Name)
+        {
+            Area = Area,
+            ConstructorArguments = constructorArguments,
+            Setters = setters,
+            Draw = Draw,
+            Month = Month,
+            Year = Year,
+            Dates = Dates,
+            NewLine = NewLine,
+            Culture = Culture,
+            CultureName = CultureName,
+            UICulture = UICulture,
+            ForegroundBefore = ForegroundBefore,
+            BackgroundBefore = BackgroundBefore,
+        };
+
     /// <summary>Puts the scenario in a part of the matrix and returns it.</summary>
     public LegacyScenario In(string area)
     {

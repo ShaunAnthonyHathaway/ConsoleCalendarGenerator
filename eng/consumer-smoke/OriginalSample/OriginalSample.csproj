@@ -3,8 +3,9 @@
   <!--
     Program.cs is the sample program that accompanied ConsoleCalendarGenerator 1.0.0, byte for byte. It must
     keep compiling against every later package, 2.0 included, without being edited: no public signature and no
-    parameter name of the legacy class changes. eng/consumer-smoke.sh builds it; it is not run, because it waits
-    for key presses.
+    parameter name of the legacy class changes. eng/consumer-smoke.sh builds it everywhere. It waits for key
+    presses, so it is run only where the script can give it a pseudo-terminal; what it writes there is in
+    expected-text.txt. The scenario is described in the script.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,6 +13,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseAppHost>false</UseAppHost>
+    <!-- Run on whatever newer runtime the machine has, like the other applications of the smoke tests. -->
+    <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

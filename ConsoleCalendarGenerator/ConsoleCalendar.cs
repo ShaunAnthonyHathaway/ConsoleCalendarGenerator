@@ -8,7 +8,7 @@ namespace CalendarGenerator
     // The API published in ConsoleCalendarGenerator 1.0.0, kept for existing callers. Its public surface, its
     // output, every single call it makes on the console and its exceptions are a compatibility contract,
     // including what is plainly wrong; see docs/ai-context/compatibility.md. Version 2.0 corrects five listed
-    // behaviors, each in a change of its own; none is made yet. Nothing else here may be "corrected".
+    // behaviors, each in a change of its own; that file says which are made. Nothing else may be "corrected".
     //
     // Where each day goes comes from MonthLayout, the modern layout model. Everything else about how 1.0.0 draws
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave
@@ -244,84 +244,76 @@ namespace CalendarGenerator
             _selectedDateColor = ConsoleColor.Blue;
         }
 
-        // In the constructors below the argument named TitleColor colors the weekday row, and in the last one the
-        // argument named DayOfWeekColor colors the title. That is the published behavior and it stays for 1.x.
-        /// <summary>Creates a calendar with a color for the weekday row and the default colors for everything else.</summary>
-        /// <param name="TitleColor">
-        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
-        /// stays yellow.
-        /// </param>
+        // In the constructors below each argument sets the color it is named for, and a color with no argument
+        // keeps its default. Version 1.0.0 gave the TitleColor argument to the weekday row, left the title yellow,
+        // and with four arguments gave the DayOfWeekColor argument to the title. Version 2.0 corrects that (D-57).
+        /// <summary>Creates a calendar with a color for the title and the default colors for everything else.</summary>
+        /// <param name="TitleColor">The color of the title.</param>
         /// <remarks>
-        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
-        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// Version 1.0.0 gave this color to the weekday row and left the title yellow. Version 2.0 corrects that:
+        /// the argument colors the title, and the weekday row is cyan. For a program that must draw the same with
+        /// both versions, use the parameterless constructor and the <c>Set</c> methods.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor)
         {
-            _dayOfWeekColor = TitleColor;
+            _dayOfWeekColor = ConsoleColor.Cyan;
             _dateColor = ConsoleColor.White;
-            _titleColor = ConsoleColor.Yellow;
+            _titleColor = TitleColor;
             _selectedDateColor = ConsoleColor.Blue;
         }
         /// <summary>
-        /// Creates a calendar with colors for the weekday row and the days, and the default colors for the title and
+        /// Creates a calendar with colors for the title and the days, and the default colors for the weekday row and
         /// the selected days.
         /// </summary>
-        /// <param name="TitleColor">
-        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
-        /// stays yellow.
-        /// </param>
+        /// <param name="TitleColor">The color of the title.</param>
         /// <param name="DateColor">The color of the days that are not selected.</param>
         /// <remarks>
-        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
-        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// Version 1.0.0 gave the first color to the weekday row and left the title yellow. Version 2.0 corrects
+        /// that: the first argument colors the title, and the weekday row is cyan. For a program that must draw the
+        /// same with both versions, use the parameterless constructor and the <c>Set</c> methods.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor)
         {
-            _dayOfWeekColor = TitleColor;
+            _dayOfWeekColor = ConsoleColor.Cyan;
             _dateColor = DateColor;
-            _titleColor = ConsoleColor.Yellow;
+            _titleColor = TitleColor;
             _selectedDateColor = ConsoleColor.Blue;
         }
         /// <summary>
-        /// Creates a calendar with colors for the weekday row, the days and the selected days, and the default color
-        /// for the title.
+        /// Creates a calendar with colors for the title, the days and the selected days, and the default color for
+        /// the weekday row.
         /// </summary>
-        /// <param name="TitleColor">
-        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
-        /// stays yellow.
-        /// </param>
+        /// <param name="TitleColor">The color of the title.</param>
         /// <param name="DateColor">The color of the days that are not selected.</param>
         /// <param name="SelectedDateColor">The color of the selected days.</param>
         /// <remarks>
-        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
-        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// Version 1.0.0 gave the first color to the weekday row and left the title yellow. Version 2.0 corrects
+        /// that: the first argument colors the title, and the weekday row is cyan. For a program that must draw the
+        /// same with both versions, use the parameterless constructor and the <c>Set</c> methods.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor)
         {
-            _dayOfWeekColor = TitleColor;
+            _dayOfWeekColor = ConsoleColor.Cyan;
             _dateColor = DateColor;
-            _titleColor = ConsoleColor.Yellow;
+            _titleColor = TitleColor;
             _selectedDateColor = SelectedDateColor;
         }
         /// <summary>Creates a calendar with all four colors.</summary>
-        /// <param name="TitleColor">
-        /// The color of the weekday row. Despite its name, this argument does not set the color of the title.
-        /// </param>
+        /// <param name="TitleColor">The color of the title.</param>
         /// <param name="DateColor">The color of the days that are not selected.</param>
         /// <param name="SelectedDateColor">The color of the selected days.</param>
-        /// <param name="DayOfWeekColor">
-        /// The color of the title. Despite its name, this argument does not set the color of the weekday row.
-        /// </param>
+        /// <param name="DayOfWeekColor">The color of the weekday row.</param>
         /// <remarks>
-        /// The first and the last argument color each other's element. Version 1.0.0 behaves this way, and every 1.x
-        /// version keeps it so that existing programs draw as before. To set each color by its name, use the
-        /// parameterless constructor and the <c>Set</c> methods.
+        /// Version 1.0.0 gave the first color to the weekday row and the last to the title. Version 2.0 corrects
+        /// that: each argument colors what it is named for. A program written for 1.0.0 keeps its appearance by
+        /// passing its first and its last color in each other's place, or, to draw the same with both versions, by
+        /// using the parameterless constructor and the <c>Set</c> methods.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor, ConsoleColor DayOfWeekColor)
         {
-            _dayOfWeekColor = TitleColor;
+            _dayOfWeekColor = DayOfWeekColor;
             _dateColor = DateColor;
-            _titleColor = DayOfWeekColor;
+            _titleColor = TitleColor;
             _selectedDateColor = SelectedDateColor;
         }
 

@@ -248,7 +248,7 @@ public class LegacyObservationTests
         LegacyObservation published100 = LegacyObservation.Capture(() => Console.Write("as in 1.0.0"));
         LegacyObservation corrected = LegacyObservation.Capture(() => Console.Write("corrected"));
         var pending = new ApprovedCorrection("D-00", "not implemented", () => Array.Empty<LegacyScenario>());
-        var implemented = new ApprovedCorrection("D-00", "implemented", () => Array.Empty<LegacyScenario>(), (_, _) => corrected);
+        var implemented = new ApprovedCorrection("D-00", "implemented", () => Array.Empty<LegacyScenario>(), corrected: (_, _) => corrected);
 
         Assert.That(pending.IsImplemented, Is.False);
         Assert.That(implemented.IsImplemented, Is.True);
@@ -262,11 +262,61 @@ public class LegacyObservationTests
         var scenario = new LegacyScenario("any");
         LegacyObservation Append(LegacyObservation observation, string text) =>
             LegacyObservation.Capture(() => Console.Write(observation.Text + text));
-        var first = new ApprovedCorrection("D-00", "first", () => Array.Empty<LegacyScenario>(), (_, observation) => Append(observation, "1"));
-        var second = new ApprovedCorrection("D-00", "second", () => Array.Empty<LegacyScenario>(), (_, observation) => Append(observation, "2"));
+        var first = new ApprovedCorrection("D-00", "first", () => Array.Empty<LegacyScenario>(), corrected: (_, observation) => Append(observation, "1"));
+        var second = new ApprovedCorrection("D-00", "second", () => Array.Empty<LegacyScenario>(), corrected: (_, observation) => Append(observation, "2"));
 
         LegacyObservation expected = ApprovedCorrection.Expected(scenario, LegacyObservation.Capture(() => Console.Write("0")), new[] { first, second });
 
         Assert.That(expected.Text, Is.EqualTo("012"));
+    }
+
+    /// <summary>The other way to state a correction: as the use of 1.0.0 that does the same.</summary>
+    [Test]
+    public void ACorrectionStatedAsAnEquivalentUseOf100_ChangesTheScenarioThat100IsRunIn_AndNotTheObservation()
+    {
+        var scenario = new LegacyScenario("any") { ConstructorArguments = new[] { ConsoleColor.Red } };
+        LegacyScenario restated = scenario.WithConstructorAndSetters(Array.Empty<ConsoleColor>(), new[] { (LegacyColorRole.Title, ConsoleColor.Red) });
+        LegacyObservation published100 = LegacyObservation.Capture(() => Console.Write("as in 1.0.0"));
+        var pending = new ApprovedCorrection("D-00", "not implemented", () => Array.Empty<LegacyScenario>());
+        var implemented = new ApprovedCorrection("D-00", "implemented", () => Array.Empty<LegacyScenario>(), equivalentIn100: _ => restated);
+
+        Assert.That(implemented.IsImplemented, Is.True);
+        Assert.That(ApprovedCorrection.ScenarioFor100(scenario, new[] { pending }), Is.SameAs(scenario));
+        Assert.That(ApprovedCorrection.ScenarioFor100(scenario, new[] { pending, implemented }), Is.SameAs(restated));
+        Assert.That(ApprovedCorrection.Expected(scenario, published100, new[] { pending, implemented }), Is.SameAs(published100));
+    }
+
+    [Test]
+    public void AScenarioWithAnotherConstructorAndOtherSetters_IsOtherwiseTheSameScenario()
+    {
+        var scenario = new LegacyScenario("name")
+        {
+            ConstructorArguments = new[] { ConsoleColor.Red, ConsoleColor.Green },
+            Setters = new[] { (LegacyColorRole.Date, ConsoleColor.Gray) },
+            Draw = LegacyDraw.MonthWithDates,
+            Month = 2,
+            Year = 2023,
+            Dates = null,
+            NewLine = "\r\n",
+            Culture = TestCultures.WithForeignWeek(),
+            UICulture = TestCultures.WithMonthNames(_ => "ui"),
+            ForegroundBefore = ConsoleColor.DarkCyan,
+            BackgroundBefore = ConsoleColor.DarkBlue,
+        }.In("area");
+
+        LegacyScenario other = scenario.WithConstructorAndSetters(Array.Empty<ConsoleColor>(), new[] { (LegacyColorRole.Title, ConsoleColor.Red) });
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(other.ConstructorArguments, Is.Empty);
+            Assert.That(other.Setters, Is.EqualTo(new[] { (LegacyColorRole.Title, ConsoleColor.Red) }));
+            Assert.That(other.ToString(), Is.EqualTo(scenario.ToString()));
+            Assert.That((other.Draw, other.Month, other.Year, other.Dates, other.NewLine), Is.EqualTo((scenario.Draw, scenario.Month, scenario.Year, scenario.Dates, scenario.NewLine)));
+            Assert.That(other.Culture, Is.SameAs(scenario.Culture));
+            Assert.That(other.UICulture, Is.SameAs(scenario.UICulture));
+            Assert.That(other.CultureName, Is.EqualTo(scenario.CultureName));
+            Assert.That((other.ForegroundBefore, other.BackgroundBefore), Is.EqualTo((scenario.ForegroundBefore, scenario.BackgroundBefore)));
+            Assert.That(other.PassesANullList, Is.True);
+        }
     }
 }

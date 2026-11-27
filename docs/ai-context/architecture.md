@@ -31,8 +31,8 @@ model; the modern API uses nothing of the legacy class.
 
 `CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface, the
 behavior that must be preserved and the five behaviors that 2.0 corrects are in
-[compatibility.md](compatibility.md). None of the five is implemented: what follows describes 1.0.0 and
-`master` alike.
+[compatibility.md](compatibility.md). One of the five is implemented, the constructor colors; apart from which
+element a constructor argument colors, what follows describes 1.0.0 and `master` alike.
 
 It is a compatibility facade. Its public members are the published ones; what is behind them was rebuilt so
 that the library has a single place that decides where a day goes.
@@ -344,7 +344,9 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
 - **The sample that accompanied 1.0.0** is no longer the example. A byte-for-byte copy is frozen at
   `eng/consumer-smoke/OriginalSample/Program.cs` and must keep compiling and running against every later
   package, 2.0 included.
-  It waits for key presses and writes terminal reset sequences, which is why it runs only in the smoke script.
+  It waits for key presses and writes terminal reset sequences, which is why it runs only in the smoke script,
+  on a pseudo-terminal, in one defined scenario
+  ([packaging-and-releases.md](packaging-and-releases.md#the-original-sample)).
 - **XML documentation** on every public type and member is the API reference. There is no generated site.
 
 Nothing in the public documents names a consumer of the package, and nothing in `docs/ai-context/` is written

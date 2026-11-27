@@ -208,8 +208,9 @@ public class ExampleProgramTests
     }
 
     /// <summary>
-    /// The legacy constructors that take colors assign them to other elements than their names say. The example
-    /// must not present them as the way to use the class.
+    /// The legacy constructors that take colors color other elements in 1.0.0 than in 2.0, which corrected them
+    /// (D-57). The example shows the form that draws the same with both: the parameterless constructor and the
+    /// setters.
     /// </summary>
     [TestCaseSource(nameof(SourceFiles))]
     public void TheSource_CreatesTheLegacyCalendar_OnlyWithItsParameterlessConstructor(string file)

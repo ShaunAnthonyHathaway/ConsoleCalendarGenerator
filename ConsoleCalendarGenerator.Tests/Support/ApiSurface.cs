@@ -1,0 +1,61 @@
+using System.Reflection;
+
+namespace ConsoleCalendarGenerator.Tests.Support;
+
+/// <summary>Describes an assembly's public API as sorted text lines, one per type and member.</summary>
+internal static class ApiSurface
+{
+    public static IReadOnlyList<string> Describe(Assembly assembly)
+    {
+        var lines = new List<string> { "assembly " + assembly.GetName().Name };
+        foreach (Type type in assembly.GetExportedTypes().OrderBy(t => t.FullName, StringComparer.Ordinal))
+        {
+            lines.Add(DescribeType(type));
+            const BindingFlags declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+            var members = new List<string>();
+            foreach (MemberInfo member in type.GetMembers(declared))
+            {
+                switch (member)
+                {
+                    case ConstructorInfo constructor:
+                        members.Add("  .ctor(" + Parameters(constructor) + ")");
+                        break;
+                    case MethodInfo method:
+                        members.Add("  " + Modifiers(method) + Name(method.ReturnType) + " " + method.Name + "(" + Parameters(method) + ")");
+                        break;
+                    default:
+                        members.Add("  " + member.MemberType.ToString().ToLowerInvariant() + " " + member.Name);
+                        break;
+                }
+            }
+            members.Sort(StringComparer.Ordinal);
+            lines.AddRange(members);
+        }
+        return lines;
+    }
+
+    private static string DescribeType(Type type)
+    {
+        string kind = type.IsInterface ? "interface" : type.IsEnum ? "enum" : type.IsValueType ? "struct" : "class";
+        string modifiers = type.IsAbstract && type.IsSealed ? "static " : type.IsAbstract ? "abstract " : type.IsSealed ? "sealed " : string.Empty;
+        string bases = string.Join(", ", new[] { type.BaseType }.Where(t => t != null).Select(t => Name(t!))
+            .Concat(type.GetInterfaces().Select(Name).OrderBy(n => n, StringComparer.Ordinal)));
+        return "public " + modifiers + kind + " " + type.FullName + (bases.Length > 0 ? " : " + bases : string.Empty);
+    }
+
+    private static string Modifiers(MethodInfo method) =>
+        (method.IsStatic ? "static " : string.Empty) + (method.IsAbstract ? "abstract " : method.IsVirtual ? "virtual " : string.Empty);
+
+    private static string Parameters(MethodBase method) =>
+        string.Join(", ", method.GetParameters().Select(p => Name(p.ParameterType) + " " + p.Name));
+
+    private static string Name(Type type)
+    {
+        if (!type.IsGenericType)
+        {
+            return type.FullName ?? type.Name;
+        }
+        string definition = type.GetGenericTypeDefinition().FullName!;
+        return definition.Substring(0, definition.IndexOf('`')) + "<" + string.Join(", ", type.GetGenericArguments().Select(Name)) + ">";
+    }
+}

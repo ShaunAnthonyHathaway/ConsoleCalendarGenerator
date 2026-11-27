@@ -53,6 +53,23 @@ jobs:
           -warnaserror
           -warnnotaserror:NETSDK1138
 
+      - name: Test
+        run: >-
+          dotnet test ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj
+          --configuration Release
+          --no-build
+          --filter "TestCategory!=Terminal"
+
+      # Tests that need a terminal database and a pseudo-terminal. They are kept out of the
+      # step above and run where both are known to exist.
+      - name: Test (terminal)
+        if: runner.os == 'Linux'
+        run: >-
+          dotnet test ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj
+          --configuration Release
+          --no-build
+          --filter "TestCategory=Terminal"
+
       # Packs into a local folder only. Nothing here pushes to a registry.
       - name: Pack (Release)
         run: >-

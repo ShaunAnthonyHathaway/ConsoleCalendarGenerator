@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleCalendarGeneratorExa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleCalendarGenerator", "ConsoleCalendarGenerator\ConsoleCalendarGenerator.csproj", "{FAF142FD-232F-408F-8D07-150478C7B7D8}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleCalendarGenerator.Tests", "ConsoleCalendarGenerator.Tests\ConsoleCalendarGenerator.Tests.csproj", "{D522433A-E9F6-428E-93DC-D33585464CCA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{FAF142FD-232F-408F-8D07-150478C7B7D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAF142FD-232F-408F-8D07-150478C7B7D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAF142FD-232F-408F-8D07-150478C7B7D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D522433A-E9F6-428E-93DC-D33585464CCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D522433A-E9F6-428E-93DC-D33585464CCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D522433A-E9F6-428E-93DC-D33585464CCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D522433A-E9F6-428E-93DC-D33585464CCA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

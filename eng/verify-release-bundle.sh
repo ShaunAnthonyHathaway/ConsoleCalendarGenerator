@@ -13,7 +13,10 @@
 #     assemblies and their documentation as in the package, the symbols as in the symbol package, the readme as
 #     in the package, and the license of the commit the package was built from;
 #   - the archive is reproducible: made again from its own contents, it is the same archive byte for byte;
-#   - nothing in it names a folder of the machine it was built on.
+#   - nothing in it names a folder of the machine it was built on;
+#   - each symbol file is the one its assembly was built with, by the identifier and the checksum the assembly
+#     records. That is the check nuget.org makes of a symbol package after the package itself is published,
+#     when nothing can be taken back, so it is made here first.
 #
 # To check only the checksums of a bundle, anywhere, without this repository:
 #   sha256sum -c SHA256SUMS.txt          (Linux, Git Bash)
@@ -142,6 +145,15 @@ tool="$(build_stored_zip_tool "$work/tool")"
 dotnet "$tool" "$work/again.zip" "$work/unpacked" > /dev/null
 cmp -s "$binaries" "$work/again.zip" || fail "the archive is not reproducible: made again from its own contents, it is another archive"
 echo "Reproducible:   made again from its own contents, the archive is the same byte for byte"
+
+# ---- the symbols are the ones the assemblies were built with ----
+
+symbol_tool="$(build_tool SymbolIdentity "$work/symbol-tool")"
+for framework in $library_builds; do
+  dotnet "$symbol_tool" "$work/unpacked/$root/$framework/ConsoleCalendarGenerator.dll" "$work/unpacked/$root/$framework/ConsoleCalendarGenerator.pdb" > "$work/symbols-$framework.log" 2>&1 \
+    || { cat "$work/symbols-$framework.log" >&2; fail "$framework/ConsoleCalendarGenerator.pdb is not the symbol file $framework/ConsoleCalendarGenerator.dll was built with; nuget.org would refuse the symbol package"; }
+done
+echo "Symbols:        each symbol file is the one its assembly records, by identifier and checksum"
 
 echo
 echo "The bundle of version $version, built from commit $commit:"

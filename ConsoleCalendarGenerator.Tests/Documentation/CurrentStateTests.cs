@@ -5,7 +5,8 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 
 /// <summary>
 /// The documents describe the repository as it is now: all five corrections of version 2.0 made, the modern API
-/// built, the development version 2.0.0-dev. These tests look for what went stale when that became true.
+/// built, and the version 2.0.0 with no suffix: the source of the release. These tests look for what went stale
+/// when each of those became true.
 ///
 /// <para>
 /// "Active" documents are the ones that say how things are: the four public documents, CLAUDE.md, the
@@ -34,11 +35,11 @@ public class CurrentStateTests
     private static IEnumerable<string> ActiveDocuments() =>
         Repository.PublicDocuments.Concat(MaintenanceNotes.Where(file => file != Decisions)).Concat(LibrarySources);
 
-    private static string DevelopmentVersion()
+    private static string ReleaseVersion()
     {
         string project = Repository.Read("ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj");
-        return Regex.Match(project, "<VersionPrefix>([^<]+)</VersionPrefix>").Groups[1].Value + "-"
-            + Regex.Match(project, "<VersionSuffix>([^<]+)</VersionSuffix>").Groups[1].Value;
+        Assert.That(project, Does.Not.Contain("<VersionSuffix>"), "the repository holds a release");
+        return Regex.Match(project, "<VersionPrefix>([^<]+)</VersionPrefix>").Groups[1].Value;
     }
 
     [Test]
@@ -52,24 +53,31 @@ public class CurrentStateTests
     // ---- versions ----
 
     /// <summary>
-    /// A development version named anywhere is the one the project file builds. The earlier development version
-    /// is named only in the decision log, in the decisions that were superseded.
+    /// The repository holds a release, so no active document names a development version. The earlier numbers
+    /// stay in two places that are history on purpose: the decision log, and the table of completed phases in
+    /// the roadmap.
     /// </summary>
     [TestCaseSource(nameof(ActiveDocuments))]
-    public void EveryDevelopmentVersionNamed_IsTheOneTheRepositoryBuilds(string document)
+    public void NoActiveDocument_NamesADevelopmentVersion(string document)
     {
-        IEnumerable<string> named = Regex.Matches(Repository.Read(document), @"\b\d+\.\d+\.\d+-dev\b").Select(match => match.Value).Distinct();
+        string text = Repository.Read(document);
+        if (document == "docs/ai-context/roadmap.md")
+        {
+            int completed = text.IndexOf("\n## Completed\n", StringComparison.Ordinal);
+            int next = text.IndexOf("\n## ", completed + 1, StringComparison.Ordinal);
+            text = text.Remove(completed, next - completed);
+        }
 
-        Assert.That(named, Is.SubsetOf(new[] { DevelopmentVersion() }));
+        Assert.That(Regex.Matches(text, @"\b\d+\.\d+\.\d+-(dev|rc|preview|beta|alpha)\b").Select(match => match.Value).Distinct(), Is.Empty);
     }
 
     [Test]
-    public void TheDevelopmentVersion_IsNamedWhereAMaintainerLooksForIt()
+    public void TheReleaseVersion_IsNamedWhereAMaintainerLooksForIt()
     {
-        Assert.That(DevelopmentVersion(), Is.EqualTo("2.0.0-dev"));
-        foreach (string document in new[] { "CLAUDE.md", "CHANGELOG.md", "CONTRIBUTING.md", "docs/ai-context/packaging-and-releases.md", "docs/ai-context/compatibility.md" })
+        Assert.That(ReleaseVersion(), Is.EqualTo("2.0.0"));
+        foreach (string document in new[] { "CLAUDE.md", "CHANGELOG.md", "README.md", "docs/ai-context/packaging-and-releases.md", "docs/ai-context/compatibility.md" })
         {
-            Assert.That(Repository.Read(document), Ordinal.Contains(DevelopmentVersion()), document);
+            Assert.That(Repository.Read(document), Ordinal.Contains(ReleaseVersion()), document);
         }
     }
 
@@ -141,6 +149,9 @@ public class CurrentStateTests
         @"apart from its first layer, not\s+built",
         @"final (version )?number is not set",
         @"modern API (is|was) not (yet )?(implemented|built)",
+        @"builds an? (unpublished )?development (version|package)",
+        @"\[Unreleased\]",
+        @"version suffix is removed only",
     };
 
     private static IEnumerable<TestCaseData> ActiveDocumentsAndRetiredClaims() =>

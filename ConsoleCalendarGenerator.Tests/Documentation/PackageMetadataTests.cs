@@ -51,8 +51,9 @@ public class PackageMetadataTests
     }
 
     /// <summary>
-    /// The release notes are the changelog of this repository. While the package is a development version they
-    /// are the changelog on the default branch, which exists; nothing points at a tag that does not.
+    /// The release notes are the changelog of this repository, on the default branch, for the release as well.
+    /// The changelog is a document of current policy: it is given the date of the release when the release is
+    /// published, which a copy at the tag could never show.
     /// </summary>
     [Test]
     public void TheReleaseNotes_AreTheChangelogOfThisRepository()

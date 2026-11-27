@@ -23,8 +23,9 @@
 # this machine (one made without ContinuousIntegrationBuild), and an output folder that is not empty. A bundle
 # that does not pass its check is not written to the output folder at all.
 #
-# It never publishes, uploads, tags or pushes, and it changes no file of the repository. On GitHub Actions the
-# bundle of a development version is made and checked on every run; see docs/ai-context/packaging-and-releases.md.
+# It never publishes, uploads, tags or pushes, and it changes no file of the repository. On GitHub Actions a
+# bundle is made and checked on every run. A bundle is not a release: the candidate of a version is the one
+# bundle that docs/ai-context/packaging-and-releases.md names, and what this script makes anywhere else never is.
 
 set -euo pipefail
 shopt -s nullglob

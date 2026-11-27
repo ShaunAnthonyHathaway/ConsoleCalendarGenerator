@@ -108,10 +108,12 @@ jobs:
         run: bash eng/consumer-smoke.sh artifacts/package ${{ runner.os == 'Linux' && '--native-aot --published-sample' || '' }}
 
       # The four files a release consists of, made from the package above and checked: the package, the
-      # symbol package, an archive of the assemblies and a file of checksums. This is the bundle of a
-      # development version. It shows on every build that the release machinery works; it is not a release
-      # and not a candidate for one, and its checksums are not the checksums of any release.
-      - name: Release bundle (development version)
+      # symbol package, an archive of the assemblies and a file of checksums. Every run makes a bundle, on
+      # every system, and a bundle is not a release. The candidate of a version is one bundle only: the one
+      # the Linux job of the first push run for the release commit uploads below, once it has been checked
+      # and designated outside this workflow (docs/ai-context/packaging-and-releases.md). No other bundle,
+      # and no bundle of a run that was started again, is ever used.
+      - name: Release bundle
         run: bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
 
       # The check of a bundle has to refuse one that was changed. A copy is damaged in one way at a time.
@@ -126,9 +128,14 @@ jobs:
       - name: Upgrade a program from the published 1.0.0
         run: bash eng/upgrade-smoke.sh artifacts/package
 
-      # Works out what release preparation would do from this commit. It builds and changes nothing.
-      - name: Rehearse release preparation
-        run: bash eng/release-rehearsal.sh
+      # What will be checked after publication, rehearsed: nuget.org signs every package, and the comparison
+      # must accept exactly that one added entry. Shown with the signed 1.0.0 that nuget.org serves.
+      - name: Check the comparison with a published package
+        run: bash eng/verify-published-package-selftest.sh artifacts/release-bundle
+
+      # The repository agrees with itself about the version it holds. It builds and changes nothing.
+      - name: Check the release state
+        run: bash eng/release-state.sh
 
       - name: Upload the packages
         if: runner.os == 'Linux'
@@ -141,8 +148,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      # The bundle made above, as an artifact of the run. While the repository builds a development version
-      # this is a development bundle and nothing more.
+      # The bundle made above, as an artifact of the run. Whether it is the candidate of a version is decided
+      # by which run this is, not by this step.
       - name: Upload the release bundle
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -4,10 +4,10 @@ Notable changes to ConsoleCalendarGenerator, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - not yet published
 
-The changes that will make up version 2.0. None of this is in a published package: 2.0 is not released, and no
-release date has been set. The package built from this repository is numbered `2.0.0-dev` and is not published.
+Version 2.0.0 is final in this repository. It is not on NuGet yet, so this entry has no date: the date is put
+in the heading when the version is published, and nothing else about the entry changes then.
 
 ### Added
 
@@ -113,7 +113,7 @@ change, so programs compile and load as before.
 
 ## [1.0.0] - 2023-06-25
 
-The first release, and the only version published on NuGet so far.
+The first release.
 
 ### Added
 
@@ -122,5 +122,5 @@ The first release, and the only version published on NuGet so far.
   dates.
 - One `netstandard2.1` build.
 
-[Unreleased]: https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/commits/master
+[2.0.0]: https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/releases/tag/v2.0.0
 [1.0.0]: https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0

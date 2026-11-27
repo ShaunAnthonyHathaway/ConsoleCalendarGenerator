@@ -5,8 +5,9 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-Four questions are open: Q-11, Q-14, Q-15 and Q-16. All four belong to the release. The implementation, the
-documentation and the release infrastructure of 2.0 are complete and depend on none of them.
+Three questions are open: Q-11, Q-14 and Q-15. All three belong to the steps of the release that come after
+the candidate. The implementation, the documentation, the release infrastructure and release preparation of
+2.0.0 are complete and depend on none of them.
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
 D-28, rendering in D-30 to D-37, and states, the theme and output in
@@ -51,12 +52,14 @@ immutable tag `v2.0.0`, from the change that prepares the release
 - **Evidence needed:** Shaun's choice. It is a repository setting, which needs his approval each time.
 - **Decide in:** the repository-setting phase, which Shaun approves separately. It stays open until then; no
   setting is changed by any other phase.
-- **Recommendation:** Turn it on before 2.0 is published and point `SECURITY.md` at it in the same change.
-- **When it is settled:** `SECURITY.md` is changed in the same separately approved change that turns the
+- **Recommendation:** Turn it on before the GitHub release of 2.0.0 is published and point `SECURITY.md` at it
+  in the same step.
+- **When it is settled:** `SECURITY.md` is changed in the same separately approved step that turns the
   setting on, never before, so that the file is true at every commit. The sentence to replace is the one that
   says the repository has no private channel; `PublicDocumentationTests` requires that sentence today and
-  changes with it. It is an item of the
-  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist).
+  changes with it. That commit comes after the release commit and does not touch the candidate: `SECURITY.md`
+  is in neither the package nor the archive, and the packed README only links to it on `master`. See
+  [What is finalized after publication](packaging-and-releases.md#what-is-finalized-after-publication).
 
 Q-12 (whether weekday labels should be the same on every operating system) is settled: culture-derived labels
 may differ between systems, nothing in the library changes, and supplied labels are the stable option
@@ -76,8 +79,14 @@ of Q-08.
   a credential for nuget.org, and which kind, how narrowly it is scoped, how long it lives and how it reaches
   the session decide what a leaked one could do.
 - **Evidence needed:** What nuget.org offers at the time, how the package's account is set up, and that the
-  credential works, which has not been verified.
+  credential works, which has not been verified. No key exists in the repository or in the environment the
+  candidate was designated in.
+- **What is prepared:** the procedure, in
+  [packaging-and-releases.md](packaging-and-releases.md#the-publication-procedure-prepared-not-run). The key is
+  read from the environment variable `NUGET_API_KEY` and never appears in a command, a log or the chat. The
+  fallback is the upload page of nuget.org, used by Shaun.
 - **Decide in:** the release phase. Nothing in the repository depends on it, and no secret is stored here.
+  The candidate was designated without it.
 - **Recommendation:** None yet.
 
 ## Q-15: Is 1.0.0 deprecated on nuget.org after 2.0?
@@ -88,18 +97,6 @@ of Q-08.
 - **Decide in:** the release phase, after publication. It needs its own approval.
 - **Recommendation:** None yet.
 
-## Q-16: Where is the candidate built?
-
-- **Why it matters:** The candidate is built once
-  ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)), so
-  where it is built decides what the published files are. The scripts work in a session on Linux and in CI
-  alike.
-- **The two ways:** (a) The Linux job of the CI run for the release commit on `master` already makes the
-  bundle and uploads it as the artifact `release-bundle`, kept 90 days: a clean machine, pinned actions, a
-  build that names no folder, and a public log with the checksums. The candidate would be that artifact,
-  downloaded once. The run must then not be run again, because a rerun builds again. (b) A build in a session,
-  from a clean clone of the release commit, with `-p:ContinuousIntegrationBuild=true`.
-- **Evidence needed:** Shaun's choice.
-- **Decide in:** the brief for release preparation or for the candidate.
-- **Recommendation:** (a). It is the build that every check ran against, on a machine nobody configured by
-  hand, and anyone can read its log.
+Q-16 (where the candidate is built) is settled: it is the Linux `release-bundle` artifact of the first push run
+for the release commit, in its first attempt, and nothing else
+([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)).

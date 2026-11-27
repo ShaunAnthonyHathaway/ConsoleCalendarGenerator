@@ -10,9 +10,11 @@ console applications. It is .NET only.
 ## Current state
 
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
-- **`master`:** builds an unpublished development package of 2.0, `2.0.0-dev`, with assembly and file version
-  `2.0.0.0`. The release will be 2.0.0; the suffix is removed only in the change that prepares an approved
-  release. No prerelease is published.
+- **`master` is the source of the release `2.0.0`,** with assembly and file version `2.0.0.0` and no version
+  suffix. Every build of it says it is 2.0.0. **It is not published:** no tag, no GitHub release and no package
+  on nuget.org exists for it. Only one build of it is the release, the **candidate**: the bundle the Linux job
+  of the first push run for the release commit uploaded. It is designated outside the repository, and its
+  record and its checksums are **not in the repository**. Never build, name or substitute another.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
@@ -41,10 +43,11 @@ console applications. It is .NET only.
   identity, and the two things in the next point. All five corrections are done; no further runtime change
   is approved. The final 2.0 documentation is done as well: the README with its migration section, the
   changelog, the XML comments and the package's description. The release infrastructure is done too: CI's
-  actions are pinned to commits, and every build makes and checks the four files of a release for the
-  development version, uses the assemblies directly, upgrades a program from the published 1.0.0 and rehearses
-  release preparation. **No release, no candidate, no tag and no publication exists,** and nothing in the
-  repository can publish.
+  actions are pinned to commits, and every build makes and checks the four files of a release, uses the
+  assemblies directly, upgrades a program from the published 1.0.0, rehearses the check that follows
+  publication, and checks that the repository agrees with itself about its version. Release preparation is
+  done: the version, the README's links at the tag `v2.0.0`, the changelog's section. **No tag, no release
+  and no publication exists,** and nothing in the repository can publish.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
@@ -54,11 +57,14 @@ console applications. It is .NET only.
   `SECURITY.md`, all at the root, and one image in `docs/images/`. Every public type and member has XML
   documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
   `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
-  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together. The documents describe
-  2.0 as complete in the repository and **not published**; the README's section "Migrating from 1.0.0 to 2.0"
-  is the one place that tells what 1.0.0 did. Its links still point at `master`; which of them move to the tag
-  `v2.0.0`, and everything else release preparation has to change, is listed in
-  [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#release-preparation-checklist).
+  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together. The README's section
+  "Migrating from 1.0.0 to 2.0" is the one place that tells what 1.0.0 did. **The README is packed into the
+  package and can never be edited there,** so it names version 2.0.0 and says nothing that publication would
+  make false: it never says by itself that 2.0.0 is or is not published (D-78). Three of its links are at the
+  tag `v2.0.0` and answer "not found" until the tag exists, which is expected. The changelog's heading says
+  "not yet published" until the date of publication is known; that and the few other things to finalize
+  afterwards are in
+  [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#what-is-finalized-after-publication).
 - **Weekday labels and operating systems (decided, D-54):** labels taken from a culture are the day names .NET
   has on the machine, and they differ: for `en-US`, two letters on Linux and macOS, one letter on Windows. That
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
@@ -66,8 +72,9 @@ console applications. It is .NET only.
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
 - **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
   approval. No 1.x release, no prerelease, no tag and no release is authorized.
-- **Next phase:** final release preparation, which sets the version 2.0.0 and is followed by the one build of
-  the candidate. See [roadmap.md](docs/ai-context/roadmap.md). Start a phase only when Shaun has scoped it.
+- **Next phase:** the separately approved steps of the release itself: repository settings, the tag, the
+  GitHub release, the NuGet publication, verification. See [roadmap.md](docs/ai-context/roadmap.md). Each
+  needs its own approval; start none unprompted.
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -93,10 +100,10 @@ dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configura
 bash eng/verify-package.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package            # add --native-aot where a native toolchain is installed
 bash eng/upgrade-smoke.sh artifacts/package             # a program upgraded from the published 1.0.0
-bash eng/release-rehearsal.sh                           # what release preparation would do; changes nothing
+bash eng/release-state.sh                               # the repository agrees with itself about its version
 
-# The four files of a release, for the development version. Needs a build made with
-# -p:ContinuousIntegrationBuild=true and a checkout with nothing uncommitted.
+# The four files of a release. Needs a build made with -p:ContinuousIntegrationBuild=true and a checkout with
+# nothing uncommitted. What this makes is a bundle, never the candidate.
 bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
 bash eng/release-bundle-tamper-test.sh artifacts/release-bundle
 bash eng/direct-reference-smoke.sh artifacts/release-bundle
@@ -129,18 +136,22 @@ The build must finish with 0 warnings. None of these commands publishes anything
 5. **Publication needs Shaun's explicit approval, each time.** That covers tags, GitHub releases, NuGet
    publication, any manual workflow dispatch or rerun that could publish, publication recovery, and repository
    settings. A published version is never changed, and what is published is the exact files that were
-   validated, never a rebuild (D-72). The bundle CI makes is a development bundle: do not call one a candidate,
-   and do not treat its checksums as those of a release. The workflow keeps read-only permission, no secret
-   and no manual trigger, and every action stays pinned to a full commit SHA (D-75). See
-   [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
+   validated, never a rebuild (D-72). **The candidate is one bundle and no other** (D-79): the Linux artifact
+   of the first push run for the release commit, in its first attempt. Never run that workflow run again,
+   never rebuild the candidate, and never use a local, pull-request, Windows or macOS build in its place; if
+   it is not good, there is no candidate until a new reviewed commit has its own first push run. The workflow
+   keeps read-only permission, no secret and no manual trigger, and every action stays pinned to a full commit
+   SHA (D-75). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
    done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
    fixtures and what the modern API renders for them do not change.
 7. **No Python.** Do not propose, build or document a Python version or interoperability layer.
 8. **One focused phase per pull request,** scoped by Shaun beforehand. Do not start the next phase unprompted.
 9. **Keep these documents true.** A change that makes any of them wrong updates them in the same pull request.
-   The same goes for the public documents: a change users can see is added to `CHANGELOG.md` under
-   "Unreleased", and the README never describes a version as published before it is.
+   The same goes for the public documents: a change users can see is added to `CHANGELOG.md`, and no
+   document says that a version is published, tagged or released before it is. After 2.0.0, a change users
+   can see belongs to a later version and goes under a new heading of the changelog; the section of 2.0.0 is
+   closed apart from its date.
 
 ## What to read first
 

@@ -16,7 +16,7 @@ described here as it is. What is still planned is the release, which is not arch
 | `docs/images/` | The images the README shows. One at present. |
 | `docs/ai-context/` | These maintenance notes. Not user documentation. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). Its `Historical/Published100/ConsoleCalendar.cs` is the frozen source of 1.0.0, which is never edited. |
-| `eng/` | `verify-package.sh`, `consumer-smoke.sh` and the two small projects the smoke script builds. |
+| `eng/` | The scripts that check a package and put a release together: `verify-package.sh`, `consumer-smoke.sh`, the release scripts ([packaging-and-releases.md](packaging-and-releases.md#the-release-bundle)), the small projects they build in `consumer-smoke/`, and two tools in `tools/`. None of it is in the solution or in the package. |
 | `.github/workflows/ci.yml` | The only workflow. |
 | `Directory.Build.props`, `.editorconfig`, `global.json` | Shared build settings, formatting rules, SDK pin. See [development.md](development.md). |
 | `docs/ai-context/`, `CLAUDE.md` | This documentation. |
@@ -335,8 +335,8 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
   legacy API, migrating from 1.0.0 to 2.0, supported frameworks, limitations, building and testing, project,
   license. The migration section lists the five corrections and what did not change, and is the only place in
   the README that tells what 1.0.0 did.
-- **`CHANGELOG.md`** has an "Unreleased" section, which is the proposed changelog of 2.0 (added, changed,
-  breaking changes, compatibility), and one entry for 1.0.0. **`CONTRIBUTING.md`** has where the project is,
+- **`CHANGELOG.md`** has the section of 2.0.0 (added, changed, breaking changes, compatibility), whose heading
+  holds the date of publication once there is one, and one entry for 1.0.0. **`CONTRIBUTING.md`** has where the project is,
   the commands, what a change must keep and the two rules a release follows. **`SECURITY.md`** says which
   version gets fixes, what the library does with text it is given, and how to report a problem.
 - **The example application** has two files. `Examples.cs` has one method per capability, each containing one

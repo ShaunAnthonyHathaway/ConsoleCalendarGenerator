@@ -98,7 +98,7 @@ public class WorkflowTests
         foreach (string script in new[]
         {
             "eng/verify-package.sh", "eng/consumer-smoke.sh", "eng/release-bundle.sh", "eng/release-bundle-tamper-test.sh",
-            "eng/direct-reference-smoke.sh", "eng/upgrade-smoke.sh", "eng/release-rehearsal.sh",
+            "eng/direct-reference-smoke.sh", "eng/upgrade-smoke.sh", "eng/verify-published-package-selftest.sh", "eng/release-state.sh",
         })
         {
             Assert.That(text, Ordinal.Contains("bash " + script), script);

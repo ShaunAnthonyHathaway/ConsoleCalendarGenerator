@@ -10,15 +10,16 @@ namespace ConsoleCalendarGenerator.Tests;
 /// <see cref="LibraryBuildTests"/>), so each of these tests is a statement about both.
 ///
 /// <para>
-/// The repository builds a development version. <see cref="DevelopmentVersion"/> and
+/// The repository holds the release 2.0.0: the version has no suffix. <see cref="ReleaseVersion"/> and
 /// <see cref="AssemblyAndFileVersion"/> are changed here in the same change that changes them in the project
-/// file, which for the final version is the change that prepares the release.
+/// file. Every build of this source says it is 2.0.0; which one build is the release is not decided by the
+/// source, and is recorded outside the repository.
 /// </para>
 /// </summary>
 [TestFixture]
 public class VersionIdentityTests
 {
-    private const string DevelopmentVersion = "2.0.0-dev";
+    private const string ReleaseVersion = "2.0.0";
     private const string AssemblyAndFileVersion = "2.0.0.0";
     private const string PublishedVersion = "1.0.0";
 
@@ -51,14 +52,16 @@ public class VersionIdentityTests
     }
 
     /// <summary>
-    /// The informational version is the development version, followed by the commit it was built from wherever
+    /// The informational version is the release version, followed by the commit it was built from wherever
     /// the build could see one. That is every build from a Git checkout, which is what Source Link needs too.
+    /// It has no suffix: nothing between the version and the commit.
     /// </summary>
     [Test]
-    public void TheInformationalVersion_IsTheDevelopmentVersion_WithTheCommit()
+    public void TheInformationalVersion_IsTheReleaseVersion_WithTheCommit()
     {
-        Assert.That(PackageVersion, Is.EqualTo(DevelopmentVersion));
-        Assert.That(InformationalVersion, Does.Match("^" + Regex.Escape(DevelopmentVersion) + @"(\+[0-9a-f]{40})?$"));
+        Assert.That(PackageVersion, Is.EqualTo(ReleaseVersion));
+        Assert.That(InformationalVersion, Does.Match("^" + Regex.Escape(ReleaseVersion) + @"(\+[0-9a-f]{40})?$"));
+        Assert.That(InformationalVersion, Does.Not.Contain("-"), "no development or prerelease suffix");
     }
 
     /// <summary>
@@ -93,7 +96,8 @@ public class VersionIdentityTests
     {
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(Property("VersionPrefix") + "-" + Property("VersionSuffix"), Is.EqualTo(DevelopmentVersion));
+            Assert.That(Property("VersionPrefix"), Is.EqualTo(ReleaseVersion));
+            Assert.That(Repository.Read(ProjectFile), Does.Not.Match("<VersionSuffix>|<Version>|<PackageVersion>"), "no suffix, and the version is stated once");
             Assert.That(Property("AssemblyVersion"), Is.EqualTo(AssemblyAndFileVersion));
             Assert.That(Property("FileVersion"), Is.EqualTo("$(VersionPrefix).0"), "the file version follows the version prefix");
             Assert.That(Property("PackageId"), Is.EqualTo("ConsoleCalendarGenerator"));
@@ -128,22 +132,31 @@ public class VersionIdentityTests
             .Where(file => file != "docs/ai-context/decisions.md");
 
     /// <summary>
-    /// A note that names a development version names the one the repository builds. decisions.md is left out:
-    /// it keeps superseded decisions as they were written.
+    /// The repository no longer builds a development version, so no note says it does. Two places keep the
+    /// earlier numbers on purpose, as history: the log of decisions, and the table of completed phases in the
+    /// roadmap, which say what each phase did when it was done.
     /// </summary>
     [TestCaseSource(nameof(MaintenanceNotes))]
-    public void EveryDevelopmentVersionAMaintenanceNoteNames_IsTheOneTheRepositoryBuilds(string note)
+    public void NoMaintenanceNote_StillNamesADevelopmentVersion(string note)
     {
-        Assert.That(Regex.Matches(Repository.Read(note), @"\b\d+\.\d+\.\d+-dev\b").Select(match => match.Value).Distinct(),
-            Is.SubsetOf(new[] { DevelopmentVersion }));
+        string text = Repository.Read(note);
+        if (note == "docs/ai-context/roadmap.md")
+        {
+            int completed = text.IndexOf("\n## Completed\n", StringComparison.Ordinal);
+            int next = text.IndexOf("\n## ", completed + 1, StringComparison.Ordinal);
+            Assert.That(completed, Is.GreaterThan(0).And.LessThan(next));
+            text = text.Remove(completed, next - completed);
+        }
+
+        Assert.That(Regex.Matches(text, @"\b\d+\.\d+\.\d+-dev\b").Select(match => match.Value).Distinct(), Is.Empty);
     }
 
     [Test]
-    public void TheNotesThatDescribeTheBuild_NameTheDevelopmentVersion_AndTheAssemblyVersion()
+    public void TheNotesThatDescribeTheBuild_NameTheReleaseVersion_AndTheAssemblyVersion()
     {
         foreach (string note in new[] { "CLAUDE.md", "docs/ai-context/packaging-and-releases.md", "docs/ai-context/compatibility.md" })
         {
-            Assert.That(Repository.Read(note), Ordinal.Contains("`" + DevelopmentVersion + "`"), note);
+            Assert.That(Repository.Read(note), Ordinal.Contains("`" + ReleaseVersion + "`"), note);
             Assert.That(Repository.Read(note), Ordinal.Contains("`" + AssemblyAndFileVersion + "`"), note);
         }
     }

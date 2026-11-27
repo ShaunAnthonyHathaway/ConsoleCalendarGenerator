@@ -88,7 +88,15 @@ internal static class ExampleProgram
         })
         {
             RenderedMonth month = MonthRenderer.Render(2027, 3, MonthRenderOptions.Default.WithCulture(CultureInfo.GetCultureInfo(culture)));
-            Assume.That(month.Lines[0].Text + "\n" + month.Lines[1].Text, Is.EqualTo(title + "\n" + labels),
+            string actual = month.Lines[0].Text + "\n" + month.Lines[1].Text;
+            if (actual != title + "\n" + labels)
+            {
+                // An inconclusive test is easy to overlook in a test run's summary, so the reason goes to its log.
+                TestContext.Progress.WriteLine(
+                    "Inconclusive: the culture data of this machine renders " + culture + " as \"" + month.Lines[0].Text.Trim()
+                    + "\" and \"" + month.Lines[1].Text + "\", not as \"" + title.Trim() + "\" and \"" + labels + "\".");
+            }
+            Assume.That(actual, Is.EqualTo(title + "\n" + labels),
                 "The culture data of this machine gives other names for " + culture + " than the expected output was written with.");
         }
     }

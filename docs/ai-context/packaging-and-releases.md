@@ -124,7 +124,9 @@ repository that is deleted afterwards:
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
 Each application creates a `MonthLayout`, builds `MonthRenderOptions`, renders a month, counts its segments by
-kind, prints its text, and then draws a month with the legacy class. Both APIs are therefore exercised from the
+kind and prints its text; defines a `DayState`, renders a marked month, finds the state on its segment, asks a
+`CalendarTheme` for colors, writes the month with `MonthWriter` to a `StringWriter` and with
+`ConsoleMonthWriter` without colors; and then draws a month with the legacy class. Both APIs are therefore exercised from the
 package in every kind of consumer, Native AOT included. The `net8.0` consumer stands for every
 existing consumer of the `netstandard2.1` build. The `net11.0` consumer
 stands for an application such as Campertron. The applications roll forward to whatever runtime is installed;

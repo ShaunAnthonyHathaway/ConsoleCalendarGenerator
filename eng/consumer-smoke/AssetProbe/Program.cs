@@ -28,6 +28,20 @@ Console.WriteLine("rendered: " + rendered.Lines.Count + " lines, "
     + segments.First(segment => segment.Date.HasValue).DayOfWeek);
 Console.WriteLine(rendered.ToText("\n"));
 
+// The modern API: a day state with a marker, found again on its segment, a theme that gives it a color, and
+// the two writers. The console writer is used with no colors, so that the output does not depend on a terminal.
+var chosen = new DayState("chosen", "*");
+RenderedMonth marked = MonthRenderer.Render(2023, 2, options.WithTitleSuffix(" (* = chosen)"), new[] { new DateTime(2023, 2, 14, 9, 30, 0) }, chosen);
+RenderedSegment markedDay = marked.Lines.SelectMany(line => line.Segments).Single(segment => segment.State != null);
+CalendarTheme theme = CalendarTheme.None.WithDayColor(ConsoleColor.White).WithStateColor(chosen.Name, ConsoleColor.Green);
+Console.WriteLine("state: " + markedDay.State!.Name + " on day " + markedDay.Date!.Value.Day.ToString(CultureInfo.InvariantCulture)
+    + ", cell \"" + markedDay.Text + "\", theme color " + theme.GetColor(markedDay)
+    + ", other days " + theme.GetColor(segments.First(segment => segment.Date.HasValue)));
+var text = new StringWriter { NewLine = "\n" };
+MonthWriter.Write(marked, text);
+Console.Write(text.ToString());
+ConsoleMonthWriter.Write(marked, CalendarTheme.None);
+
 // The legacy API: draws the month.
 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 new ConsoleCalendar(ConsoleColor.Red).GenerateMonth(2, 2023, new List<DateTime> { new DateTime(2023, 2, 14) });

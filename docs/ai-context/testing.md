@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **615 tests**: 153 characterization tests of the legacy API, 184 tests of
-the layout model, 275 tests of text rendering, 2 tests of the modern public surface and 1 test about the build
-setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk
-18.12.0.
+`ConsoleCalendarGenerator.Tests` holds **823 tests**: 153 characterization tests of the legacy API, 184 tests of
+the layout model, 275 tests of text rendering, 98 tests of day states and markers, 52 tests of the theme, 58
+tests of the writers, 2 tests of the modern public surface and 1 test about the build setup. It targets
+`net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
 
@@ -16,8 +16,8 @@ definition of "unchanged" for the whole 1.x line. See [compatibility.md](compati
 A test whose name contains `Characterized1xBehavior` pins down something that is not the intended design. Do not
 correct it.
 
-The layout and rendering tests are ordinary specification tests: they say what the modern API must do, and a
-failure there means the code is wrong.
+The tests of the modern API (layout, rendering, states, themes, output) are ordinary specification tests: they
+say what the modern API must do, and a failure there means the code is wrong.
 
 ### Organization
 
@@ -54,6 +54,16 @@ failure there means the code is wrong.
 | `Rendering/RenderValidationTests` | 16 | Exception type, parameter name, value and checking order for `Render` |
 | `Rendering/RenderDeterminismTests` | 7 | The same result every time and from many threads with different cultures, with no effect on the console or the process |
 | `Rendering/RenderedLayoutTests` | 4 | That every month from 1900 through 2100, for every first day of the week, shows exactly what its layout says |
+| `States/DayStateTests` | 43 | What a state's name and marker may be, and that a state cannot be changed |
+| `States/DayStateAssociationTests` | 27 | Which dates select which days, which segments carry the state, the input collections, and what is refused |
+| `States/StatePrecedenceTests` | 8 | One state per day, and the first entry for a date wins |
+| `States/MarkerRenderingTests` | 19 | The exact text and segments of marked months, markers measured in text elements, markers that do not fit, and that nothing else moves |
+| `States/UnmarkedRenderingRegressionTests` | 1 | A digest of unmarked rendering recorded before day states existed |
+| `Themes/CalendarThemeTests` | 52 | The color of every kind of segment, state colors by name, the fallback, colors and names refused, and immutability |
+| `Output/MonthWriterTests` | 21 | The exact text for any writer and line terminator, that the writer is left alone, failures, and that the console is never touched |
+| `Output/ConsoleMonthWriterTests` | 31 | The text and every single write to the console, the color of each, the caller's colors afterwards and after a failure, and calls from several threads |
+| `Output/ConsoleMonthWriterProcessTests` | 3 | The real standard output of a child process, redirected |
+| `Output/ConsoleMonthWriterTerminalTests` | 3 | Color on a terminal (`Terminal` category) |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 
@@ -78,14 +88,18 @@ failure there means the code is wrong.
   so that a test can spell out the text and the segments it expects.
 - `ProcessState`: a snapshot of the process-wide state that pure code must leave alone, and a way to run code
   under given current cultures and put them back.
+- `ModernChildScenario`: the month, the state and the theme that the child process writes with
+  `ConsoleMonthWriter`, and its plain text. `Program.cs` has one command for the legacy scenario and one for
+  this one.
+- `TerminalOutput`: recognizes and removes escape sequences, for the modern terminal tests.
 
 ### What a run executes
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 610 pass | 2 Windows-only | 3 pass |
-| macOS | 610 pass | 2 Windows-only | not part of CI |
-| Windows | 583 pass | 29 that need Linux or macOS | not part of CI |
+| Linux | 814 pass | 3 Windows-only | 6 pass |
+| macOS | 814 pass | 3 Windows-only | not part of CI |
+| Windows | 767 pass | 50 that need Linux or macOS | not part of CI |
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -113,19 +127,25 @@ cultures built in the test.
 
 ### Platform-specific tests
 
-- **Linux and macOS only (29):** 27 tests that read console colors back (25 legacy, and 1 each that check the
-  layout and the renderer leave the colors alone), and 2 that assert line-feed-only output.
+- **Linux and macOS only (50):** 47 tests that read console colors back (25 legacy; 1 each that check the
+  layout, the renderer and the plain writer leave the colors alone; 19 for the console writer's colors and
+  their restoration), and 3 that assert line-feed-only output (2 legacy, 1 for the console writer).
   On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
-- **Windows only (2):** the real mixed line endings.
+- **Windows only (3):** the legacy class's real mixed line endings (2), and the console writer's uniform
+  `\r\n` endings (1).
+- What Windows does verify for the console writer: the text, every individual write, the line terminator, the
+  redirected output of a real child process, failures passed on, and writes from several threads. What it
+  cannot verify is which color a write was made in, or that colors are restored.
 - Add a platform condition only where the behavior really differs by platform. Text, write-sequence, API and
   validation tests run everywhere.
 
 ### The Terminal category
 
-Three tests need a terminal database entry for `xterm-256color`, and two of those also need Linux and the
-util-linux `script` program to create a pseudo-terminal. They are in the `Terminal` category, are excluded from
+Six tests, three for the legacy class and three for the modern console writer, need a terminal database entry
+for `xterm-256color`, and four of those also need Linux and the util-linux `script` program to create a
+pseudo-terminal. They are in the `Terminal` category, are excluded from
 the normal run by filter, run in their own CI step on Linux, and ignore themselves where they cannot run. They
 check that color sequences are present or absent and that the text is unchanged; they do not compare escape
 sequences byte for byte, because the .NET runtime writes those, not the library. Keep anything that depends on
@@ -177,6 +197,17 @@ that are not copied; collections handed out as arrays or lists; a different defa
 final line terminator; any line terminator accepted; and a write to the console. One change cannot be seen on
 Linux and is left to the Windows job: a default text that uses the platform's line terminator.
 
+The state, theme and writer tests were checked the same way: 52 deliberate changes to a scratch copy, each of
+which failed the suite. Among them: the last entry winning instead of the first; a date matched without its year
+or its month; a time of day that shifts the date; the marker after the number; the fit not checked, checked for
+a one-digit day only, counted in UTF-16 code units, or checked only for dates in the month; an entry without a
+state skipped silently; names compared without case; a state missing from its segment; invisible markers and
+names accepted; state colors found without case, ignored, or not falling back to the day color; the suffix
+taking the title's color; gaps taking the day's; undefined colors accepted; no terminator after the last line; a
+fixed line feed instead of the writer's terminator; the writer flushed or disposed; colors not put back after a
+failure; a line end written in a theme color; the background lost or set; an unset foreground not restored; no
+lock around a month; and the theme ignored.
+
 ## Rules for adding tests
 
 - **Never weaken a legacy test** to make a change pass. A failing characterization test means the behavior
@@ -201,19 +232,15 @@ Linux and is left to the Windows job: a default text that uses the platform's li
 
 Nothing in this section exists yet.
 
-### States, markers, theme and output
+### Legacy facade
 
-- Day states and markers extend the renderer, which is pure, so their tests need no console capture and no
-  platform conditions: exact text with a marker in the cell, the state on the `Day` segment, and what happens
-  to a date outside the month or given twice.
-- A theme maps segment kinds and states to colors without writing anything, and is tested as a plain function.
-- Only the writer touches a `TextWriter` or the console. Its tests record what is written and in which color,
-  as the legacy tests do, and are the only new tests that may need the console helpers or a platform condition.
-- Unmarked rendering is already covered; those tests must keep passing unchanged, and new tests should not
-  repeat them. `LayoutPicture` and `Rendered` are for reading results and must not turn into a second renderer.
-- Both library builds, as now.
-- When the legacy class becomes a facade, every test in `Legacy/` must pass without being edited. That is the
-  acceptance test for that phase.
+- When the legacy class becomes a facade, every test in `Legacy/` must pass without being edited, on both
+  library builds, including the two digests recorded from the published 1.0.0 assembly. That is the acceptance
+  test for that phase.
+- The modern tests must keep passing unchanged too: the facade is a consumer of the modern API, not a reason to
+  change it. If the facade needs something the modern API lacks, that is a design question for Shaun, not a
+  quiet addition.
+- `LayoutPicture` and `Rendered` are for reading results and must not turn into a second renderer.
 
 ### Campertron parity fixtures
 

@@ -34,8 +34,9 @@ groundwork were merged.
 ### D-03: The constructor color defect stays in 1.x
 
 - **Status:** Superseded by
-  [D-57](#d-57-constructor-arguments-color-the-element-they-are-named-for), which corrects the defect in 2.0.
-  Until that correction is implemented the tests (`ConstructorColorTests`) stay as they are.
+  [D-57](#d-57-constructor-arguments-color-the-element-they-are-named-for), which corrects the defect in 2.0
+  and is implemented. `ConstructorColorTests` now states the corrected behavior; what 1.0.0 did is in
+  `Historical/Published100ConstructorTests`.
 - **Decision:** The parameterized constructors keep assigning `TitleColor` to the weekday row, and
   `DayOfWeekColor` to the title in the four-argument form, throughout 1.x. Correcting or removing them is 2.0
   work.
@@ -679,7 +680,10 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
 - **Reason:** A user of the legacy class sees these comments in the editor at the moment of calling it, which
   is where a wrongly named argument does its damage. Documenting the defect is not correcting it.
 - **Consequences:** The file changed in comments only; the test suite and the digests are the proof. The
-  comments must stay true to [compatibility.md](compatibility.md). `XmlDocumentationTests` checks that every
+  comments must stay true to [compatibility.md](compatibility.md). (Later: the comments of the four constructors
+  that take colors were rewritten when 2.0 corrected them,
+  [D-57](#d-57-constructor-arguments-color-the-element-they-are-named-for); they now describe the corrected
+  behavior and say what 1.0.0 did.) `XmlDocumentationTests` checks that every
   public member of both builds is documented and that the constructor comments say what the arguments color.
 
 ### D-52: Security reports go through a public issue until a private channel exists
@@ -771,24 +775,39 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   other way: the legacy class and its namespace remain
   ([D-62](#d-62-the-legacy-class-keeps-every-signature-and-nothing-is-obsolete)), and `netstandard2.1` remains
   ([D-64](#d-64-the-target-frameworks-stay-as-they-are-for-20)). A sixth correction needs a new decision by
-  Shaun before any code. The corrections are made one per pull request, in the order of
-  [roadmap.md](roadmap.md#remaining-sequence).
+  Shaun before any code. The corrections are made in the order Shaun approved when he reviewed the groundwork:
+  the constructor colors; the null list; the line terminator and the blank line, together; the Gregorian title
+  ([roadmap.md](roadmap.md#remaining-sequence)).
 
 ### D-57: Constructor arguments color the element they are named for
 
-- **Status:** Approved. **Not implemented.** Supersedes
+- **Status:** Approved. **Implemented** (pull request #14), the first runtime change of 2.0. Supersedes
   [D-03](#d-03-the-constructor-color-defect-stays-in-1x).
 - **Decision:** In the four constructors that take colors, each argument controls the role its parameter is
   named for: `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and
-  `DayOfWeekColor` the weekday row. The parameters, their names and their order do not change.
+  `DayOfWeekColor` the weekday row. An element with no argument keeps its default: with one, two or three
+  arguments the weekday row stays Cyan, and the parameterless constructor is unchanged. The parameters, their
+  names and their order do not change. No overload is added, no constructor is obsolete, and nothing goes
+  through `CalendarTheme`.
 - **Reason:** In 1.0.0 `TitleColor` colors the weekday row, the title stays Yellow, and with four arguments
   `DayOfWeekColor` colors the title. A caller who reads the signature gets another result than the one asked
   for.
 - **Consequences:** A program that uses one of these constructors draws its title and its weekday row in other
-  colors after upgrading; a program that uses the parameterless constructor and the setters is unaffected. An
-  argument that is not a defined color fails when its element is first drawn, so with the element also changes
-  how much is written before that failure; the migration matrix has scenarios for it. The XML comments, the
-  README and `ConstructorColorTests` describe the 1.0.0 behavior until the pull request that implements this.
+  colors after upgrading, also when it was compiled against 1.0.0 and is not rebuilt. With four arguments it
+  keeps its appearance by passing the first and the fourth color in each other's place. A program that uses
+  the parameterless constructor and the setters is unaffected. The matrix is in
+  [compatibility.md](compatibility.md#behavior-of-the-legacy-class).
+- **Undefined colors (Shaun, reviewing the groundwork):** correcting the assignments necessarily changes the
+  role of an argument that is not a defined `ConsoleColor`, and therefore when it fails. That is part of this
+  correction, not a separate change. An undefined `TitleColor` now fails at the title, before anything is
+  written, where 1.0.0 wrote the title and failed at the weekday row; an undefined `DayOfWeekColor` now fails
+  at the weekday row, after the title, where 1.0.0 failed at the title. `DateColor` and `SelectedDateColor`
+  fail where they did. No early validation is added, no value is rejected by a constructor or a setter, and
+  the exception type does not change. It is tested and documented explicitly, never described as unchanged.
+- **How it is tested:** in the migration tests the correction is stated as an equivalent use of 1.0.0: a
+  constructor does what the parameterless constructor and the setters of the same names did. The digests
+  recorded from 1.0.0 are kept and still compared with the library, which for them is given the colors 1.0.0
+  gave ([testing.md](testing.md#when-a-correction-changes-a-recorded-digest)).
 
 ### D-58: A null list throws ArgumentNullException for dates
 
@@ -935,3 +954,21 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   How the push is authenticated, and whether 1.0.0 is deprecated afterwards, are decisions of the release
   phase ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated),
   [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
+
+### D-70: The original sample is compared in one defined scenario, by its text
+
+- **Status:** Approved by Shaun when he reviewed the groundwork. Implemented in `eng/consumer-smoke.sh`.
+- **Decision:** There is one exact scenario for running the sample program that accompanied 1.0.0: the program,
+  the command, the pseudo-terminal, the settings, the culture and the four key presses are fixed, and what is
+  captured is defined. The criterion is the program's text, compared with the file
+  `eng/consumer-smoke/OriginalSample/expected-text.txt`. The raw bytes a terminal receives are compared
+  between two runs on the same machine and never with a recorded number. No byte count is a release criterion.
+- **Reason:** Two earlier reports gave 21,742 and 21,738 bytes for the same program and the same library, and
+  neither said what input the terminal was given. A count that depends on unrecorded conditions proves nothing.
+- **Consequences:** The scenario is written out in the script and in
+  [packaging-and-releases.md](packaging-and-releases.md#the-original-sample). Both earlier numbers are
+  reproduced there and explained by one thing, whether the terminal itself echoed the four keys; which of the
+  two conditions the earlier 21,742 was measured under was not recorded and is not claimed. On Linux, CI runs
+  the scenario with the package, with the published 1.0.0, and with the program compiled against 1.0.0 running
+  the new library unrebuilt. When a later correction changes the text, the file is split into what 1.0.0
+  writes and what 2.0 writes, in that pull request.

@@ -22,6 +22,13 @@ namespace ConsoleCalendarGenerator.Tests.Facade;
 ///
 /// The scenarios take the implementation to run, so that Historical/Published100DigestTests.cs can put the
 /// frozen source of 1.0.0 through the same code and compare it with the same two values.
+///
+/// Since version 2.0 corrected which element a constructor argument colors (D-57), both values are computed
+/// with the library's calendars given the colors that 1.0.0 gave them. The values are the ones recorded from
+/// the original implementation and are not recorded again. These tests therefore no longer say anything about
+/// the constructors, which Legacy/ConstructorColorTests.cs and Migration/ConstructorColorMigrationTests.cs
+/// cover; they say that with the same colors held, the library still makes every call the original made, in
+/// the same color.
 /// </summary>
 [TestFixture]
 public class PreFacadeBaselineTests
@@ -31,24 +38,21 @@ public class PreFacadeBaselineTests
 
     /// <summary>The method, the text and the order of every call on the console's writer, and every exception.</summary>
     [Test]
-    public void EveryCallOnTheConsolesWriter_IsWhatItWasBeforeTheFacade()
+    public void EveryCallOnTheConsolesWriter_IsWhatItWasBeforeTheFacade_GivenTheConstructorColorsOf100()
     {
-        Assert.That(Digest(colors: false), Is.EqualTo(CallsBeforeTheFacade),
+        Assert.That(Digest(colors: false, LegacySubject.LibraryWithTheConstructorColorsOf100), Is.EqualTo(CallsBeforeTheFacade),
             "The legacy class writes differently than the original implementation. The tests in Legacy/ show where.");
     }
 
     /// <summary>The foreground and background color in effect for every one of those calls, and afterwards.</summary>
     [Test]
     [Platform(Exclude = "Win", Reason = ConsoleState.ColorsObservableOnUnixOnly)]
-    public void TheColorOfEveryCall_IsWhatItWasBeforeTheFacade()
+    public void TheColorOfEveryCall_IsWhatItWasBeforeTheFacade_GivenTheConstructorColorsOf100()
     {
-        Assert.That(Digest(colors: true), Is.EqualTo(ColorsBeforeTheFacade),
+        Assert.That(Digest(colors: true, LegacySubject.LibraryWithTheConstructorColorsOf100), Is.EqualTo(ColorsBeforeTheFacade),
             "The legacy class sets colors differently than the original implementation. The tests in Legacy/ show where.");
     }
 
-    internal static string Digest(bool colors) => Digest(colors, LegacySubject.Library);
-
-    /// <summary>The same for either implementation of the legacy calendar.</summary>
     internal static string Digest(bool colors, LegacySubject subject)
     {
         var all = new StringBuilder();

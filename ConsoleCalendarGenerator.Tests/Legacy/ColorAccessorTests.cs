@@ -30,7 +30,7 @@ public class ColorAccessorTests
         }
     }
 
-    /// <summary>Unlike the constructors, the setters each control the color their name says.</summary>
+    /// <summary>The setters each control the color their name says, in 1.0.0 as in 2.0.</summary>
     [Test]
     public void EachSetter_ChangesOnlyItsOwnColor()
     {

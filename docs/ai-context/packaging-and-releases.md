@@ -152,6 +152,7 @@ script in the same change.
 ```bash
 bash eng/consumer-smoke.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package --native-aot
+bash eng/consumer-smoke.sh artifacts/package --native-aot --published-sample     # what CI runs on Linux
 ```
 
 Installs the packed package into small applications the way a consumer would, in a temporary folder outside the
@@ -167,7 +168,9 @@ repository that is deleted afterwards:
 | `net10.0` application | the `net10.0` build | builds, runs, expected output |
 | `net8.0` application | the `netstandard2.1` build | builds, runs, expected output |
 | `net11.0` application | the `net10.0` build | builds, runs, expected output |
-| The sample program that accompanied 1.0.0, unchanged | | compiles |
+| The sample program that accompanied 1.0.0, unchanged | the `net10.0` build | compiles; on Linux with the `script` program it is also run on a pseudo-terminal and writes the expected text |
+| The same program with the published 1.0.0 (`--published-sample`) | published 1.0.0 from nuget.org | builds, runs, writes the same text; its raw terminal bytes differ from the package's in color sequences only |
+| That program, as compiled against 1.0.0 and not rebuilt, with the library under test in place of the published assembly (`--published-sample`) | the `netstandard2.1` build, substituted | runs, and writes byte for byte what the rebuilt program writes |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
 Each application first prints which build of the library it was given and which version that build says it
@@ -182,6 +185,59 @@ existing consumer of the `netstandard2.1` build. The `net11.0` consumer
 stands for an application such as Campertron. The applications roll forward to whatever runtime is installed;
 that does not affect which library build they are given. Templates are in `eng/consumer-smoke/`; they are not in
 the solution and are not meant to be built in place.
+
+### The original sample
+
+`eng/consumer-smoke/OriginalSample/Program.cs` is the sample program that accompanied 1.0.0, byte for byte. It
+uses the legacy class through the parameterless constructor, the one-argument constructor, the four-argument
+constructor and the setters, draws 34 months, and waits four times for a key. Because it reads keys it needs a
+terminal, and what a terminal receives depends on details that have to be fixed before two runs can be
+compared ([D-70](decisions.md#d-70-the-original-sample-is-compared-in-one-defined-scenario-by-its-text)).
+
+**The scenario,** as `eng/consumer-smoke.sh` runs it:
+
+| | |
+|---|---|
+| Program | the sample, built for `net10.0` in Release, started as `dotnet OriginalSample.dll` |
+| Runtime | `RollForward` `LatestMajor`: the newest runtime installed |
+| Operating system | Linux. The script skips the run elsewhere |
+| Terminal | a pseudo-terminal from util-linux `script -qec "<command>" /dev/null`. Standard input, output and error of the program are that terminal; nothing is redirected or piped |
+| Settings | `TERM=xterm-256color`; `LC_ALL=C` and `LANG=C`, so the current culture is the invariant culture; `NO_COLOR` unset; terminal echo turned off with `stty -echo` before the program starts |
+| Newlines | the program writes `\n`; the terminal turns each into `\r\n` |
+| Input | four presses of the letter `x`, one for each `Console.ReadKey`, written to the terminal once echo is off; nothing else |
+| Captured, "raw" | every byte the terminal received: the text, the color and keypad escape sequences the .NET runtime writes, the form feed and the two escape sequences the program writes to clear the screen, and one `x` after each prompt, which the runtime echoes when it reads a key. The terminal echoes nothing itself, and `script -q` adds nothing |
+| Captured, "text" | the raw bytes without escape sequences and without carriage returns |
+
+**What is compared.** The text, with `eng/consumer-smoke/OriginalSample/expected-text.txt`, exactly. The raw
+bytes depend on the runtime and the terminal database, so they are compared only between two runs on the same
+machine: with `--published-sample`, the run with the published 1.0.0 and the run with the package must be
+identical once the sequences that set a color are removed from both.
+
+**Measured on 2026-11-27** (Linux, .NET runtime 11.0.0, util-linux 2.42.4, ncurses 6.6), for the record and not
+as a criterion:
+
+| Run | Raw bytes | SHA-256 of the raw bytes | Text |
+|---|---|---|---|
+| Published 1.0.0 | 21,738 | `cb4664cd9417416a6de600359ce49f2a09705679282e41776a2e681a15f8c43b` | 4,869 bytes, SHA-256 `ad83e16e54f45f7de0a48bf885379c085178e815b444329638fab8b368d9eb6d` |
+| 2.0 with the constructor colors corrected | 21,738 | `1ef9b52c3ca0094a0511983bdf7133864bf1d1ce44233242ac55a33784e3ff6e` | the same |
+
+The two raw streams have the same 2,522 color sequences in the same places and differ in 46 bytes, each the
+color digit of one sequence, which is the constructor correction and nothing else: the five titles of the
+one-argument calendar are red where they were yellow (5), its seventeen weekday rows cyan where they were red
+(17), and the twelve titles and twelve weekday rows of the four-argument calendar have traded red and blue
+(24). The sequences are the same length, so the byte count does not change.
+
+**The two numbers reported before.** Earlier reports gave 21,742 bytes and 21,738 bytes for this program with
+the published assembly. Both are reproduced exactly, and they differ in one thing. When the four keys are
+already waiting in the terminal as the program starts, the terminal still has echo on and echoes them itself:
+four bytes, `xxxx`, at the very start of the output, and the rest is byte for byte the 21,738 of the scenario
+above. When the keys arrive after the program is waiting for them, or echo is off as in the scenario, the
+terminal echoes nothing. The run behind the 21,738 sent its keys after a delay. What the run behind the 21,742
+sent, and when, was not recorded, so that it was this case is a reproduction of the number and not a record
+of the run. Neither number was wrong, and neither is a criterion now.
+
+When a later correction changes what the sample writes, which the line terminator and the blank line will,
+`expected-text.txt` is split in that pull request into what 1.0.0 writes and what 2.0 writes.
 
 ## Release boundaries
 

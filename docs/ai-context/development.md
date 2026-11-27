@@ -11,7 +11,8 @@ How to build, test and change this repository today. Every command here is run f
   line endings for that reason.
 - **unzip,** used by `eng/verify-package.sh`.
 - Optional: a native toolchain (for example clang on Linux) for the Native AOT part of the consumer smoke tests,
-  and the util-linux `script` program for two of the terminal tests.
+  and the util-linux `script` program for the terminal tests and for running the original sample in the
+  consumer smoke tests.
 - Network access to nuget.org on the first restore. See
   [packaging-and-releases.md](packaging-and-releases.md#network-and-cache-behavior).
 
@@ -69,6 +70,7 @@ dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configura
 bash eng/verify-package.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package --native-aot     # also publishes and runs a Native AOT application
+bash eng/consumer-smoke.sh artifacts/package --native-aot --published-sample     # Linux: also the 1.0.0 sample with the published 1.0.0
 ```
 
 Packing is explicit; a build never creates a package. Packing also runs package validation against published
@@ -166,7 +168,8 @@ once per operating system:
 6. Tests against the `netstandard2.1` library build
 7. Pack, which includes package validation against 1.0.0
 8. `eng/verify-package.sh`
-9. `eng/consumer-smoke.sh` (with `--native-aot` on Linux)
+9. `eng/consumer-smoke.sh` (with `--native-aot --published-sample` on Linux, which also runs the sample
+   program of 1.0.0 with the published 1.0.0 and checks binary compatibility)
 10. Upload the `.nupkg` and `.snupkg` as a CI artifact, kept seven days (Linux only)
 
 It has read-only repository permission, uses no secrets, has no manual trigger and publishes nothing. Keep it

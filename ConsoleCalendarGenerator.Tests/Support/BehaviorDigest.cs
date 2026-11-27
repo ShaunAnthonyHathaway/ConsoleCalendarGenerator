@@ -29,9 +29,6 @@ internal static class BehaviorDigest
     /// Text and write sequence: every month from 1900 to 2100, the first and last supported years, a year
     /// through a "\r\n" writer, and the individual write calls of one year. The same on every platform.
     /// </summary>
-    public static string TextAndWrites() => TextAndWrites(LegacySubject.Library);
-
-    /// <summary>The same for either implementation of the legacy calendar.</summary>
     public static string TextAndWrites(LegacySubject subject)
     {
         ILegacyCalendar calendar = subject.Create();
@@ -66,9 +63,6 @@ internal static class BehaviorDigest
     /// five constructors, and the colors left behind. Only meaningful where colors can be read back
     /// (<see cref="ConsoleState.ColorsObservableOnUnixOnly"/>).
     /// </summary>
-    public static string Colors() => Colors(LegacySubject.Library);
-
-    /// <summary>The same for either implementation of the legacy calendar.</summary>
     public static string Colors(LegacySubject subject)
     {
         var calendars = new[]

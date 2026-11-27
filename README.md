@@ -7,8 +7,9 @@ structured segments you can style yourself, or straight to the console in color.
 
 - **Published on NuGet:** [ConsoleCalendarGenerator 1.0.0](https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0).
   It contains the legacy API only (`CalendarGenerator.ConsoleCalendar`).
-- **In this repository:** the next version, under development and **not published yet**. It adds the modern API
-  described below and keeps the legacy API working exactly as it does in 1.0.0.
+- **In this repository:** the next version, 2.0, under development and **not published yet**. It adds the modern
+  API described below. It keeps the legacy API, with every signature unchanged, and corrects a few things that
+  API got wrong; see [Changes from 1.0.0](#changes-from-100).
 
 Until a new version is published, the modern API is available by building this repository. See
 [Building and testing](#building-and-testing).
@@ -25,7 +26,7 @@ Until a new version is published, the modern API is available by building this r
 - A structured result: every piece of text says what it is (title, weekday label, day, marked day), so you can
   render it your own way without parsing text.
 - The layout on its own, if all you need is which day falls in which week and column.
-- The 1.0.0 API, kept compatible.
+- The 1.0.0 API, kept for existing code.
 
 ## Installation
 
@@ -294,8 +295,8 @@ the library can know.
 
 ## Legacy API
 
-`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. It is kept for existing code and behaves
-exactly as it did, including its quirks. For new code, use the modern API above.
+`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. It is kept for existing code, with the same
+constructors and methods. For new code, use the modern API above.
 
 ```csharp
 // The legacy class takes the month name from the current culture of the process.
@@ -324,11 +325,33 @@ What to know about it:
 - Weeks start on Monday and the weekday row is always English.
 - It resets the console's colors when it is done; it does not put the caller's colors back.
 - `GenerateYear` draws the twelve months of a year one after the other.
-- Prefer the parameterless constructor and the four `Set` methods. In the constructors that take colors, the
-  argument named `TitleColor` sets the weekday row's color, not the title's. That behavior is published and is
-  kept for compatibility.
+- Prefer the parameterless constructor and the four `Set` methods, as in the example. They set the color they
+  are named for in every version.
 
 The XML documentation of the class describes the rest.
+
+### Changes from 1.0.0
+
+The next version, 2.0, corrects a few things this class got wrong in 1.0.0. No constructor, method or parameter
+name changes, so existing programs compile and load as before; what changes is what they draw. So far there is
+one correction.
+
+**Constructor colors.** In the constructors that take colors, each argument now colors what it is named for:
+`TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the
+weekday row. In 1.0.0, `TitleColor` colored the weekday row instead, the title stayed yellow, and with four
+arguments `DayOfWeekColor` colored the title.
+
+What that means for a program written for 1.0.0:
+
+- **One, two or three arguments:** the title is now drawn in the first color, where it was yellow, and the
+  weekday row in cyan, where it had the first color.
+- **Four arguments:** the first and the fourth color trade places. To keep what the program drew, pass those
+  two in each other's place.
+- **The parameterless constructor and the `Set` methods are unchanged.** A program that uses them draws the
+  same with both versions, which makes them the simplest way to migrate.
+- A value that is not a defined `ConsoleColor` is still accepted by every constructor and still fails only
+  when its element is drawn. For the first and the fourth argument that is now another element, so the
+  failure comes at another point.
 
 ## Supported frameworks
 

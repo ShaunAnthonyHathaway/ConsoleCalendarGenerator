@@ -94,9 +94,11 @@ jobs:
         run: bash eng/verify-package.sh artifacts/package
 
       # Installs the package from a local feed into separate applications and runs them.
-      # On Linux this includes a Native AOT publish.
+      # On Linux this includes a Native AOT publish, and the sample program of 1.0.0 run on a
+      # pseudo-terminal: with the package, with the published 1.0.0, and as compiled against
+      # 1.0.0 with the new library put in its place.
       - name: Consumer smoke tests
-        run: bash eng/consumer-smoke.sh artifacts/package ${{ runner.os == 'Linux' && '--native-aot' || '' }}
+        run: bash eng/consumer-smoke.sh artifacts/package ${{ runner.os == 'Linux' && '--native-aot --published-sample' || '' }}
 
       - name: Upload the packages
         if: runner.os == 'Linux'

@@ -13,7 +13,8 @@ namespace ConsoleCalendarGenerator.Tests.Migration;
 /// whether it is an accident or a correction made without being recorded.
 /// </para>
 /// <para>
-/// Nothing here says what a correction will do before it is implemented. Until then the expectation is 1.0.0.
+/// Implemented so far: the constructor colors (D-57). Nothing here says what one of the other four corrections
+/// will do before it is implemented; until then the expectation for it is 1.0.0.
 /// </para>
 /// </summary>
 [TestFixture]
@@ -193,7 +194,9 @@ public class LegacyMigrationTests
         CultureInfo? culture = scenario.ResolveCulture();
         Assume.That(culture, Is.Not.Null, "The culture " + scenario.CultureName + " is not available on this machine.");
 
-        LegacyObservation published100 = LegacyObservation.Of(LegacySubject.Published100, scenario, culture!);
+        // What 1.0.0 did in the use of it that the implemented corrections say is the same, with the implemented
+        // corrections that change an observation applied. Everything else about the scenario is as given.
+        LegacyObservation published100 = LegacyObservation.Of(LegacySubject.Published100, ApprovedCorrection.ScenarioFor100(scenario), culture!);
         LegacyObservation library = LegacyObservation.Of(LegacySubject.Library, scenario, culture!);
         LegacyObservation expected = ApprovedCorrection.ExpectedOfTheLibrary(scenario, published100);
 

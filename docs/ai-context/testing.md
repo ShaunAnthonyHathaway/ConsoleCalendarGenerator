@@ -2,12 +2,12 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **1,899 tests**: 153 characterization tests of the legacy API, 25 tests of
-the legacy class as a facade, 23 tests of the frozen source of 1.0.0, 159 migration tests that compare the
-library with it, 184 tests of the layout model, 275 tests of text rendering, 98 tests of day states and
-markers, 52 tests of the theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per
-recorded case), 97 tests of the documentation and the example, 2 tests of the modern public surface, 16 tests
-of the version identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
+`ConsoleCalendarGenerator.Tests` holds **1,973 tests**: 165 tests of the legacy API, 25 tests of the legacy class
+as a facade, 38 tests of the frozen source of 1.0.0, 202 migration tests that compare the library with it, 184
+tests of the layout model, 275 tests of text rendering, 98 tests of day states and markers, 52 tests of the
+theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 101
+tests of the documentation and the example, 2 tests of the modern public surface, 16 tests of the version
+identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
@@ -18,8 +18,10 @@ of it is refactored. They describe the behavior that exists, **including behavio
 [compatibility.md](compatibility.md).
 
 A test whose name contains `Characterized1xBehavior` pins down something that is not the intended design. It
-is changed in the pull request that implements the correction of that behavior, and at no other time. Six
-such tests pin the constructor colors (D-57) and two the exception for a null list (D-58).
+is changed in the pull request that implements the correction of that behavior, and at no other time. Two
+such tests remain; they pin the exception for a null list (D-58). The six that pinned the constructor colors
+were replaced when D-57 was implemented: `Legacy/ConstructorColorTests` now states the corrected behavior under
+names that say so, and what 1.0.0 did is in `Historical/Published100ConstructorTests`.
 
 The tests in `Historical/` describe 1.0.0 itself, through its frozen source. They are never changed to match
 the library: when the library is corrected they keep saying what 1.0.0 did. The tests in `Migration/` hold the
@@ -37,7 +39,7 @@ say what the modern API must do, and a failure there means the code is wrong.
 | Fixture | Tests | Covers |
 |---|---|---|
 | `Legacy/PublicApiTests` | 5 | The public surface of the legacy namespace by reflection, and source compatibility with named arguments |
-| `Legacy/ConstructorColorTests` | 7 | Which color each constructor argument controls |
+| `Legacy/ConstructorColorTests` | 19 | Which color each constructor argument controls in 2.0: the one it is named for. The colors held, the colors drawn, that a constructor does what the setters of the same names do, and where an argument that is not a color fails |
 | `Legacy/ColorAccessorTests` | 28 | Getters, setters, defaults, undefined color values |
 | `Legacy/MonthLayoutTests` | 26 | The text of a month, line by line, and the layout rules for every month from 1900 through 2100 |
 | `Legacy/LineEndingTests` | 9 | Which line endings are written |
@@ -54,9 +56,11 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Facade/FacadeCompatibilityTests` | 17 | The places where the legacy class must stay different from the modern API: the runtime's own exception, colors reset and failing late, the bare line feed, no marker, the culture's own calendar, and no lock |
 | `Historical/Published100SourceTests` | 8 | That the frozen source is the original file byte for byte, that its header records where it comes from, that its class is named apart from the library's and has the same public members, and that nothing of it is in the library or can be packed |
 | `Historical/Published100DigestTests` | 4 | That the frozen source reproduces the four values recorded from 1.0.0: two from the published assembly, two from the class before the facade |
+| `Historical/Published100ConstructorTests` | 15 | The constructors of 1.0.0, complete: the colors each one held, the colors drawn, and where an argument that is not a color failed |
 | `Historical/Published100BehaviorTests` | 11 | What 1.0.0 did in the five places that 2.0 corrects, written out against the frozen source: constructor colors, the null list, the bare line feed, the two blank lines after a Sunday, the title under a culture with another calendar |
 | `Migration/LegacyMigrationTests` | 141 | The library against the frozen source: 134 scenarios of the matrix, one test each; every month from 1900 through 2100 and of the years 1 and 9999; every culture whose calendar is not Gregorian; the selections the recorded digests use; 500 generated scenarios; and that the five corrections are the five decisions |
-| `Migration/LegacyObservationTests` | 18 | The tools those tests use, tested with code written in the tests: what an observation records, that a comparison finds each kind of difference and names only the aspects that differ, and that a correction changes the expectation only once it is implemented |
+| `Migration/ConstructorColorMigrationTests` | 41 | The constructor correction (D-57) as the exact difference between 1.0.0 and the library: the colors held and drawn by each constructor in both; that with the same arguments only colors differ, and among them only the title's and the weekday row's; how a program keeps its appearance; 14 cases of where an undefined argument fails in each; and that both descriptions of the constructors match what they describe |
+| `Migration/LegacyObservationTests` | 20 | The tools those tests use, tested with code written in the tests: what an observation records, that a comparison finds each kind of difference and names only the aspects that differ, and that a correction, in either of its two forms, changes the expectation only once it is implemented |
 | `Layout/FirstDayOfWeekTests` | 53 | The weekday of each column and where the 1st and the last day land, for each of the seven first days of the week, with hand-written grids |
 | `Layout/MonthShapeTests` | 77 | Month lengths, leap years, four, five and six weeks, January 0001 and December 9999, and the step from each month to the next |
 | `Layout/ExhaustiveLayoutTests` | 20 | Every layout against an independent reference and against the layout rules: 1900 through 2100, and all 839,916 layouts there are |
@@ -97,8 +101,8 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 9 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
 | `Documentation/DocumentationLinkTests` | 20 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows |
-| `Documentation/PublicDocumentationTests` | 33 | Which documents exist; the frameworks, versions and commands they name; nothing machine-specific and nothing about a consumer |
-| `Documentation/XmlDocumentationTests` | 10 | Every public type, member and parameter of the built documentation file has text; the legacy class's comments say what the constructors really color; no documentation warning is suppressed |
+| `Documentation/PublicDocumentationTests` | 37 | Which documents exist; the frameworks, versions and commands they name; that the version in development is called unpublished; that the README and the changelog describe the constructor correction; nothing machine-specific and nothing about a consumer |
+| `Documentation/XmlDocumentationTests` | 10 | Every public type, member and parameter of the built documentation file has text; the comments of the legacy constructors say that each argument colors what it is named for and that 1.0.0 did otherwise; no documentation warning is suppressed |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `VersionIdentityTests` | 16 | The assembly version, the file version and the informational version of the library build under test; that the major version of the assembly is that of the package; that nothing says it is 1.0.0; that the project file sets those versions; that package validation compares with 1.0.0 and nothing is suppressed; that the maintenance notes name the development version the repository builds |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
@@ -141,22 +145,28 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 - `LegacySubject` and `ILegacyCalendar`: the two implementations of the legacy calendar, the library's class
   and the frozen source of 1.0.0, behind one interface that passes every call straight on. `BehaviorDigest` and
   the scenarios of `PreFacadeBaselineTests` take a subject, so that the same code condenses the output of
-  either.
+  either. A third subject, `LibraryWithTheConstructorColorsOf100`, is the library's class given the colors
+  that 1.0.0 gave a calendar made with the same constructor arguments; the recorded digests are computed with
+  it.
+- `ConstructorColorRoles`: which element each constructor argument colors in 1.0.0 and in 2.0, as the setter
+  calls with the same effect. Both lists are tested against the implementation they describe.
+- `RenderedRoleColors`: the color the title, the weekday row, the days and the selected days of a drawn month
+  were written in, read from an observation.
 - `LegacyScenario`: one use of the legacy calendar as data: constructor arguments, setters, one drawing call,
   the line terminator, the cultures and the caller's colors.
 - `LegacyObservation`: everything a caller can observe about one use, and the comparison of two observations
   aspect by aspect (`LegacyAspects`).
 - `MigrationMatrix`: the scenarios, in one group for each of the five corrections and one for everything else.
 - `ApprovedCorrection`: the five corrections, each with its decision, its scenarios and, once it is
-  implemented, what it changes.
+  implemented, what it changes, in one of two forms.
 
 ### What a run executes
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 1,887 pass | 3 Windows-only | 9 pass |
-| macOS | 1,887 pass | 3 Windows-only | not part of CI |
-| Windows | 1,833 pass | 57 that need Linux or macOS | not part of CI |
+| Linux | 1,961 pass | 3 Windows-only | 9 pass |
+| macOS | 1,961 pass | 3 Windows-only | not part of CI |
+| Windows | 1,892 pass | 72 that need Linux or macOS | not part of CI |
 
 The parity tests have no platform conditions. A few of them compare titles that come from the operating
 system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
@@ -192,10 +202,11 @@ cultures built in the test.
 
 ### Platform-specific tests
 
-- **Linux and macOS only (57):** 54 tests that read console colors back (25 legacy; 2 for the facade; 3 for the
-  frozen source of 1.0.0; 2 for the observations of the migration tests; 1 each that check the layout, the
-  renderer and the plain writer leave the colors alone; 19 for the console writer's colors and their
-  restoration), and 3 that assert line-feed-only output (2 legacy, 1 for the console writer).
+- **Linux and macOS only (72):** 69 tests that read console colors back (26 legacy; 2 for the facade; 8 for the
+  frozen source of 1.0.0; 11 for the migration tests, 2 of them for their observations and 9 for the colors the
+  constructors draw; 1 each that check the layout, the renderer and the plain writer leave the colors alone;
+  19 for the console writer's colors and their restoration), and 3 that assert line-feed-only output (2 legacy,
+  1 for the console writer).
   On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
@@ -232,6 +243,11 @@ changed.
 `Historical/Published100DigestTests` compares the frozen source of 1.0.0 with the same two values, computed by
 the same code.
 
+Since the constructor colors were corrected (D-57), the color digest of the library is computed with
+`LegacySubject.LibraryWithTheConstructorColorsOf100`; see
+[When a correction changes a recorded digest](#when-a-correction-changes-a-recorded-digest). The text digest
+uses the parameterless constructor only and is computed as before.
+
 ### The pre-facade digests
 
 `Facade/PreFacadeBaselineTests` compares two more SHA-256 values, recorded by running the code in that file
@@ -249,7 +265,8 @@ closer than the published digests and cover more:
 
 They use the invariant culture and cultures built in the test only. Like the published digests, they are not to
 be recorded again from the current source. `Historical/Published100DigestTests` compares the frozen source of
-1.0.0 with these two values as well.
+1.0.0 with these two values as well. Since D-57 both are computed for the library with
+`LegacySubject.LibraryWithTheConstructorColorsOf100`, like the published color digest.
 
 ### The frozen source of 1.0.0
 
@@ -296,8 +313,8 @@ The rules:
 
 `Migration/LegacyMigrationTests` runs the library's class and the frozen source of 1.0.0 through the same
 scenarios and compares what a caller can observe. The rule it enforces: **the library does what 1.0.0 did, in
-every scenario and every aspect, apart from the corrections that are implemented.** None is implemented yet, so
-today the two must be identical.
+every scenario and every aspect, apart from the corrections that are implemented.** One is: the constructor
+colors (D-57). In everything else the two must be identical.
 
 What is compared (`LegacyAspects`):
 
@@ -321,12 +338,21 @@ aspect, whichever group it is in. Around the matrix, four tests compare in bulk:
 every culture of the runtime whose calendar is not Gregorian, the selections that the recorded digests use,
 and 500 scenarios from a generator with a fixed seed.
 
-**How a correction is marked.** `ApprovedCorrection` lists the five, each with its decision. Each has a
-`Corrected` function that is null until the library implements the correction. The pull request that
-implements one sets it, to a function that takes a scenario and what was expected of the library before, and
-returns what is expected now: for example the same observation with another exception type, for the scenarios
-that pass a null list, and the argument unchanged for every other scenario. From then on the library is
-compared with 1.0.0 plus that correction, still in every aspect and every scenario. So:
+**How a correction is marked.** `ApprovedCorrection` lists the five, each with its decision. A correction has
+two functions, both null until the library implements it. The pull request that implements one sets the one
+that states the correction exactly:
+
+- `EquivalentIn100` takes a scenario and returns the scenario in which 1.0.0 does what the corrected library
+  does. The constructor colors are stated this way: a scenario that uses a constructor with colors becomes
+  the same scenario with the parameterless constructor and the setter for each argument. The setters of 1.0.0
+  were right, so the frozen source run in that scenario is exactly the corrected behavior, including where a
+  color that is not defined fails.
+- `Corrected` takes a scenario and what was expected of the library before, and returns what is expected now:
+  for example the same observation with another exception type, for the scenarios that pass a null list, and
+  the argument unchanged for every other scenario. It is for a result that no use of 1.0.0 produces.
+
+From then on the library is compared with 1.0.0 plus that correction, still in every aspect and every
+scenario. So:
 
 - a correction made in the library without being marked fails the tests;
 - a correction marked without being made fails the tests;
@@ -335,15 +361,16 @@ compared with 1.0.0 plus that correction, still in every aspect and every scenar
 
 The rules:
 
-- **A `Corrected` function says what an approved decision says and no more.** It is written in the pull request
-  for that decision. Do not set one ahead of time, and do not add a sixth correction without a decision by
+- **The function of a correction says what an approved decision says and no more.** It is written in the pull
+  request for that decision. Do not set one ahead of time, and do not add a sixth correction without a decision by
   Shaun; `LegacyMigrationTests` checks the five identifiers and that each is a decision in `decisions.md`.
 - **Do not remove a scenario or narrow a comparison** to make a change pass. Add scenarios freely.
 - **Real cultures are named, never required.** A scenario that names a culture the machine lacks is
   inconclusive, not failed. Which cultures have a calendar that is not Gregorian depends on the system: on the
   Linux system the tests were written on, `fa-IR`, `ps-AF` and `th-TH` do, and `ar-SA` does not.
 - The corrected behavior itself is stated by tests of its own, added with the correction. The migration tests
-  say that nothing else changed.
+  say that nothing else changed. For D-57 those are `Legacy/ConstructorColorTests`, with the literal 2.0
+  expectations, and `Migration/ConstructorColorMigrationTests`, with 1.0.0 and 2.0 side by side.
 
 ### When a correction changes a recorded digest
 
@@ -359,6 +386,16 @@ request whose correction does:
   and 9999, both line terminators, all five constructors, setters, the same selections, month names of every
   length, colors that are not defined in each place, invalid months, years and lists) and compares it call by
   call instead of as one hash.
+
+**What was done for the constructor colors (D-57).** Three of the four library-side digests cover calendars
+made with constructors that take colors: the published color digest and both pre-facade digests. None was
+removed and none was recorded again. They were narrowed: the library's calendars are made through
+`LegacySubject.LibraryWithTheConstructorColorsOf100`, which gives each the colors 1.0.0 gave it, and the three
+values are reproduced exactly. The tests carry `GivenTheConstructorColorsOf100` in their names. What they no
+longer say is which element a constructor argument colors; what they still say is everything else the digests
+cover. `ConstructorColorMigrationTests` checks that this subject does what the frozen source does with the same
+arguments. A later correction that changes text or calls cannot be handled this way and will have to remove
+the library-side comparison.
 
 ### The Campertron parity fixtures
 
@@ -511,6 +548,13 @@ copy of which nothing was committed:
   that both versions of the original source behave alike.
 - **Package validation:** see [packaging-and-releases.md](packaging-and-releases.md#package-validation).
 
+The tests of the constructor correction were checked the same way, with seven deliberately wrong versions in a
+scratch copy, each of which failed the suite: the one-argument constructor left as in 1.0.0 (17 tests failed);
+the four-argument constructor ignoring `DayOfWeekColor` (22); the weekday row yellow instead of cyan with
+three arguments (9); a constructor that rejects a value that is not a color (7); `DateColor` given to the
+selected dates (12); the correction described wrongly in `ConstructorColorRoles.In20` (11); and the 1.0.0
+constructors described wrongly in `ConstructorColorRoles.In100` (5, the three narrowed digests among them).
+
 ## Rules for adding tests
 
 - **Never weaken a legacy, facade, historical or migration test** to make a change pass. A failing
@@ -538,5 +582,6 @@ copy of which nothing was committed:
 
 ## Planned tests
 
-With each of the five corrections, in its own pull request: tests that state the corrected behavior outright,
-and the `Corrected` function of that correction in `Migration/ApprovedCorrection.cs`. Nothing else is planned.
+With each of the four corrections still to be made, in its pull request: tests that state the corrected
+behavior outright, and the function of that correction in `Migration/ApprovedCorrection.cs`. Nothing else is
+planned.

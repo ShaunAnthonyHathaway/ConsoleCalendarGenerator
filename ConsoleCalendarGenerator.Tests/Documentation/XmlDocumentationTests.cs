@@ -157,28 +157,38 @@ public class XmlDocumentationTests
     }
 
     /// <summary>
-    /// The constructors that take colors: the documentation of the argument named TitleColor says what it
-    /// really colors, the weekday row, and every one of them points to the parameterless constructor.
+    /// The constructors that take colors: every argument is documented as coloring the element it is named for,
+    /// which is what version 2.0 does (D-57). Each of them also says that 1.0.0 did otherwise and points to the
+    /// parameterless constructor, and none describes the old assignment as what happens now.
     /// </summary>
     [Test]
-    public void TheLegacyConstructorsThatTakeColors_DescribeWhatTheirArgumentsReallyColor()
+    public void TheLegacyConstructorsThatTakeColors_DocumentEachArgumentAsColoringWhatItIsNamedFor_AndSayThat100DidOtherwise()
     {
+        var colored = new Dictionary<string, string>
+        {
+            ["TitleColor"] = "The color of the title.",
+            ["DateColor"] = "The color of the days that are not selected.",
+            ["SelectedDateColor"] = "The color of the selected days.",
+            ["DayOfWeekColor"] = "The color of the weekday row.",
+        };
         ConstructorInfo[] withColors = typeof(ConsoleCalendar).GetConstructors().Where(constructor => constructor.GetParameters().Length > 0).ToArray();
 
         Assert.That(withColors, Has.Length.EqualTo(4));
         foreach (ConstructorInfo constructor in withColors)
         {
             XElement member = Documentation.Value[IdOf(constructor)];
-            string titleColor = TextOf(member.Elements("param").Single(element => (string?)element.Attribute("name") == "TitleColor"));
+            foreach (ParameterInfo parameter in constructor.GetParameters())
+            {
+                string text = TextOf(member.Elements("param").Single(element => (string?)element.Attribute("name") == parameter.Name));
 
-            Assert.That(titleColor, Does.StartWith("The color of the weekday row.").Using(StringComparison.Ordinal), IdOf(constructor));
-            Assert.That(titleColor, Ordinal.Contains("does not set the color of the title"), IdOf(constructor));
-            Assert.That(TextOf(member.Element("remarks")), Ordinal.Contains("parameterless constructor"), IdOf(constructor));
+                Assert.That(text, Is.EqualTo(colored[parameter.Name!]), IdOf(constructor) + " " + parameter.Name);
+            }
+            string remarks = TextOf(member.Element("remarks"));
+            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 gave"), IdOf(constructor));
+            Assert.That(remarks, Ordinal.Contains("Version 2.0 corrects that"), IdOf(constructor));
+            Assert.That(remarks, Ordinal.Contains("parameterless constructor"), IdOf(constructor));
+            Assert.That(TextOf(member), Does.Not.Match("Despite its name|does not set"), IdOf(constructor));
         }
-
-        XElement fourColors = Documentation.Value[IdOf(withColors.Single(constructor => constructor.GetParameters().Length == 4))];
-        string dayOfWeekColor = TextOf(fourColors.Elements("param").Single(element => (string?)element.Attribute("name") == "DayOfWeekColor"));
-        Assert.That(dayOfWeekColor, Does.StartWith("The color of the title.").Using(StringComparison.Ordinal));
     }
 
     [Test]

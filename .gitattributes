@@ -66,3 +66,9 @@
 # Shell scripts run under Git Bash on Windows too, which needs LF line endings.
 ###############################################################################
 *.sh text eol=lf
+
+###############################################################################
+# What the sample program of 1.0.0 writes, compared byte for byte by
+# eng/consumer-smoke.sh. It has form feeds in it and must keep LF line endings.
+###############################################################################
+eng/consumer-smoke/OriginalSample/expected-text.txt text eol=lf

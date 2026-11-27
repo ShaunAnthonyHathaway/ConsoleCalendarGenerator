@@ -16,9 +16,9 @@ console applications. It is .NET only.
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
     is a compatibility facade: it takes the position of every day from `MonthLayout` and keeps everything else
-    about how 1.0.0 draws a month (title, colors, the exact console calls, exceptions) in private code. Its
-    behavior is identical to published 1.0.0, which the tests verify. Version 2.0 corrects five of its
-    behaviors (rule 2); **none of the five is implemented yet**.
+    about how 1.0.0 draws a month (title, colors, the exact console calls, exceptions) in private code.
+    Version 2.0 corrects five of its behaviors (rule 2). **One is implemented: the constructor colors (D-57).**
+    In everything else its behavior is identical to published 1.0.0, which the tests verify.
   - The layout model, in `ConsoleCalendarGenerator/Layout/`: `MonthLayout`, `MonthLayoutWeek` and
     `MonthLayoutCell`. It places the days of a month in weeks and weekday columns and does nothing else.
   - Text rendering, in `ConsoleCalendarGenerator/Rendering/`: `MonthRenderOptions`, `MonthRenderer` and the
@@ -35,7 +35,8 @@ console applications. It is .NET only.
   fixtures (in `ConsoleCalendarGenerator.Tests/Parity/Campertron/`) show that the public modern API reproduces
   Campertron's live calendar renderer; no production code was needed for that. The user-facing material is
   complete as well (see the next point). The 2.0 groundwork is complete: the 2.0 policy below, the version
-  identity, and the two things in the next point. Everything about releases is **planned and not implemented**.
+  identity, and the two things in the next point. Of the corrections, the constructor colors are done.
+  Everything about releases is **planned and not implemented**.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
@@ -53,8 +54,9 @@ console applications. It is .NET only.
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
 - **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
   approval. No 1.x release, no prerelease, no tag and no release is authorized.
-- **Next phase:** the first of the five corrections, the constructor colors (D-57). See
-  [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
+- **Next phase:** the null-list correction (D-58). After it come the line terminator and the blank line
+  together (D-59, D-60), then the Gregorian title (D-61). See [roadmap.md](docs/ai-context/roadmap.md). Start
+  a phase only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -89,11 +91,11 @@ The build must finish with 0 warnings. None of these commands publishes anything
    about to change. If the repository and these documents disagree, the repository is right: fix the document in
    the same pull request.
 2. **2.0 corrects exactly five behaviors of `CalendarGenerator.ConsoleCalendar`, and everything else about it is
-   protected.** The five (D-57 to D-61): constructor arguments color the element they are named for; a null list
-   throws `ArgumentNullException` for `dates`, still before the month and year are checked; the last row of a
-   month ends with the console's line terminator; every month is followed by exactly one blank line; the title
-   names the Gregorian month. Every other output, console call, color, exception and side effect stays as in
-   1.0.0. See [compatibility.md](docs/ai-context/compatibility.md).
+   protected.** The five (D-57 to D-61): constructor arguments color the element they are named for (done); a
+   null list throws `ArgumentNullException` for `dates`, still before the month and year are checked; the last
+   row of a month ends with the console's line terminator; every month is followed by exactly one blank line;
+   the title names the Gregorian month. Every other output, console call, color, exception and side effect
+   stays as in 1.0.0. See [compatibility.md](docs/ai-context/compatibility.md).
 3. **An approved difference is made with all four of these, or not at all:** a decision in `decisions.md`, a
    focused pull request for that one difference, a migration test, and changelog and migration documentation.
    Do not implement, test as done or document as done a correction before its own pull request. Tests named

@@ -24,38 +24,39 @@ phase's pull request is #2.
 | User-facing material | Replaced the README, the example application and the screenshots; removed the duplicated docs; added `CHANGELOG.md`, `CONTRIBUTING.md` and `SECURITY.md`; documented the legacy class in XML and removed the last warning suppression; added tests that keep the README, the example and the documentation file true. No runtime behavior or public API changed. | #11 | `59e4b45` |
 | Deterministic quick start | Settled Q-12 in documentation: the README's quick start and the example program supply their weekday labels and print the same text on Linux, Windows and macOS; one example keeps the culture's own labels and says they depend on the system. Example, README, tests and these notes only. | #12 | `083924f` |
 | 2.0 scope and readiness audit | Read-only review of where the project stood, what 2.0 should contain and what a release needs. Delivered to Shaun outside the repository; what he approved of it is recorded as D-56 to D-69. | none | none |
-| 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | see `git log` |
+| 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | `09ffd05` |
+| Constructor colors (D-57) | The first runtime change of 2.0: in the four constructors that take colors, each argument colors the element it is named for. Only the assignments and the comments of those constructors changed in the library. The migration tests recognize exactly that difference from 1.0.0; the 1.0.0 behavior stays recorded against the frozen source. Also defined one exact scenario for running the original sample, and a check that a program compiled against 1.0.0 runs with the new library unrebuilt. | #14 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
-behavior of the legacy class is unchanged in all of them.
+behavior of the legacy class was unchanged in every phase before the constructor colors.
 
 ## Remaining sequence
 
-The 2.0 implementation sequence, in this order. Each item is one focused pull request unless it says otherwise,
-and each needs its own brief from Shaun before it starts.
+The 2.0 implementation sequence, in this order. Each item is one focused pull request, and each needs its own
+brief from Shaun before it starts.
 
-1. **Constructor colors** ([D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for)).
-2. **A null list** ([D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)).
-3. **The line terminator of the last row**
-   ([D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator)).
-4. **One blank line after every month**
-   ([D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)).
-5. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
-6. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
+The order of the corrections is the one Shaun approved when he reviewed the groundwork: the constructor colors,
+which are done; then the null list; then the line terminator and the blank line, together; then the Gregorian
+title.
+
+1. **A null list** ([D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)).
+2. **The line terminator of the last row and one blank line after every month,** in one pull request
+   ([D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator),
+   [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)). Both are about how a month
+   ends, in the same few lines of the class.
+3. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
+4. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
    migration notes, the links to the tag `v2.0.0`
    ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), the final version number, and
    a release-readiness audit.
-7. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
+5. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
    ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
    readiness audit names.
-8. **Publication and verification:** a manual push of the exact validated artifacts
+6. **Publication and verification:** a manual push of the exact validated artifacts
    ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)), each step approved
    separately, then verification from nuget.org and a factual handoff for the Campertron project.
 
-Where this order comes from: the groundwork came first and the constructor correction is next, both stated in
-the brief for the groundwork. The corrections after it are listed in the order in which the approved decisions
-number them, one per pull request as [D-56](decisions.md#d-56-20-corrects-exactly-five-legacy-behaviors-and-protects-everything-else)
-requires; the brief for each one is what fixes its place. Items 6 to 8 are the planned release steps of
+Items 4 to 6 are the planned release steps of
 [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
 What this sequence does and does not say:
@@ -70,24 +71,29 @@ What this sequence does and does not say:
 
 ## Next action
 
-**The constructor color correction** (item 1,
-[D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for)), and only after Shaun
-has scoped it. Read [compatibility.md](compatibility.md), above all
+**The null-list correction** (item 1,
+[D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates)), and only after Shaun has scoped
+it. Read [compatibility.md](compatibility.md), above all
 [How a correction is made](compatibility.md#how-a-correction-is-made), and
-[testing.md](testing.md#the-migration-tests) first.
+[testing.md](testing.md#the-migration-tests) first. The constructor-color pull request is the worked example
+of every step.
 
 What that pull request starts from:
 
-- `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests` requires it, and fails as soon as the
-  constructors change, until the correction is given its `Corrected` function in
-  `Migration/ApprovedCorrection.cs`.
-- The 1.0.0 behavior of the constructors is pinned in `Legacy/ConstructorColorTests` (tests named
-  `Characterized1xBehavior`), in `XmlDocumentationTests`, in the two color digests
-  (`Published100BaselineTests`, `PreFacadeBaselineTests`), in the XML comments of the four constructors, in the
-  README's "Legacy API" section, in `CHANGELOG.md` and in `ExampleProgramTests`, which forbids those
-  constructors in the example. Each has to be looked at; `Historical/` is not touched.
-- An argument that is not a defined color fails when its element is first drawn, so the correction also moves
-  that failure. Two scenarios of the migration matrix show it.
+- Apart from the constructor colors, `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests` requires
+  it, and fails as soon as a null list is treated differently, until the correction is given its function in
+  `Migration/ApprovedCorrection.cs`. For this one that is `Corrected`: no use of 1.0.0 throws
+  `ArgumentNullException`.
+- The 1.0.0 behavior is pinned in `Legacy/ValidationTests` (three tests, two of them named
+  `Characterized1xBehavior`), in the call digest of `Facade/PreFacadeBaselineTests`, which covers null lists
+  and cannot be kept by the means that kept it through the constructor colors
+  ([testing.md](testing.md#when-a-correction-changes-a-recorded-digest)), in `XmlDocumentationTests`, which
+  requires the documented exception to be `NullReferenceException`, in the XML comments of the two methods
+  that take a list, and in the behavior list of [compatibility.md](compatibility.md#behavior-of-the-legacy-class).
+  A scratch run of this correction during the groundwork failed exactly the first two of these; the others
+  follow from the comments changing. Each has to be looked at; `Historical/` is not touched.
+- The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` get one more
+  entry each. The original sample passes no null list, so `expected-text.txt` does not change.
 
 What the later items have to deal with, none of it to be done earlier:
 
@@ -96,6 +102,9 @@ What the later items have to deal with, none of it to be done earlier:
   "Unreleased" heading of `CHANGELOG.md`, the supported versions in `SECURITY.md` and the version checks in
   `Documentation/PublicDocumentationTests` change with the corrections they describe or in the change that
   prepares the release, and not before.
+- **The class-level XML remarks of `ConsoleCalendar` still speak of what "every 1.x version" does.** That is
+  not false, but it no longer describes the assembly it ships in. The correction pull requests change only the
+  comments of what they correct; the remarks are rewritten with the final documentation.
 - **The README's image and file links point at the `master` branch** until the change that prepares the release
   switches them to the tag ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)).
 - **There is no private channel for security reports**

@@ -24,16 +24,18 @@
     <PackageId>ConsoleCalendarGenerator</PackageId>
 
     <!--
-      Development version. 1.0.0 is the only published version; nothing built from this repository may carry
-      that number. The suffix is removed only as part of an approved release.
+      Development version of 2.0, the next version to be published. 1.0.0 is the only published version; nothing
+      built from this repository may carry that number. The suffix is removed only as part of an approved
+      release, and no prerelease is published.
     -->
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>2.0.0</VersionPrefix>
     <VersionSuffix>dev</VersionSuffix>
     <!--
-      The assembly version stays at the major version for the whole 1.x line, as published in 1.0.0. The file
-      version follows the package version, so builds can still be told apart.
+      The assembly version is the major version of the package and nothing more: 2.0.0.0 for every 2.x version,
+      as it was 1.0.0.0 in 1.0.0. The file version follows the version prefix. The informational version is the
+      package version with the commit, which the SDK adds.
     -->
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>$(VersionPrefix).0</FileVersion>
 
     <Authors>Shaun Hathaway</Authors>

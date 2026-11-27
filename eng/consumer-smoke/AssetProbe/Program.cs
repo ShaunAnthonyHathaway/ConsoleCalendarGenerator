@@ -8,6 +8,13 @@ using ConsoleCalendarGenerator;
 string? libraryBuild = typeof(ConsoleCalendar).Assembly.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
 Console.WriteLine("library build: " + libraryBuild);
 
+// Reports which version that build says it is: the package version it was built as, which is its informational
+// version without the commit, then its assembly version and its file version.
+Assembly library = typeof(ConsoleCalendar).Assembly;
+string? builtAs = library.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0];
+Console.WriteLine("library version: " + builtAs + ", assembly " + library.GetName().Version
+    + ", file " + library.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version);
+
 // The modern API: the layout of the same month, with weeks that start on Sunday.
 MonthLayout layout = MonthLayout.Create(2023, 2, DayOfWeek.Sunday);
 Console.WriteLine("layout: " + layout.Weeks.Count + " weeks, first week "

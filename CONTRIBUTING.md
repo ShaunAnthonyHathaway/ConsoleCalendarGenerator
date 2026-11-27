@@ -54,11 +54,17 @@ None of these commands publishes anything.
 
 ## What a change must keep
 
-- **The legacy class does not change.** `CalendarGenerator.ConsoleCalendar` keeps the public API, the output
-  and the console behavior of version 1.0.0, including behavior that looks wrong, such as the constructor
-  arguments that color a different element than their name says. Tests named `Characterized1xBehavior` record
-  it. Please do not fix the code or those tests; corrections that break existing programs wait for a new major
-  version. The details are in [docs/ai-context/compatibility.md](docs/ai-context/compatibility.md).
+- **The legacy class changes only where a correction has been decided.** `CalendarGenerator.ConsoleCalendar`
+  keeps the public API of version 1.0.0 without exception, and its output and console behavior apart from a
+  short list of corrections that the next major version makes, one at a time, each with a recorded decision and
+  a test of its own. Everything else stays, including behavior that looks wrong. Tests named
+  `Characterized1xBehavior` record such behavior, and tests compare the class with the source of 1.0.0. Please
+  do not fix the code or those tests on your own; open an issue instead. The list and the rules are in
+  [docs/ai-context/compatibility.md](docs/ai-context/compatibility.md).
+- **The record of version 1.0.0 is never edited.**
+  [ConsoleCalendarGenerator.Tests/Historical](ConsoleCalendarGenerator.Tests/Historical) holds the source of
+  1.0.0 as it was published, and tests that say what it did. It is evidence of what the old version did, kept
+  with its faults on purpose. Do not format it, tidy it or correct it; a test fails if one character changes.
 - **The public API is listed in tests.** A new or changed public member fails `ModernApiTests` or
   `PublicApiTests` until the list is updated, which makes every API change a visible decision. Removing or
   changing an existing member is a breaking change.

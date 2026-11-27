@@ -1,13 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
-using CalendarGenerator;
+using ConsoleCalendarGenerator.Tests.Migration;
 
 namespace ConsoleCalendarGenerator.Tests.Support;
 
 /// <summary>
 /// Condenses a large amount of ConsoleCalendar output into one SHA-256 value, so that the output of the
 /// assembly under test can be compared with values recorded from the published 1.0.0 assembly
-/// (see Legacy/Published100BaselineTests.cs).
+/// (see Legacy/Published100BaselineTests.cs). The same code condenses the output of the frozen source of 1.0.0
+/// (see Historical/Published100DigestTests.cs), which is why it takes the implementation to run.
 /// </summary>
 internal static class BehaviorDigest
 {
@@ -28,9 +29,12 @@ internal static class BehaviorDigest
     /// Text and write sequence: every month from 1900 to 2100, the first and last supported years, a year
     /// through a "\r\n" writer, and the individual write calls of one year. The same on every platform.
     /// </summary>
-    public static string TextAndWrites()
+    public static string TextAndWrites() => TextAndWrites(LegacySubject.Library);
+
+    /// <summary>The same for either implementation of the legacy calendar.</summary>
+    public static string TextAndWrites(LegacySubject subject)
     {
-        var calendar = new ConsoleCalendar();
+        ILegacyCalendar calendar = subject.Create();
         var all = new StringBuilder();
 
         all.Append(ConsoleCapture.Run(() =>
@@ -62,18 +66,21 @@ internal static class BehaviorDigest
     /// five constructors, and the colors left behind. Only meaningful where colors can be read back
     /// (<see cref="ConsoleState.ColorsObservableOnUnixOnly"/>).
     /// </summary>
-    public static string Colors()
+    public static string Colors() => Colors(LegacySubject.Library);
+
+    /// <summary>The same for either implementation of the legacy calendar.</summary>
+    public static string Colors(LegacySubject subject)
     {
         var calendars = new[]
         {
-            new ConsoleCalendar(),
-            new ConsoleCalendar(ConsoleColor.Red),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta),
-            new ConsoleCalendar(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta, ConsoleColor.DarkYellow),
+            subject.Create(),
+            subject.Create(ConsoleColor.Red),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta),
+            subject.Create(ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Magenta, ConsoleColor.DarkYellow),
         };
         var all = new StringBuilder();
-        foreach (ConsoleCalendar calendar in calendars)
+        foreach (ILegacyCalendar calendar in calendars)
         {
             Captured captured = ConsoleCapture.Run(
                 () => calendar.GenerateYear(2024, Selection()),

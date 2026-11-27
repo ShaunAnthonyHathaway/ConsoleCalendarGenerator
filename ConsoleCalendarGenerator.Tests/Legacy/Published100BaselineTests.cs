@@ -13,15 +13,19 @@ namespace ConsoleCalendarGenerator.Tests.Legacy;
 /// PublicApiTests.
 ///
 /// The package is not downloaded by the tests and is not checked in. To record the values again, compile
-/// Support/RecordingWriter.cs, ConsoleCapture.cs, ConsoleState.cs and BehaviorDigest.cs into a console program
-/// that references the published assembly, and print the two digests. The color digest must be recorded on
-/// Linux or macOS.
+/// Support/RecordingWriter.cs, ConsoleCapture.cs, ConsoleState.cs and BehaviorDigest.cs, together with
+/// Migration/LegacySubject.cs and Historical/Published100/ConsoleCalendar.cs, which BehaviorDigest.cs needs since
+/// it takes the implementation to run, into a console program that references the published assembly, and print
+/// the two digests of LegacySubject.Library, which is then the published class. The color digest must be
+/// recorded on Linux or macOS.
+///
+/// Historical/Published100DigestTests.cs compares the frozen source of 1.0.0 with the same two values.
 /// </summary>
 [TestFixture]
 public class Published100BaselineTests
 {
-    private const string PublishedTextAndWrites = "b3de1456dc0d5094cfa787731904dc29e31b668bb8bdeaa678b20ca9a10f61ae";
-    private const string PublishedColors = "bf3d53d84ed3a6ddd7c24840a53c8dcc9c555dc734351889f6b2a0e362554a86";
+    internal const string PublishedTextAndWrites = "b3de1456dc0d5094cfa787731904dc29e31b668bb8bdeaa678b20ca9a10f61ae";
+    internal const string PublishedColors = "bf3d53d84ed3a6ddd7c24840a53c8dcc9c555dc734351889f6b2a0e362554a86";
 
     /// <summary>
     /// Every month from 1900 through 2100, the years 1 and 9999, a year through a "\r\n" writer and the

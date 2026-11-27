@@ -6,8 +6,8 @@ point to its replacement rather than deleting it.
 
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
-All decisions below date from 2026-11-27, the day the modernization was planned and its first phases, up to and
-including the Campertron parity fixtures, were merged.
+All decisions below date from 2026-11-27, the day the modernization was planned and its phases up to the 2.0
+groundwork were merged.
 
 ## Scope and compatibility
 
@@ -21,7 +21,10 @@ including the Campertron parity fixtures, were merged.
 
 ### D-02: 1.x is additive; breaking corrections wait for 2.0
 
-- **Status:** Approved. Standing rule.
+- **Status:** Superseded for 2.0 by
+  [D-56](#d-56-20-corrects-exactly-five-legacy-behaviors-and-protects-everything-else). It governed every phase
+  up to the 2.0 groundwork. No 1.x version is published ([D-55](#d-55-the-next-published-version-is-20)), so
+  there is no 1.x line left for it to protect.
 - **Decision:** Every 1.x release stays compatible with published 1.0.0. Intentional breaking corrections are
   made in 2.0.
 - **Reason:** 1.0.0 has existing users, and its behavior, defects included, is what they built on.
@@ -30,7 +33,9 @@ including the Campertron parity fixtures, were merged.
 
 ### D-03: The constructor color defect stays in 1.x
 
-- **Status:** Approved. Implemented as tests (`ConstructorColorTests`).
+- **Status:** Superseded by
+  [D-57](#d-57-constructor-arguments-color-the-element-they-are-named-for), which corrects the defect in 2.0.
+  Until that correction is implemented the tests (`ConstructorColorTests`) stay as they are.
 - **Decision:** The parameterized constructors keep assigning `TitleColor` to the weekday row, and
   `DayOfWeekColor` to the title in the four-argument form, throughout 1.x. Correcting or removing them is 2.0
   work.
@@ -50,7 +55,9 @@ including the Campertron parity fixtures, were merged.
 
 ### D-05: Assembly version is the major version only
 
-- **Status:** Approved. Implemented (`AssemblyVersion` in the library project).
+- **Status:** Approved. Implemented (`AssemblyVersion` in the library project). The step to `2.0.0.0` was made
+  in the 2.0 groundwork
+  ([D-65](#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)).
 - **Decision:** `AssemblyVersion` is `1.0.0.0` for the whole 1.x line and becomes `2.0.0.0` at 2.0. Assembly
   major versions stay aligned with package major versions; it must not remain `1.0.0.0` after 1.x. The package
   version and file version reflect the actual release, and the Source Link informational version is kept.
@@ -87,7 +94,9 @@ including the Campertron parity fixtures, were merged.
 
 ### D-09: Development builds are versioned 1.1.0-dev
 
-- **Status:** Approved. Implemented.
+- **Status:** Superseded by
+  [D-65](#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000): the development version is
+  now `2.0.0-dev`. The rule that nothing built here may be numbered 1.0.0 stands.
 - **Decision:** Packages built from the repository carry a development version, currently `1.1.0-dev`. Nothing
   built here may be numbered 1.0.0.
 - **Reason:** 1.0.0 is published; a local or CI package must never be mistaken for it or overwrite it in a cache.
@@ -96,7 +105,8 @@ including the Campertron parity fixtures, were merged.
 
 ### D-10: Package validation against 1.0.0 on every pack
 
-- **Status:** Approved. Implemented.
+- **Status:** Approved. Implemented. Confirmed for 2.0
+  ([D-66](#d-66-package-validation-stays-against-100-with-no-suppression)).
 - **Decision:** `dotnet pack` validates the package's public API against published 1.0.0, including parameter
   names, and fails on a break.
 - **Reason:** A second, independent check beside the tests, on the artifact that would actually ship.
@@ -149,6 +159,8 @@ including the Campertron parity fixtures, were merged.
   allowing a compatibility profile where exact parity with existing output is required.
 - **Reason:** 1.0.0 names the wrong month under cultures with a non-Gregorian calendar.
 - **Consequences:** The legacy class keeps its 1.0.0 behavior in 1.x. The mechanism is an open question.
+  (Later: 2.0 gives the legacy class a Gregorian title as well,
+  [D-61](#d-61-legacy-titles-name-the-gregorian-month).)
 
 ### D-16: Campertron parity targets its live renderer
 
@@ -192,7 +204,8 @@ including the Campertron parity fixtures, were merged.
 
 ### D-20: 2.0 is to be published and verified on NuGet
 
-- **Status:** Planned. **Not authorized.**
+- **Status:** Planned. **Not authorized.** How it is to be published is in
+  [D-69](#d-69-20-is-published-by-hand-from-the-validated-artifacts).
 - **Decision:** `ConsoleCalendarGenerator` 2.0 must eventually be published on NuGet and verified there.
 - **Reason:** It is the version Campertron is expected to adopt.
 - **Consequences:** Every publication step still needs its own approval under D-18. See the sequence in
@@ -660,9 +673,9 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
   another element than their name says, the month name from the current culture's own calendar, the colors
   that are reset and not restored, the mixed line ends, and the exceptions. The comments recommend the
   parameterless constructor and the setters, and point to the modern API for new code. `CS1591` is no longer
-  suppressed anywhere. No `[Obsolete]` attribute is added
-  ([Q-05](open-questions.md#q-05-when-do-legacy-members-become-obsolete)), and the comments promise nothing
-  about 2.0.
+  suppressed anywhere. No `[Obsolete]` attribute is added (then the open question Q-05, since settled by
+  [D-62](#d-62-the-legacy-class-keeps-every-signature-and-nothing-is-obsolete)), and the comments promise
+  nothing about 2.0.
 - **Reason:** A user of the legacy class sees these comments in the editor at the moment of calling it, which
   is where a wrongly named argument does its damage. Documenting the defect is not correcting it.
 - **Consequences:** The file changed in comments only; the test suite and the digests are the proof. The
@@ -730,4 +743,195 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
 - **Reason:** Shaun's decision.
 - **Consequences:** The roadmap has no 1.x release step. `master` keeps building `1.1.0-dev` with assembly
   version `1.0.0.0` and keeps the 1.x compatibility rules until the 2.0 work changes them deliberately; what
-  the version becomes, and when, belongs to the 2.0 scope audit.
+  the version becomes, and when, belongs to the 2.0 scope audit. (The 2.0 groundwork changed all three:
+  [D-56](#d-56-20-corrects-exactly-five-legacy-behaviors-and-protects-everything-else) and
+  [D-65](#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000).)
+
+## Version 2.0
+
+Decided by Shaun after the 2.0 scope and readiness audit, which was a read-only review delivered to him outside
+the repository, and recorded here in the 2.0 groundwork. The policy is set out in
+[compatibility.md](compatibility.md#policy).
+
+### D-56: 2.0 corrects exactly five legacy behaviors and protects everything else
+
+- **Status:** Approved. Standing rule for all 2.0 work. Resolves the former open question Q-08. Supersedes
+  [D-02](#d-02-1x-is-additive-breaking-corrections-wait-for-20).
+- **Decision:** Version 2.0 intentionally changes five behaviors of `CalendarGenerator.ConsoleCalendar`, D-57 to
+  D-61, and nothing else. What published 1.0.0 does stays recorded and testable. Each approved difference
+  requires a durable decision, a focused implementation pull request, a migration test, and changelog and
+  migration documentation. All behavior outside the five corrections remains protected. New breaking changes
+  that are not approved are forbidden. What the modern API renders for Campertron does not change, and
+  Campertron stays out of scope. Nothing is published before the final approval of 2.0.
+- **Reason:** 2.0 is the one version in which breaking corrections can be made
+  ([D-55](#d-55-the-next-published-version-is-20)), and each one costs existing users something. A short,
+  closed list keeps that cost known, and the four requirements make each difference deliberate, reviewable and
+  explained to the people it affects.
+- **Consequences:** The five were the first five candidates of Q-08. Its other two candidates were decided the
+  other way: the legacy class and its namespace remain
+  ([D-62](#d-62-the-legacy-class-keeps-every-signature-and-nothing-is-obsolete)), and `netstandard2.1` remains
+  ([D-64](#d-64-the-target-frameworks-stay-as-they-are-for-20)). A sixth correction needs a new decision by
+  Shaun before any code. The corrections are made one per pull request, in the order of
+  [roadmap.md](roadmap.md#remaining-sequence).
+
+### D-57: Constructor arguments color the element they are named for
+
+- **Status:** Approved. **Not implemented.** Supersedes
+  [D-03](#d-03-the-constructor-color-defect-stays-in-1x).
+- **Decision:** In the four constructors that take colors, each argument controls the role its parameter is
+  named for: `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and
+  `DayOfWeekColor` the weekday row. The parameters, their names and their order do not change.
+- **Reason:** In 1.0.0 `TitleColor` colors the weekday row, the title stays Yellow, and with four arguments
+  `DayOfWeekColor` colors the title. A caller who reads the signature gets another result than the one asked
+  for.
+- **Consequences:** A program that uses one of these constructors draws its title and its weekday row in other
+  colors after upgrading; a program that uses the parameterless constructor and the setters is unaffected. An
+  argument that is not a defined color fails when its element is first drawn, so with the element also changes
+  how much is written before that failure; the migration matrix has scenarios for it. The XML comments, the
+  README and `ConstructorColorTests` describe the 1.0.0 behavior until the pull request that implements this.
+
+### D-58: A null list throws ArgumentNullException for dates
+
+- **Status:** Approved. **Not implemented.**
+- **Decision:** `GenerateMonth(Month, Year, dates)` and `GenerateYear(Year, dates)` throw
+  `ArgumentNullException` with the parameter name `dates` when the list is null. The list is still checked
+  before the month and the year are validated.
+- **Reason:** 1.0.0 throws `NullReferenceException`, which is what a defect in a library looks like, and names
+  no parameter.
+- **Consequences:** Code that catches `NullReferenceException` around these calls no longer catches this. That
+  nothing is written first, that the caller's colors are left alone, and that a null list is reported even when
+  the month or the year is invalid as well, all stay.
+
+### D-59: The last row of a month ends with the console's line terminator
+
+- **Status:** Approved. **Not implemented.**
+- **Decision:** The final row of days of each month is ended with the console's normal line terminator instead
+  of a literal bare line feed.
+- **Reason:** In 1.0.0 every other line ends with the terminator of the console's writer. Where that is
+  `\r\n`, as on Windows, the output mixes two kinds of line end.
+- **Consequences:** Where the terminator is `\n` the text is the same as before. A program whose own writer
+  stands in for `Console.Out` sees one `WriteLine()` where it saw `Write("\n")`.
+
+### D-60: Every month is followed by exactly one blank line
+
+- **Status:** Approved. **Not implemented.**
+- **Decision:** Every month ends with exactly one blank line, including a month whose last day is a Sunday.
+- **Reason:** In 1.0.0 such a month is followed by two blank lines, because its last row is ended twice: once
+  as a full week and once as the last row.
+- **Consequences:** The output of those months, and of every year that contains one, is one line shorter.
+
+### D-61: Legacy titles name the Gregorian month
+
+- **Status:** Approved. **Not implemented.**
+- **Decision:** The title of a month drawn by the legacy class uses the Gregorian month name that corresponds
+  to the Gregorian grid, also under a culture whose default calendar is not Gregorian.
+- **Reason:** 1.0.0 looks the month number up in the current culture's own calendar, so under a culture such as
+  `fa-IR` the title names another month than the one drawn. It is the defect that
+  [D-15](#d-15-modern-titles-match-the-gregorian-grid) already corrected for the modern renderer.
+- **Consequences:** Under a culture whose calendar is Gregorian nothing changes. The correction is made inside
+  the legacy class; the modern API gets no option for it
+  ([D-45](#d-45-no-public-compatibility-profile) stands).
+
+### D-62: The legacy class keeps every signature, and nothing is obsolete
+
+- **Status:** Approved. Standing rule for 2.0. Resolves the former open question Q-05.
+- **Decision:** In 2.0 no public signature and no existing parameter name changes. The parameters of the four
+  setters, all named `TitleColor`, are not renamed. The legacy class and its namespace `CalendarGenerator` are
+  not removed. No legacy member is marked `[Obsolete]`.
+- **Reason:** Each of these would break or warn existing callers without correcting anything they can see in
+  the output. A renamed parameter breaks named arguments; `[Obsolete]` fails the build of every consumer that
+  treats warnings as errors. The README and the XML comments already recommend the modern API in words.
+- **Consequences:** The five corrections change behavior only, so package validation against 1.0.0 passes
+  without any exception ([D-66](#d-66-package-validation-stays-against-100-with-no-suppression)). The sample
+  program that accompanied 1.0.0 keeps compiling unchanged.
+
+### D-63: The modern API is unchanged for 2.0 and renders single months
+
+- **Status:** Approved. Standing rule for 2.0. Closes the former open question Q-02 as deferred.
+- **Decision:** The complete modern API stays as it is for 2.0: nothing is added, removed or changed. There is
+  no modern whole-year rendering (`RenderYear`). It is deferred until a consumer provides evidence that it is
+  wanted.
+- **Reason:** A year view brings layout choices, stacked or side by side, that no consumer has asked for;
+  Campertron does not render years. Adding features on speculation is not part of 2.0.
+- **Consequences:** `ModernApiTests` and the Campertron parity fixtures stay exactly as they are through the
+  2.0 work. The legacy `GenerateYear` still draws twelve months.
+
+### D-64: The target frameworks stay as they are for 2.0
+
+- **Status:** Approved. Resolves Q-13, the number this question was given when the 2.0 scope was decided; in
+  [open-questions.md](open-questions.md) it had been one of the candidates of Q-08.
+- **Decision:** The library targets `net10.0;netstandard2.1`, the example `net10.0` and the tests `net11.0`,
+  as in [D-06](#d-06-the-library-targets-net100-and-netstandard21) to
+  [D-08](#d-08-the-tests-target-net110-and-use-nunit). `netstandard2.1` is retained for 2.0.
+- **Reason:** `netstandard2.1` is the only build 1.0.0 has, so keeping it lets every existing consumer upgrade.
+- **Consequences:** The package keeps both builds, and the tests keep running against both.
+
+### D-65: The repository builds 2.0.0-dev, with assembly and file version 2.0.0.0
+
+- **Status:** Approved. Implemented in the 2.0 groundwork. Supersedes
+  [D-09](#d-09-development-builds-are-versioned-110-dev) and carries out
+  [D-05](#d-05-assembly-version-is-the-major-version-only).
+- **Decision:** Packages built from the repository are versioned `2.0.0-dev`. `AssemblyVersion` and
+  `FileVersion` are `2.0.0.0`. The informational version keeps carrying the development version and the commit.
+  No prerelease is published, and the final version number is not set until the release is prepared.
+- **Reason:** The next published version is 2.0, and it corrects behavior, so an assembly from this repository
+  must not present itself as version 1 of anything. Making the change before the first correction means no
+  build ever combines 2.0 behavior with a 1.x identity.
+- **Consequences:** `VersionIdentityTests`, `eng/verify-package.sh` and the consumer smoke tests require this
+  identity, on both builds of the library. Removing the suffix is part of the approved release and of nothing
+  else.
+
+### D-66: Package validation stays against 1.0.0, with no suppression
+
+- **Status:** Approved. Implemented by changing nothing.
+- **Decision:** Every pack keeps validating the public API against published 1.0.0, parameter names included.
+  No suppression file is added and no rule is turned off.
+- **Reason:** 2.0 breaks behavior, never a signature, so the comparison with 1.0.0 has nothing to excuse. It
+  was the open point of the planned 2.0 sequence, which expected the baseline to need reconsidering.
+- **Consequences:** Checked in a scratch copy when this was decided: with the 2.0 version identity the pack
+  passes; a removed public member and a renamed parameter each still fail it; and all five corrections applied
+  together pass it. `VersionIdentityTests` fails if validation is turned off, pointed at another baseline or
+  given a suppression. The baseline is raised only after a newer version has been published and is meant to
+  become the baseline.
+
+### D-67: 1.0.0 is kept as a frozen source, and differences are shown by migration tests
+
+- **Status:** Approved. Implemented in the 2.0 groundwork.
+- **Decision:** The behavior of 1.0.0 is preserved as frozen historical test evidence: the source of the class
+  as published, compiled into the test assembly under its own namespace and never edited, with tests that say
+  what it did. Explicit migration tests show the approved differences. The corrected library is not required to
+  satisfy an assertion that intentionally pins a 1.0.0 defect. Every other test stays: the modern API, the
+  Campertron parity, the package, the documentation, the consumer smoke tests and Native AOT.
+- **Reason:** Once the library is corrected, it can no longer be its own record of what 1.0.0 did. A source
+  that is frozen and checked byte for byte can, with no dependency on the network, on the published package or
+  on a committed binary.
+- **Consequences:** The frozen source is the published one, Git blob `02b3c1c` of commit `93f2d5d`, not the
+  slightly later one at commit `64995b6`; the published assembly shows which it was built from. Details are in
+  [testing.md](testing.md#the-frozen-source-of-100). A correction is "marked" by giving it a function in
+  `Migration/ApprovedCorrection.cs`, after which the library is compared with 1.0.0 plus that correction.
+
+### D-68: The published README of 2.0 links to the tag v2.0.0
+
+- **Status:** Approved. **Not implemented:** the tag does not exist. Resolves the former open question Q-10.
+- **Decision:** In the README that is packed into the 2.0 package, the links whose target must not change
+  after the release, the image and the links to files of the repository, use the immutable tag `v2.0.0`
+  instead of the `master` branch.
+- **Reason:** nuget.org shows the README inside each version for as long as that version exists. A link to
+  `master` would show the newest image and the newest files on the page of an old version, or nothing once a
+  file is moved.
+- **Consequences:** The links change in the change that prepares the release and not before, because until the
+  tag exists they would point at nothing. `eng/verify-package.sh` and `DocumentationLinkTests`, which require
+  `master` today, change with them. Creating the tag needs its own approval
+  ([D-18](#d-18-publication-requires-explicit-approval-every-time)).
+
+### D-69: 2.0 is published by hand, from the validated artifacts
+
+- **Status:** Approved as the direction. **Nothing is authorized.**
+- **Decision:** Publication will be a manual push of the exact artifacts that were validated, after Shaun's
+  separate approval. No tag, release or NuGet publication is authorized now, and no repository setting is
+  changed for it now.
+- **Reason:** What is published should be, bit for bit, what was checked.
+- **Consequences:** There is still no publication workflow, and none is added without a phase scoped for it.
+  How the push is authenticated, and whether 1.0.0 is deprecated afterwards, are decisions of the release
+  phase ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated),
+  [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).

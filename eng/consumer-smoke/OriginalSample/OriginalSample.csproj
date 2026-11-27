@@ -2,8 +2,9 @@
 
   <!--
     Program.cs is the sample program that accompanied ConsoleCalendarGenerator 1.0.0, byte for byte. It must
-    keep compiling against every later 1.x package without being edited. eng/consumer-smoke.sh builds it; it is
-    not run, because it waits for key presses.
+    keep compiling against every later package, 2.0 included, without being edited: no public signature and no
+    parameter name of the legacy class changes. eng/consumer-smoke.sh builds it; it is not run, because it waits
+    for key presses.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

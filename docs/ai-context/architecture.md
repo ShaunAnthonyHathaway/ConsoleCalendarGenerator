@@ -22,26 +22,35 @@ built. Do not treat anything in the second part as existing code unless it says 
 
 The assembly has two public namespaces. `CalendarGenerator` holds the legacy class and nothing else.
 `ConsoleCalendarGenerator`, which matches the assembly and the package, holds the modern API: the layout model,
-text rendering, day states, the theme and output. The legacy class and the modern API do not use each other.
+text rendering, day states, the theme and output. The legacy class uses one piece of the modern API, the layout
+model; the modern API uses nothing of the legacy class.
 
 ### The legacy class
 
 `CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface and the
 behavior that must be preserved are in [compatibility.md](compatibility.md).
 
-How it works:
+It is a compatibility facade. Its public members are the published ones; what is behind them was rebuilt so
+that the library has a single place that decides where a day goes.
 
 - **State.** Four `ConsoleColor` values: title, weekday row, dates, selected dates. Five constructors set them;
   four getter/setter pairs read and change them. Instances are mutable and not thread-safe.
-- **`GenerateMonth(Month, Year[, dates])`.** Collects the days of that month that appear in `dates`, then writes
-  directly to the console: the title line (the month name from `CultureInfo.CurrentCulture`, then the year), the
-  fixed weekday row `Mo Tu We Th Fr Sa Su`, and one `Console.Write` per day cell. Before each write it sets
-  `Console.ForegroundColor`; it calls `Console.ResetColor()` after the title, after the weekday row and at the
-  end.
+- **`GenerateMonth(Month, Year[, dates])`.** Reads `dates` to find the selected days, lets the runtime check the
+  month and the year (`DateTime.DaysInMonth`), creates `MonthLayout.Create(Year, Month, DayOfWeek.Monday)`, and
+  then writes directly to the console: the title line, the fixed weekday row, and one call per cell of the
+  layout, walking its weeks and cells in order.
 - **`GenerateYear(Year[, dates])`.** Calls `GenerateMonth` for months 1 through 12.
-- **Private helpers.** `SetColor`, `GetSpaces` (title indent), `GetNextShortDay` (weekday cycling).
+- **From the modern API:** `MonthLayout` only, for the column and the row of every day. The class no longer has
+  a grid algorithm of its own: the loop that cycled through two-letter weekday names (`GetNextShortDay`) and
+  its `Started` flag are gone.
+- **Kept private in the class, deliberately:** the title (month name from the current culture's own calendar,
+  three-step indent, the year appended), the weekday row, which console method is called for each cell and
+  with which text, the color set before every call, the three `Console.ResetColor()` calls, the bare `\n`
+  after the last day, and the order in which invalid arguments fail. The modern renderer, theme and writers
+  are not used, because each of them deliberately behaves differently; see
+  [compatibility.md](compatibility.md#how-the-legacy-class-is-built).
 
-Consequences of this design that the planned work exists to remove:
+What the legacy API cannot do, and the modern API exists for:
 
 - Nothing is returned. The only output is what reaches the live console.
 - Text goes through `Console.Out`, but colors are set on the console itself, so replacing `Console.Out` captures
@@ -94,8 +103,8 @@ Invalid arguments throw `ArgumentOutOfRangeException` naming the parameter, chec
 first day of the week, before anything is built. Equality is reference equality; nothing overrides `Equals`. The
 reasons for these choices are in [decisions.md](decisions.md#layout-model).
 
-The legacy class always starts weeks on Monday and does not use the layout model. It will only when it becomes a
-facade, after the rendering layers exist and can be shown to reproduce its output.
+The legacy class is a consumer of the layout model: it asks for the layout with weeks from Monday and draws
+each cell its own way.
 
 ### Text rendering
 
@@ -324,8 +333,9 @@ that: they compare layouts with hand-written grids and with an independent refer
 January 0001 through December 9999. The rendering tests compare rendered months with hand-written text and
 segment lists, and with the layout for every month from 1900 through 2100. The state, theme and writer tests
 do the same for marked months and colors; the console writer is observed through a recording `Console.Out`,
-through a child process with redirected output, and on a pseudo-terminal. The project can be built against
-either library build. Details: [testing.md](testing.md).
+through a child process with redirected output, and on a pseudo-terminal. The facade tests compare every call
+the legacy class makes with a record of the original implementation, and its grid with the layout. The project
+can be built against either library build. Details: [testing.md](testing.md).
 
 ### Build, package and CI
 
@@ -347,13 +357,13 @@ both writers and the legacy class. It proves which library build each kind of co
 
 ## Approved direction
 
-Every layer in the table exists, for a single month: see the sections above. What is still planned is the last
-step, turning the legacy class into a facade over them, and the open questions in
+Every layer in the table exists, for a single month: see the sections above. The legacy class has been rebuilt
+as a facade ([The legacy class](#the-legacy-class)). What remains is in [roadmap.md](roadmap.md) and
 [open-questions.md](open-questions.md).
 
-New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays and becomes
-a facade over the new code. That has **not** been done: the legacy class is still the published 1.0.0
-implementation.
+New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays as the
+compatibility API. It shares the layout with the modern API and nothing else, because everything else it does
+is a published behavior that the modern layers deliberately do not have.
 
 | Layer | Responsibility | Touches the live console | Status |
 |---|---|---|---|

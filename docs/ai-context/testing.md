@@ -2,10 +2,11 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **823 tests**: 153 characterization tests of the legacy API, 184 tests of
-the layout model, 275 tests of text rendering, 98 tests of day states and markers, 52 tests of the theme, 58
-tests of the writers, 2 tests of the modern public surface and 1 test about the build setup. It targets
-`net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and Microsoft.NET.Test.Sdk 18.12.0.
+`ConsoleCalendarGenerator.Tests` holds **848 tests**: 153 characterization tests of the legacy API, 25 tests of
+the legacy class as a facade, 184 tests of the layout model, 275 tests of text rendering, 98 tests of day states
+and markers, 52 tests of the theme, 58 tests of the writers, 2 tests of the modern public surface and 1 test
+about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
+Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
 
@@ -15,6 +16,10 @@ definition of "unchanged" for the whole 1.x line. See [compatibility.md](compati
 
 A test whose name contains `Characterized1xBehavior` pins down something that is not the intended design. Do not
 correct it.
+
+The facade tests in `Facade/` are characterization tests as well. They were added when the class was rebuilt on
+`MonthLayout`, they describe the same published behavior more closely, and every one of them also passes against
+the original 1.0.0 implementation.
 
 The tests of the modern API (layout, rendering, states, themes, output) are ordinary specification tests: they
 say what the modern API must do, and a failure there means the code is wrong.
@@ -36,6 +41,9 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Legacy/RedirectedOutputTests` | 4 | The real console streams, through a child process |
 | `Legacy/TerminalTests` | 3 | Color on a terminal (`Terminal` category) |
 | `Legacy/Published100BaselineTests` | 2 | Digests recorded from the published 1.0.0 assembly |
+| `Facade/PreFacadeBaselineTests` | 2 | Digests of every call on the console's writer, and of the color of every call, recorded from the original implementation |
+| `Facade/FacadeLayoutTests` | 6 | That the legacy class draws every day where `MonthLayout` puts it |
+| `Facade/FacadeCompatibilityTests` | 17 | The places where the legacy class must stay different from the modern API: the runtime's own exception, colors reset and failing late, the bare line feed, no marker, the culture's own calendar, and no lock |
 | `Layout/FirstDayOfWeekTests` | 53 | The weekday of each column and where the 1st and the last day land, for each of the seven first days of the week, with hand-written grids |
 | `Layout/MonthShapeTests` | 77 | Month lengths, leap years, four, five and six weeks, January 0001 and December 9999, and the step from each month to the next |
 | `Layout/ExhaustiveLayoutTests` | 20 | Every layout against an independent reference and against the layout rules: 1900 through 2100, and all 839,916 layouts there are |
@@ -92,14 +100,16 @@ say what the modern API must do, and a failure there means the code is wrong.
   `ConsoleMonthWriter`, and its plain text. `Program.cs` has one command for the legacy scenario and one for
   this one.
 - `TerminalOutput`: recognizes and removes escape sequences, for the modern terminal tests.
+- `CallRecordingWriter`: like `RecordingWriter`, but it also records which method was called for each write
+  (`Write(string)`, `Write(int)`, `WriteLine()`, `WriteLine(string)`), which a caller's own writer can tell apart.
 
 ### What a run executes
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 814 pass | 3 Windows-only | 6 pass |
-| macOS | 814 pass | 3 Windows-only | not part of CI |
-| Windows | 767 pass | 50 that need Linux or macOS | not part of CI |
+| Linux | 839 pass | 3 Windows-only | 6 pass |
+| macOS | 839 pass | 3 Windows-only | not part of CI |
+| Windows | 790 pass | 52 that need Linux or macOS | not part of CI |
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -127,9 +137,9 @@ cultures built in the test.
 
 ### Platform-specific tests
 
-- **Linux and macOS only (50):** 47 tests that read console colors back (25 legacy; 1 each that check the
-  layout, the renderer and the plain writer leave the colors alone; 19 for the console writer's colors and
-  their restoration), and 3 that assert line-feed-only output (2 legacy, 1 for the console writer).
+- **Linux and macOS only (52):** 49 tests that read console colors back (25 legacy; 2 for the facade; 1 each
+  that check the layout, the renderer and the plain writer leave the colors alone; 19 for the console writer's
+  colors and their restoration), and 3 that assert line-feed-only output (2 legacy, 1 for the console writer).
   On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
@@ -160,6 +170,24 @@ tests and is not checked in. The test file says exactly how the values were reco
 
 Do not regenerate these values from the repository's own source. If they stop matching, the library's behavior
 changed.
+
+### The pre-facade digests
+
+`Facade/PreFacadeBaselineTests` compares two more SHA-256 values, recorded by running the code in that file
+against the legacy class at commit `64995b6`, the last one with the original 1.0.0 implementation. They look
+closer than the published digests and cover more:
+
+- For every write they record which method of the console's writer was called. The original writes a two-digit
+  day in the Monday column with `Console.Write(int)` and everything else with strings; the published digests
+  cannot tell those apart.
+- They cover selected dates in many patterns, month names of every length, both line terminators, all five
+  constructors, setters, undefined colors in each of the four places, and invalid months, years and lists in
+  combination, with the type of each exception.
+- One value covers the calls and is the same on every system. The other covers the color of every call and is
+  only checked where colors can be read back.
+
+They use the invariant culture and cultures built in the test only. Like the published digests, they are not to
+be recorded again from the current source.
 
 ### Other compatibility layers
 
@@ -197,6 +225,24 @@ that are not copied; collections handed out as arrays or lists; a different defa
 final line terminator; any line terminator accepted; and a write to the console. One change cannot be seen on
 Linux and is left to the Windows job: a default text that uses the platform's line terminator.
 
+When the legacy class was rebuilt as a facade, the original and the new implementation were also compared side
+by side, outside the suite. One scratch program was built against each and run over 12,986 scenarios: every
+year from 1 through 9999; every culture of the runtime (907) as the current culture; 1,500 pseudo-random
+selections with duplicates, times of day, kinds and dates elsewhere; every constructor and setter with every
+color; undefined colors in every place; and every combination of invalid month, year and list through every
+method. It recorded every call, the color of every call, the colors left behind, and each exception with its
+type, parameter name and message. The two records were identical. The same program drew to a pseudo-terminal,
+to a pipe, to a pipe with the runtime's color opt-in, to a dumb terminal and with `NO_COLOR`; the bytes that
+arrived were identical each time, escape sequences included. The scratch program is not in the repository.
+
+For the facade, 29 deliberate changes were then applied to a scratch copy, four of them to `MonthLayout`. The
+four layout changes failed the legacy tests as well as the layout tests, which is the evidence that the legacy
+class really takes its grid from the layout. Of the changes to the facade itself, one cannot be observed with
+any real culture (reading the month name before setting the title color instead of after). Two were not noticed
+at first and led to new tests: using the modern validation instead of the runtime's, which keeps the exception
+type but changes its parameter name and message, and a lock around a month. Every other change failed the suite,
+several of them only because of the new facade tests, among them a two-digit Monday written as a string.
+
 The state, theme and writer tests were checked the same way: 52 deliberate changes to a scratch copy, each of
 which failed the suite. Among them: the last entry winning instead of the first; a date matched without its year
 or its month; a time of day that shifts the date; the marker after the number; the fit not checked, checked for
@@ -210,7 +256,7 @@ lock around a month; and the theme ignored.
 
 ## Rules for adding tests
 
-- **Never weaken a legacy test** to make a change pass. A failing characterization test means the behavior
+- **Never weaken a legacy or facade test** to make a change pass. A failing characterization test means the behavior
   changed.
 - **New behavior gets new tests** in a new folder beside `Legacy/`. Leave `Legacy/` for the legacy class.
 - **Write expected output explicitly.** Use `Golden.Lines` or concatenated string literals with `\n`. Do not use
@@ -231,16 +277,6 @@ lock around a month; and the theme ignored.
 ## Planned tests
 
 Nothing in this section exists yet.
-
-### Legacy facade
-
-- When the legacy class becomes a facade, every test in `Legacy/` must pass without being edited, on both
-  library builds, including the two digests recorded from the published 1.0.0 assembly. That is the acceptance
-  test for that phase.
-- The modern tests must keep passing unchanged too: the facade is a consumer of the modern API, not a reason to
-  change it. If the facade needs something the modern API lacks, that is a design question for Shaun, not a
-  quiet addition.
-- `LayoutPicture` and `Rendered` are for reading results and must not turn into a second renderer.
 
 ### Campertron parity fixtures
 

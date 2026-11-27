@@ -7,7 +7,7 @@ point to its replacement rather than deleting it.
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
 All decisions below date from 2026-11-27, the day the modernization was planned and its first phases, up to and
-including day states, the theme and output, were merged.
+including the legacy facade, were merged.
 
 ## Scope and compatibility
 
@@ -41,6 +41,7 @@ including day states, the theme and output, were merged.
 ### D-04: The legacy API stays; new API gets its own namespace
 
 - **Status:** Approved. In use since the layout model ([D-25](#d-25-the-layout-model-is-three-small-sealed-classes)).
+  The legacy class became a facade in [D-44](#d-44-the-legacy-class-shares-the-layout-and-nothing-else).
 - **Decision:** `CalendarGenerator.ConsoleCalendar` remains the compatibility API. The modern API will live in
   the `ConsoleCalendarGenerator` namespace, which matches the package ID and the assembly name.
 - **Reason:** The published namespace cannot change in 1.x, and the new API should not inherit the mismatch.
@@ -421,8 +422,10 @@ listed in [architecture.md](architecture.md#text-rendering).
 
 ## States, themes and output
 
-Settled in the states, themes and output phase, within the authority Shaun gave that phase. The API and the
-contracts are listed in [architecture.md](architecture.md#day-states-and-markers).
+Settled in the states, themes and output phase, within the authority Shaun gave that phase, and accepted by him
+when he reviewed it, including that a repeated `WithStateColor` replaces (D-41) and that color restoration is
+not verified on Windows (D-43). The API and the contracts are listed in
+[architecture.md](architecture.md#day-states-and-markers).
 
 ### D-38: A day state is a name and a visible marker
 
@@ -521,3 +524,51 @@ contracts are listed in [architecture.md](architecture.md#day-states-and-markers
 - **Consequences:** The lock covers this writer only; it cannot coordinate with other code that writes to the
   console. Colors cannot be read back on a Windows test host without a console, so restoration is asserted on
   Linux and macOS only. Nothing is transactional: text written before a failure stays written.
+
+## Legacy facade
+
+Settled in the legacy facade phase, within the authority Shaun gave that phase. How each published behavior is
+kept is listed in [compatibility.md](compatibility.md#how-the-legacy-class-is-built).
+
+### D-44: The legacy class shares the layout and nothing else
+
+- **Status:** Approved. Implemented.
+- **Decision:** `CalendarGenerator.ConsoleCalendar` takes the column and the row of every day from
+  `MonthLayout.Create(Year, Month, DayOfWeek.Monday)`. Its own grid algorithm is removed. Everything else it
+  does stays in private code inside the class: the title, the weekday row, each console call and its color, the
+  resets, the line endings and the order of failures. It does not use `MonthRenderer`, `DayState`,
+  `CalendarTheme`, `MonthWriter` or `ConsoleMonthWriter`.
+- **Reason:** The grid is the one part where the legacy class and the modern API must agree and where two
+  implementations could drift. Every other legacy behavior is something the modern layers deliberately do
+  differently: a Gregorian title, visible markers, early rejection of undefined colors, restored colors, whole
+  segments, one line terminator, a lock. Routing the legacy output through them would mean either changing
+  published behavior or adding legacy switches to the modern API. The month and the year are still checked by
+  `DateTime.DaysInMonth`, so that the exception a caller receives is the runtime's own, as in 1.0.0.
+- **Consequences:** A defect in `MonthLayout` now shows in the legacy output as well, and both the modern and
+  the legacy tests catch it. A change to how the modern API renders or writes cannot change the legacy class.
+  The class stays the place to read when a legacy behavior is in doubt.
+
+### D-45: No public compatibility profile
+
+- **Status:** Approved. Implemented by adding nothing. Resolves the former open question Q-06.
+- **Decision:** The modern API has no option, overload or type whose purpose is to reproduce legacy output. The
+  legacy title, with the month name from the culture's own calendar, exists only inside the facade.
+- **Reason:** The facade reproduces 1.0.0 exactly without any such option, so the only known user of one would
+  have been the facade itself. A profile would have put a published defect into the modern surface for good.
+- **Consequences:** The modern title stays Gregorian in every case
+  ([D-33](#d-33-the-culture-supplies-language-only)). Campertron's current title also follows the culture's own
+  calendar, so under a culture such as `fa-IR` or `th-TH` the package's title differs from Campertron's today,
+  on purpose. Whether that matters to Campertron is for the parity fixtures to show and for the Campertron
+  project to decide; a caller that wants a particular title can already supply it as quoted text
+  ([D-34](#d-34-the-title-is-a-date-format-string-a-suffix-and-an-alignment)).
+
+### D-46: The original implementation is recorded call by call
+
+- **Status:** Approved. Implemented as tests (`Facade/PreFacadeBaselineTests`).
+- **Decision:** Two digests recorded from the class at commit `64995b6`, the last with the original 1.0.0
+  implementation, are part of the suite: every call on the console's writer with its method and text, and the
+  color of every call. They are not to be recorded again from current code.
+- **Reason:** The digests recorded from the published assembly do not distinguish `Write(int)` from
+  `Write(string)`, which a caller's own writer can, and cover fewer cases. Rebuilding the class needed a record
+  that would notice such a change, and later changes to the class need the same.
+- **Consequences:** These digests, like the published ones, define "unchanged" for the legacy class.

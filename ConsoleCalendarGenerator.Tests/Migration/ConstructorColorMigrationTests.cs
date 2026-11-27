@@ -18,6 +18,11 @@ namespace ConsoleCalendarGenerator.Tests.Migration;
 /// The 1.0.0 side of every comparison is in Historical/Published100ConstructorTests.cs on its own, and the 2.0
 /// side in Legacy/ConstructorColorTests.cs.
 /// </para>
+/// <para>
+/// Version 2.0 has corrected other things since: the exception for a null list and how a month ends. So that
+/// these tests keep saying what they said, the 1.0.0 side is 1.0.0 with those later corrections applied; what
+/// is compared is still this correction and nothing else. No test here was changed for them.
+/// </para>
 /// </summary>
 [TestFixture]
 public class ConstructorColorMigrationTests
@@ -47,7 +52,13 @@ public class ConstructorColorMigrationTests
         BackgroundBefore = ConsoleColor.DarkBlue,
     };
 
-    private static LegacyObservation In100(LegacyScenario scenario) => LegacyObservation.Of(LegacySubject.Published100, scenario, CultureOf(scenario));
+    /// <summary>
+    /// What 1.0.0 did in a scenario, with the corrections made after this one applied (the exception for a null
+    /// list, the end of a month), so that what is left to differ from the library is the constructor colors
+    /// alone. The constructors themselves are the frozen ones of 1.0.0.
+    /// </summary>
+    private static LegacyObservation In100(LegacyScenario scenario) =>
+        ApprovedCorrection.ExpectedWithout(new[] { ApprovedCorrection.ConstructorColors }, scenario, CultureOf(scenario));
 
     private static LegacyObservation In20(LegacyScenario scenario) => LegacyObservation.Of(LegacySubject.Library, scenario, CultureOf(scenario));
 

@@ -836,21 +836,42 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-59: The last row of a month ends with the console's line terminator
 
-- **Status:** Approved. **Not implemented.**
+- **Status:** Approved. **Implemented** (pull request #16), together with D-60, as Shaun approved: both change
+  the same few calls at the end of a month.
 - **Decision:** The final row of days of each month is ended with the console's normal line terminator instead
-  of a literal bare line feed.
+  of a literal bare line feed. Every line of a month is ended through `Console.WriteLine`, so with the newline
+  of the writer that is `Console.Out` at that moment, not with `Environment.NewLine` and not with any fixed
+  text.
 - **Reason:** In 1.0.0 every other line ends with the terminator of the console's writer. Where that is
   `\r\n`, as on Windows, the output mixes two kinds of line end.
-- **Consequences:** Where the terminator is `\n` the text is the same as before. A program whose own writer
-  stands in for `Console.Out` sees one `WriteLine()` where it saw `Write("\n")`.
+- **Consequences:** Where the terminator is `\n` the text is the same as before. On Windows the output no longer
+  mixes LF and CRLF. A program whose own writer stands in for `Console.Out` sees one `WriteLine()` where it saw
+  `Write("\n")`: the call is made another way, in the same place and in the same color, and the number of
+  calls is the same.
+- **The exact calls.** A month ends: the last day, `WriteLine()` for its row, `WriteLine()` for the blank line.
+  In 1.0.0 it ended: the last day, `Write("\n")`, `WriteLine()`. Both line ends are made in the color of the
+  last day, as before; no color is set or reset for them, and the `Console.ResetColor()` that ends the month
+  still follows them.
 
 ### D-60: Every month is followed by exactly one blank line
 
-- **Status:** Approved. **Not implemented.**
+- **Status:** Approved. **Implemented** (pull request #16), together with D-59.
 - **Decision:** Every month ends with exactly one blank line, including a month whose last day is a Sunday.
+  `GenerateYear` stays twelve `GenerateMonth` calls, so a year has one blank line after each month, December
+  included, and nothing is added for the year.
 - **Reason:** In 1.0.0 such a month is followed by two blank lines, because its last row is ended twice: once
   as a full week and once as the last row.
-- **Consequences:** The output of those months, and of every year that contains one, is one line shorter.
+- **Consequences:** The output of those months, and of every year that contains one, is one line shorter for
+  each: one `WriteLine()` call fewer. Of the 2,412 months from 1900 through 2100, 345 end on a Sunday. Nothing
+  changes for a month that ends on any other day beyond what D-59 changes.
+- **How the two are implemented:** two lines of the loop that walks the cells. A row is ended once, after its
+  Sunday or after the last day, whichever comes; then one more line end is the blank line.
+- **How the two are tested:** in the migration tests each is a change of the calls 1.0.0 made, and nothing
+  looser (`Migration/MonthEnd.cs`): for D-59, every call that wrote the literal line feed becomes a call that
+  ends the line; for D-60, where three line ends then follow each other, one is removed. The result must be
+  the calls the library makes, one by one, with their colors. A literal line feed anywhere else, or more blank
+  lines than 1.0.0 ever wrote, is refused and not tidied. The recorded digests that cover the text of months
+  were handled as [D-71](#d-71-a-recorded-digest-is-never-bent-to-let-a-correction-through) requires.
 
 ### D-61: Legacy titles name the Gregorian month
 
@@ -973,8 +994,8 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 - **Status:** Approved by Shaun when he reviewed the groundwork. Implemented in `eng/consumer-smoke.sh`.
 - **Decision:** There is one exact scenario for running the sample program that accompanied 1.0.0: the program,
   the command, the pseudo-terminal, the settings, the culture and the four key presses are fixed, and what is
-  captured is defined. The criterion is the program's text, compared with the file
-  `eng/consumer-smoke/OriginalSample/expected-text.txt`. The raw bytes a terminal receives are compared
+  captured is defined. The criterion is the program's text, compared with the expected text kept in
+  `eng/consumer-smoke/OriginalSample/`. The raw bytes a terminal receives are compared
   between two runs on the same machine and never with a recorded number. No byte count is a release criterion.
 - **Reason:** Two earlier reports gave 21,742 and 21,738 bytes for the same program and the same library, and
   neither said what input the terminal was given. A count that depends on unrecorded conditions proves nothing.
@@ -985,8 +1006,12 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   the scenario with the package, with the published 1.0.0, and with the program compiled against 1.0.0 running
   the new library unrebuilt; Shaun confirmed, reviewing the constructor colors, that this stays automated
   (`--published-sample` in the Linux smoke step). The raw terminal bytes may differ from the published 1.0.0
-  where a correction deliberately changes a color sequence, and nowhere else. When a later correction changes the text, the file is split into what 1.0.0
-  writes and what 2.0 writes, in that pull request.
+  where a correction deliberately changes them, and nowhere else: color sequences (D-57) and the second blank
+  line after a month that ends on a Sunday (D-60).
+- **Two expected texts since D-60.** `expected-text-1.0.0.txt` is what the program writes with the published
+  1.0.0, recorded from it, historical and never changed. `expected-text-2.0.txt` is what it writes with 2.0.
+  They differ by the second blank line after the six months the program draws that end on a Sunday, and the
+  script and the tests both check that this is the whole difference.
 
 ### D-71: A recorded digest is never bent to let a correction through
 
@@ -1006,5 +1031,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   comparison of the library with the frozen source scenario by scenario, in the text that the value is a hash
   of: all 100 scenarios must be identical, except that the 18 that pass a null list end with
   `ArgumentNullException` where 1.0.0 ended with `NullReferenceException`. The other three library-side digests
-  do not cover the exception and are still reproduced. The line terminator and the blank line change the text
-  of every month, so all remaining library-side hashes go the same way in that pull request.
+  do not cover the exception and were still reproduced then. The line terminator and the blank line change
+  the text and the calls of every month, so with them the last library-side hash comparisons went the same
+  way: the library is compared with the frozen source write by write and scenario by scenario, over
+  everything the four values cover, with the two differences of `Migration/MonthEnd.cs` applied to what 1.0.0
+  wrote. No recorded value is compared with the library any more; all four stay asserted against the frozen
+  source.

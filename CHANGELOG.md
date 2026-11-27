@@ -61,6 +61,17 @@ behavior. The public API of the class does not change, so programs compile and l
   - A program that catches `NullReferenceException` around these calls no longer catches this. Catch
     `ArgumentNullException`, or pass an empty list, which selects no dates.
   - Nothing changes for a list that is not `null`.
+- **Legacy output uses the console writer's line terminator for every line.** The last row of days of a month
+  now ends with it, like every other line. In 1.0.0 that row ended with a bare line feed whatever the
+  terminator was.
+  - On Windows, where the terminator is CRLF, the output no longer mixes LF and CRLF.
+  - Where the terminator is a line feed, as on Linux and macOS, the text is unchanged.
+  - A program that replaces `Console.Out` with a writer of its own sees `WriteLine()` where it saw
+    `Write("\n")`.
+- **Every generated month ends with exactly one blank line.** In 1.0.0 a month whose last day is a Sunday was
+  followed by two.
+  - Such a month is one line shorter, and so is the output of `GenerateYear` for each such month in the year.
+  - A program that counts lines or compares the output with stored text has to allow for it.
 
 ### Compatibility
 

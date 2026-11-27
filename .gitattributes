@@ -68,7 +68,8 @@
 *.sh text eol=lf
 
 ###############################################################################
-# What the sample program of 1.0.0 writes, compared byte for byte by
-# eng/consumer-smoke.sh. It has form feeds in it and must keep LF line endings.
+# What the sample program of 1.0.0 writes with 1.0.0 and with 2.0, compared byte
+# for byte by eng/consumer-smoke.sh. The files have form feeds in them and must
+# keep LF line endings.
 ###############################################################################
-eng/consumer-smoke/OriginalSample/expected-text.txt text eol=lf
+eng/consumer-smoke/OriginalSample/expected-text-*.txt text eol=lf

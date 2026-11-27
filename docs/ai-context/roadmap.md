@@ -26,7 +26,8 @@ phase's pull request is #2.
 | 2.0 scope and readiness audit | Read-only review of where the project stood, what 2.0 should contain and what a release needs. Delivered to Shaun outside the repository; what he approved of it is recorded as D-56 to D-69. | none | none |
 | 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | `09ffd05` |
 | Constructor colors (D-57) | The first runtime change of 2.0: in the four constructors that take colors, each argument colors the element it is named for. Only the assignments and the comments of those constructors changed in the library. The migration tests recognize exactly that difference from 1.0.0; the 1.0.0 behavior stays recorded against the frozen source. Also defined one exact scenario for running the original sample, and a check that a program compiled against 1.0.0 runs with the new library unrebuilt. | #14 | `fcc6d5c` |
-| Null list (D-58) | The second runtime change of 2.0: the two methods that take a list throw `ArgumentNullException` for `dates` when it is null, where 1.0.0 threw `NullReferenceException`. Still first, with nothing written and nothing touched. Only a null check in each of the two methods and their comments changed in the library. The migration tests recognize exactly that difference; the one recorded digest that covers null lists became an explicit comparison with the frozen source. | #15 | see `git log` |
+| Null list (D-58) | The second runtime change of 2.0: the two methods that take a list throw `ArgumentNullException` for `dates` when it is null, where 1.0.0 threw `NullReferenceException`. Still first, with nothing written and nothing touched. Only a null check in each of the two methods and their comments changed in the library. The migration tests recognize exactly that difference; the one recorded digest that covers null lists became an explicit comparison with the frozen source. | #15 | `042c3bc` |
+| Line terminator and blank line (D-59, D-60) | The third and fourth runtime changes of 2.0, in one pull request because both change the same calls at the end of a month: the last row of days ends with the console's line terminator, where 1.0.0 wrote a literal line feed, and every month is followed by exactly one blank line, where 1.0.0 wrote two after a month ending on a Sunday. Two lines of the library. The first corrections that change text: the remaining library-side digest comparisons became explicit comparisons with the frozen source, and the original sample has an expected text for each version. | #16 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 behavior of the legacy class was unchanged in every phase before the constructor colors.
@@ -36,27 +37,22 @@ behavior of the legacy class was unchanged in every phase before the constructor
 The 2.0 implementation sequence, in this order. Each item is one focused pull request, and each needs its own
 brief from Shaun before it starts.
 
-The order of the corrections is the one Shaun approved when he reviewed the groundwork: the constructor colors
-and the null list, which are done; then the line terminator and the blank line, together; then the Gregorian
-title.
+The order of the corrections is the one Shaun approved when he reviewed the groundwork. Four are done: the
+constructor colors, the null list, and the line terminator and the blank line together. One is left.
 
-1. **The line terminator of the last row and one blank line after every month,** in one pull request
-   ([D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator),
-   [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)). Both are about how a month
-   ends, in the same few lines of the class.
-2. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
-3. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
+1. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
+2. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
    migration notes, the links to the tag `v2.0.0`
    ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), the final version number, and
    a release-readiness audit.
-4. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
+3. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
    ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
    readiness audit names.
-5. **Publication and verification:** a manual push of the exact validated artifacts
+4. **Publication and verification:** a manual push of the exact validated artifacts
    ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)), each step approved
    separately, then verification from nuget.org and a factual handoff for the Campertron project.
 
-Items 3 to 5 are the planned release steps of
+Items 2 to 4 are the planned release steps of
 [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
 What this sequence does and does not say:
@@ -71,40 +67,42 @@ What this sequence does and does not say:
 
 ## Next action
 
-**The line terminator and the blank line, together** (item 1,
-[D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) and
-[D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line)), and only after Shaun has scoped
-it. Read [compatibility.md](compatibility.md), above all
+**The Gregorian title** (item 1, [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)), the last of
+the five corrections, and only after Shaun has scoped it. Read [compatibility.md](compatibility.md), above all
 [How a correction is made](compatibility.md#how-a-correction-is-made), and
-[testing.md](testing.md#the-migration-tests) first. The pull requests for the constructor colors and for the
-null list are the two worked examples: one states its correction as an equivalent use of 1.0.0, the other as a
-change of the observation.
+[testing.md](testing.md#the-migration-tests) first. The three merged correction pull requests are the worked
+examples.
 
 What that pull request starts from:
 
-- Apart from the constructor colors and the exception for a null list, `master` behaves exactly as 1.0.0 does.
-  `LegacyMigrationTests` requires it, and fails as soon as a month ends differently, until each of the two
-  corrections is given its function in `Migration/ApprovedCorrection.cs`. Both are changes of the observation:
-  no use of 1.0.0 ends a month the corrected way. They are two decisions and stay two entries, applied in
-  order, although one pull request implements them.
-- This is the first correction that changes text, and it changes the end of every month drawn. A scratch run of
-  all five corrections together during the groundwork failed, among others, tests in `Legacy/LineEndingTests`,
-  `Legacy/GenerateYearTests` and `Facade/FacadeCompatibilityTests` and the published text digest. The helper
-  `Support/LegacyReference`, which builds the expected text of a month for many legacy tests, encodes both
-  1.0.0 behaviors and has to be looked at first.
-- The three library-side digests that are left cannot survive it
-  ([D-71](decisions.md#d-71-a-recorded-digest-is-never-bent-to-let-a-correction-through),
-  [testing.md](testing.md#when-a-correction-changes-a-recorded-digest)).
-- The original sample draws months that end on a Sunday, so what it writes changes:
-  `eng/consumer-smoke/OriginalSample/expected-text.txt` is split into what 1.0.0 writes and what 2.0 writes
-  ([packaging-and-releases.md](packaging-and-releases.md#the-original-sample)), and the comparison of the raw
-  terminal bytes with the published 1.0.0, which today allows color sequences to differ, has to allow exactly
-  the new difference as well.
-- The example program draws March 2027 with the legacy class. It ends on a Wednesday, so its text is not
-  expected to change where the console's terminator is a line feed; on Windows its last row will end
-  differently. Check the example's expected output and the README's legacy output block on all three systems.
+- Apart from the four corrections made, `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests`
+  requires it, and fails as soon as a title changes under a culture whose calendar is not Gregorian, until the
+  correction is given its function in `Migration/ApprovedCorrection.cs`. It is a change of the observation:
+  the text of the title call, under those cultures only.
+- The decision says the title uses the Gregorian month name that corresponds to the grid. Where that name is
+  taken from (the current culture's own names for the Gregorian months, as the modern renderer does in
+  [D-33](decisions.md#d-33-the-culture-supplies-language-only), or something else) and what happens under a
+  culture that offers no Gregorian calendar are for the brief of that pull request.
+- Which cultures are affected depends on the system's culture data. On the Linux system the tests were written
+  on, 15 cultures have a calendar that is not Gregorian: those of the Persian calendar, whose months do not
+  line up with the Gregorian ones, and those of the Thai Buddhist calendar, whose months do, so that their
+  title already names the right month. Exact text must not be taken from system data; compare with what the
+  culture reports at run time.
+- The 1.0.0 behavior is pinned in `Legacy/CultureTests`
+  (`InACultureWithAnotherCalendar_TheTitleNamesThatCalendarsMonthOfTheSameNumber`, and the real-culture cases
+  of `InARealCulture_OnlyTheMonthNameInTheTitleChanges`), in `Facade/FacadeCompatibilityTests`
+  (`UnderANonGregorianCulture_TheLegacyTitleStillFollowsTheCulturesCalendar_UnlikeTheModernTitle`), in the XML
+  remarks of `GenerateMonth`, and in the behavior list of
+  [compatibility.md](compatibility.md#behavior-of-the-legacy-class). `Historical/Published100BehaviorTests`
+  already records the 1.0.0 side and is not touched.
+- No recorded digest is compared with the library any more, and none of the four covers a culture whose
+  calendar is not Gregorian, so nothing about digests has to change.
+- The original sample runs under the invariant culture, so neither of its expected texts changes. The Campertron
+  parity tests are about the modern API and are not affected; two of their fixtures already document that the
+  modern title is Gregorian where Campertron's is not.
 - The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` get their
-  entries. `Historical/` is not touched.
+  entries. After this correction the class-level XML remarks, which still speak of "every 1.x version", are
+  the main thing left for the final documentation.
 
 What the later items have to deal with, none of it to be done earlier:
 

@@ -13,7 +13,7 @@ namespace CalendarGenerator
     // Where each day goes comes from MonthLayout, the modern layout model. Everything else about how 1.0.0 draws
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave
     // differently: they take the title from the Gregorian calendar, restore the caller's colors, write whole
-    // lines with one line terminator, and reject invalid colors early.
+    // lines, and reject invalid colors early.
     /// <summary>
     /// The calendar of version 1.0.0. It draws a month, or the twelve months of a year, directly on the console,
     /// in four colors.
@@ -58,7 +58,8 @@ namespace CalendarGenerator
         /// <param name="Year">The year, from 1 to 9999.</param>
         /// <remarks>
         /// This is the same as calling <see cref="GenerateMonth(int, int)"/> for the months 1 to 12. There is no heading
-        /// for the year.
+        /// for the year. Every month, December included, is followed by one empty line, and nothing more is added
+        /// between the months or at the end.
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
@@ -79,7 +80,8 @@ namespace CalendarGenerator
         /// </param>
         /// <remarks>
         /// This is the same as calling <see cref="GenerateMonth(int, int, List{DateTime})"/> for the months 1 to 12
-        /// with the same list. There is no heading for the year.
+        /// with the same list. There is no heading for the year. Every month, December included, is followed by one
+        /// empty line, and nothing more is added between the months or at the end.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
@@ -131,7 +133,8 @@ namespace CalendarGenerator
         /// <b>What is written.</b> The title is the name of the month, a space and the year as given, after three to
         /// five spaces: fewer for a longer name. The weekday row follows, then one line for each week, with the days
         /// right-aligned in columns two characters wide and one space between columns. No line ends with spaces. The
-        /// month is followed by one empty line, or by two when its last day is a Sunday.
+        /// month is followed by exactly one empty line. Version 1.0.0 wrote two after a month whose last day is a
+        /// Sunday; version 2.0 corrects that.
         /// </para>
         /// <para>
         /// <b>Culture.</b> The name of the month is what the calendar of <see cref="CultureInfo.CurrentCulture"/> calls
@@ -147,9 +150,10 @@ namespace CalendarGenerator
         /// even when <see cref="Console.Out"/> has been replaced or redirected.
         /// </para>
         /// <para>
-        /// <b>Line ends.</b> Every line ends with the line terminator of <see cref="Console.Out"/>, except the last
-        /// line of days, which ends with a line feed. Where the terminator is a carriage return and a line feed, as
-        /// on Windows, the output contains both forms.
+        /// <b>Line ends.</b> Every line, the last line of days and the empty line after it included, ends with the
+        /// line terminator of <see cref="Console.Out"/>. Version 1.0.0 ended the last line of days with a line feed
+        /// whatever the terminator was, so that on Windows its output had two kinds of line end; version 2.0 corrects
+        /// that.
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException">
@@ -407,17 +411,18 @@ namespace CalendarGenerator
                         Console.Write(" " + day);
                     }
 
-                    if (cell.DayOfWeek == DayOfWeek.Sunday)
+                    // A row ends after its Sunday, and the last row ends after the last day, once and with the
+                    // console's line terminator either way. Version 1.0.0 ended the last row with a literal "\n"
+                    // instead, which mixed two kinds of line end where the terminator is "\r\n" (corrected in
+                    // 2.0, D-59), and ended it a second time when the last day was a Sunday, which put two blank
+                    // lines after such a month (corrected in 2.0, D-60).
+                    if (cell.DayOfWeek == DayOfWeek.Sunday || day == lastDay)
                     {
                         Console.WriteLine();
                     }
                     if (day == lastDay)
                     {
-                        // The last row ends with a literal line feed, not with the console's line terminator,
-                        // followed by a blank line. Where the console's terminator is "\r\n" the output mixes
-                        // both. A month whose last day is a Sunday has just ended its row above as well, so it
-                        // is followed by two blank lines.
-                        Console.Write("\n");
+                        // The one blank line after the month.
                         Console.WriteLine();
                         return;
                     }

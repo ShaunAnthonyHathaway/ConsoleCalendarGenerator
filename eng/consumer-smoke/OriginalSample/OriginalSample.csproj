@@ -4,8 +4,9 @@
     Program.cs is the sample program that accompanied ConsoleCalendarGenerator 1.0.0, byte for byte. It must
     keep compiling against every later package, 2.0 included, without being edited: no public signature and no
     parameter name of the legacy class changes. eng/consumer-smoke.sh builds it everywhere. It waits for key
-    presses, so it is run only where the script can give it a pseudo-terminal; what it writes there is in
-    expected-text.txt. The scenario is described in the script.
+    presses, so it is run only where the script can give it a pseudo-terminal. What it writes there with the
+    published 1.0.0 is in expected-text-1.0.0.txt, which is historical and never changes, and what it writes
+    with 2.0 in expected-text-2.0.txt. The scenario is described in the script.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

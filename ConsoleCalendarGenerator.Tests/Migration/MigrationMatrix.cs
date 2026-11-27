@@ -62,8 +62,16 @@ internal static class MigrationMatrix
     /// <summary>Behavior that none of the five corrections is about.</summary>
     public static IReadOnlyList<LegacyScenario> OtherBehavior { get; } = Group("other behavior", OtherBehaviorScenarios());
 
+    /// <summary>
+    /// Every calendar the sample program of 1.0.0 draws (eng/consumer-smoke/OriginalSample/Program.cs), call by
+    /// call. The smoke script runs that program and compares its text; here the same calls are compared with
+    /// 1.0.0 in every aspect, the single calls on the console's writer and their colors included.
+    /// </summary>
+    public static IReadOnlyList<LegacyScenario> OriginalSample { get; } = Group("the original sample", OriginalSampleScenarios());
+
     public static IReadOnlyList<LegacyScenario> All { get; } =
-        ConstructorColors.Concat(NullDateList).Concat(LineTerminator).Concat(BlankLineAfterSunday).Concat(CultureTitle).Concat(OtherBehavior).ToArray();
+        ConstructorColors.Concat(NullDateList).Concat(LineTerminator).Concat(BlankLineAfterSunday).Concat(CultureTitle).Concat(OtherBehavior)
+            .Concat(OriginalSample).ToArray();
 
     private static LegacyScenario[] Group(string area, IEnumerable<LegacyScenario> scenarios) =>
         scenarios.Select(scenario => scenario.In(area)).ToArray();
@@ -380,6 +388,78 @@ internal static class MigrationMatrix
         {
             yield return new LegacyScenario(culture + ", a year") { Draw = LegacyDraw.Year, Year = 2023, CultureName = culture };
         }
+    }
+
+    private static IEnumerable<LegacyScenario> OriginalSampleScenarios()
+    {
+        // The first calendar: the parameterless constructor, with one more setter before each month.
+        var setters = new List<(LegacyColorRole, ConsoleColor)>();
+        (LegacyColorRole Role, ConsoleColor Color)?[] setBefore =
+        {
+            null,
+            (LegacyColorRole.Title, ConsoleColor.Red),
+            (LegacyColorRole.SelectedDate, ConsoleColor.Magenta),
+            (LegacyColorRole.DayOfWeek, ConsoleColor.Green),
+            (LegacyColorRole.Date, ConsoleColor.DarkYellow),
+        };
+        DateTime[][] selected =
+        {
+            new[] { new DateTime(2023, 1, 1) },
+            new[] { new DateTime(2023, 2, 1), new DateTime(2023, 2, 4) },
+            new[] { new DateTime(2023, 3, 1) },
+            new[] { new DateTime(2023, 4, 1) },
+            new[] { new DateTime(2023, 5, 1), new DateTime(2023, 5, 8), new DateTime(2023, 5, 11) },
+        };
+        for (int month = 1; month <= 5; month++)
+        {
+            if (setBefore[month - 1] is { } setter)
+            {
+                setters.Add(setter);
+            }
+            yield return new LegacyScenario("the first calendar, month " + month)
+            {
+                Setters = setters.ToArray(),
+                Draw = LegacyDraw.MonthWithDates,
+                Month = month,
+                Year = 2023,
+                Dates = selected[month - 1],
+            };
+        }
+
+        // The second: one color given to the constructor, the same list of dates for five months, then a year
+        // after the title color is set.
+        DateTime[] hitDates =
+        {
+            new DateTime(2023, 1, 1), new DateTime(2023, 2, 1), new DateTime(2023, 2, 4), new DateTime(2023, 3, 1),
+            new DateTime(2023, 4, 1), new DateTime(2023, 5, 1), new DateTime(2023, 5, 8), new DateTime(2023, 5, 11),
+        };
+        for (int month = 1; month <= 5; month++)
+        {
+            yield return new LegacyScenario("the second calendar, month " + month)
+            {
+                ConstructorArguments = new[] { ConsoleColor.Red },
+                Draw = LegacyDraw.MonthWithDates,
+                Month = month,
+                Year = 2023,
+                Dates = hitDates,
+            };
+        }
+        yield return new LegacyScenario("the second calendar, the year")
+        {
+            ConstructorArguments = new[] { ConsoleColor.Red },
+            Setters = new[] { (LegacyColorRole.Title, ConsoleColor.DarkMagenta) },
+            Draw = LegacyDraw.Year,
+            Year = 2023,
+        };
+
+        // The third: all four colors given to the constructor, a year with the dates.
+        yield return new LegacyScenario("the calendar with four colors, the year")
+        {
+            ConstructorArguments = new[] { ConsoleColor.Red, ConsoleColor.Yellow, ConsoleColor.Magenta, ConsoleColor.Blue },
+            Draw = LegacyDraw.YearWithDates,
+            Year = 2023,
+            Dates = hitDates,
+        };
     }
 
     private static string Show(string newLine) => newLine.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);

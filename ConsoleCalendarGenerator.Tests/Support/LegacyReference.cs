@@ -3,8 +3,11 @@ using System.Text;
 namespace ConsoleCalendarGenerator.Tests.Support;
 
 /// <summary>
-/// The text ConsoleCalendar 1.0.0 writes for a month, built from the layout rules instead of copied from the
-/// library, so that the library can be compared with it for every month.
+/// The text the legacy calendar writes for a month, built from the layout rules instead of copied from the
+/// library, so that the library can be compared with it for every month. These are the rules of version 2.0:
+/// every line, the last row of days and the blank line after it included, ends with the console writer's line
+/// terminator, and every month is followed by exactly one blank line. Everything before the end of the month is
+/// as in 1.0.0, whose own rules are kept in Historical/Published100Text.cs.
 /// </summary>
 internal static class LegacyReference
 {
@@ -16,10 +19,7 @@ internal static class LegacyReference
 
     public static string Title(string monthName, int year) => TitleIndent(monthName) + monthName + " " + year;
 
-    /// <param name="newLine">
-    /// The console writer's newline. The line after the last day always ends with a bare "\n" as well, because
-    /// the library writes that one as a literal character.
-    /// </param>
+    /// <param name="newLine">The console writer's newline, which ends every line.</param>
     public static string Month(int year, int month, string monthName, string newLine = "\n")
     {
         var text = new StringBuilder();
@@ -37,13 +37,15 @@ internal static class LegacyReference
                 text.Append(' ');
             }
             text.Append(day.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(2));
-            if (column == 6)
+            if (column == 6 || day == days)
             {
+                // A row ends after its Sunday and after the last day, once.
                 text.Append(newLine);
             }
             if (day == days)
             {
-                text.Append('\n').Append(newLine);
+                // The one blank line after the month.
+                text.Append(newLine);
             }
             column = (column + 1) % 7;
         }

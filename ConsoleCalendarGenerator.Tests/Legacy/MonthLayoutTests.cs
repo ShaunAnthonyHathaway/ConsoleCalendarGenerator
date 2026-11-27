@@ -87,7 +87,7 @@ public class MonthLayoutTests
 
     /// <summary>A month whose last day is a Sunday is followed by two blank lines instead of one.</summary>
     [Test]
-    public void FirstOnSaturday_30Days_EndingOnSunday_HasAnExtraBlankLine()
+    public void FirstOnSaturday_30Days_EndingOnSunday_IsFollowedByOneBlankLineLikeAnyMonth()
     {
         Assert.That(Month(4, 2023), Is.EqualTo(Golden.Lines(
             "    April 2023",
@@ -97,7 +97,6 @@ public class MonthLayoutTests
             "10 11 12 13 14 15 16",
             "17 18 19 20 21 22 23",
             "24 25 26 27 28 29 30",
-            "",
             "")));
     }
 
@@ -119,7 +118,7 @@ public class MonthLayoutTests
     // ---- February and leap years ----
 
     [Test]
-    public void February2021_FourRows_EndingOnSunday_HasAnExtraBlankLine()
+    public void February2021_FourRows_EndingOnSunday_IsFollowedByOneBlankLineLikeAnyMonth()
     {
         Assert.That(Month(2, 2021), Is.EqualTo(Golden.Lines(
             "   February 2021",
@@ -128,7 +127,6 @@ public class MonthLayoutTests
             " 8  9 10 11 12 13 14",
             "15 16 17 18 19 20 21",
             "22 23 24 25 26 27 28",
-            "",
             "")));
     }
 
@@ -309,7 +307,6 @@ public class MonthLayoutTests
                 string[] rows = lines.Skip(2).TakeWhile(line => line.Length > 0).ToArray();
                 rowCounts.Add(rows.Length);
 
-                bool endsOnSunday = new DateTime(year, month, DateTime.DaysInMonth(year, month)).DayOfWeek == DayOfWeek.Sunday;
                 int trailingNewlines = text.Length - text.TrimEnd('\n').Length;
 
                 if (lines[1] != "Mo Tu We Th Fr Sa Su"
@@ -317,7 +314,7 @@ public class MonthLayoutTests
                     || rows.Any(row => row.Length > 20)
                     || rows.Any(row => row.Length % 3 != 2)
                     || rows.Any(row => Enumerable.Range(0, row.Length).Any(i => i % 3 == 2 && row[i] != ' '))
-                    || trailingNewlines != (endsOnSunday ? 3 : 2))
+                    || trailingNewlines != 2)
                 {
                     problems.Add($"{year}-{month:00}");
                 }
@@ -326,7 +323,7 @@ public class MonthLayoutTests
 
         Assert.That(problems, Is.Empty,
             "weekday header, no trailing spaces, rows of at most 20 characters, two-character cells with one space between, " +
-            "one blank line after the month and two when it ends on a Sunday");
+            "exactly one blank line after the month, whichever day it ends on");
         Assert.That(rowCounts, Is.EqualTo(new[] { 4, 5, 6 }));
     }
 }

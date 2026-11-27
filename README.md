@@ -334,7 +334,7 @@ The XML documentation of the class describes the rest.
 
 The next version, 2.0, corrects a few things this class got wrong in 1.0.0. No constructor, method or parameter
 name changes, so existing programs compile and load as before; what changes is how they behave in the cases
-below. So far there are two corrections.
+below. So far there are four corrections.
 
 **Constructor colors.** In the constructors that take colors, each argument now colors what it is named for:
 `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the
@@ -357,6 +357,16 @@ What that means for a program written for 1.0.0:
 `dates`, when the list of dates is `null`. In 1.0.0 they threw `NullReferenceException`. As before, the list is
 looked at first and nothing is written. A program that catches `NullReferenceException` around these calls has
 to catch the new exception instead, or better, not pass `null`: an empty list selects no dates.
+
+**Line endings.** Every line now ends with the line terminator of the console's writer, the last row of days
+of a month included. In 1.0.0 that row ended with a bare line feed whatever the terminator was. On Windows the
+output therefore no longer mixes LF and CRLF: every line ends with CRLF. Where the terminator is a line feed,
+as on Linux and macOS, the text is the same as before.
+
+**One blank line after every month.** Every month is now followed by exactly one blank line. In 1.0.0 a month
+whose last day is a Sunday was followed by two. Such a month, and a year that contains one, is now one line
+shorter for each. A program that counts lines or compares the output with stored text has to allow for both
+changes.
 
 ## Supported frameworks
 

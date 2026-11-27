@@ -41,12 +41,13 @@ rule protected nothing any more and only stood in the way of the corrections.
 |---|---|---|---|---|
 | 1 | [D-57](decisions.md#d-57-constructor-arguments-color-the-element-they-are-named-for) | In the constructors that take colors, `TitleColor` colors the weekday row, the title stays Yellow, and with four arguments `DayOfWeekColor` colors the title. | Each argument controls the element it is named for. | **Yes** (pull request #14) |
 | 2 | [D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates) | A null list throws `NullReferenceException`. | A null list throws `ArgumentNullException` with the parameter name `dates`, still before the month and the year are checked. | **Yes** (pull request #15) |
-| 3 | [D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) | The last row of days of a month ends with a literal `\n`. | It ends with the console's line terminator, like every other line. | Not yet |
-| 4 | [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line) | A month is followed by one blank line, or by two when its last day is a Sunday. | Every month is followed by exactly one blank line. | Not yet |
+| 3 | [D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) | The last row of days of a month ends with a literal `\n`. | It ends with the console's line terminator, like every other line. | **Yes** (pull request #16) |
+| 4 | [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line) | A month is followed by one blank line, or by two when its last day is a Sunday. | Every month is followed by exactly one blank line. | **Yes** (pull request #16) |
 | 5 | [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month) | The title names the month of that number in the current culture's own calendar. | The title names the Gregorian month that the grid shows, also under a culture whose calendar is not Gregorian. | Not yet |
 
-**Two of the five are implemented: the constructor colors and the null list.** In everything else `master`
-behaves exactly as 1.0.0 does, and the tests require that. The last column changes in the pull request that implements a
+**Four of the five are implemented: the constructor colors, the null list, the line terminator and the blank
+line.** Only the title is still as in 1.0.0. In everything else `master` behaves exactly as 1.0.0 does, and
+the tests require that. The last column changes in the pull request that implements a
 correction.
 
 ### How a correction is made
@@ -161,14 +162,21 @@ disagrees with a test is the thing to fix.
 - Day cells are two characters wide with one space between them. No line has trailing spaces.
 - The title is indented five spaces for month names of up to 4 characters, four for up to 7, three otherwise,
   followed by the name, a space and the year as a plain number (year 1 is `1`).
-- A month is followed by one blank line, or by two when its last day is a Sunday **(2.0: D-60)**.
-- `GenerateYear` is exactly twelve `GenerateMonth` calls. There is no year heading.
+- **Every month is followed by exactly one blank line (corrected, D-60).** In 1.0.0 a month whose last day is
+  a Sunday was followed by two, because its last row was ended twice: once as a full week and once as the last
+  row.
+- `GenerateYear` is exactly twelve `GenerateMonth` calls. There is no year heading. So a year has one blank
+  line after each month, December included, and nothing more between the months or at the end.
 
 **Line endings**
 
-- Every line ends with `Console.WriteLine`, so with the console writer's newline, except the last row of days,
-  which ends with a literal `\n`. Where the writer's newline is `\r\n`, as on Windows, the output mixes both
-  **(2.0: D-59)**.
+- **Every line ends with `Console.WriteLine`, so with the console writer's newline (corrected, D-59):** the
+  title, the weekday row, every row of days, the last one included, and the blank line. No line feed is ever
+  written as text. In 1.0.0 the last row of days ended with a literal `\n` instead, so where the writer's
+  newline is `\r\n`, as on Windows, the output mixed both; it no longer does. Where the newline is `\n` the
+  text of a month that does not end on a Sunday is byte for byte what 1.0.0 wrote.
+- The newline is the writer's, whatever it is: `Console.Out.NewLine` when the month is drawn, not
+  `Environment.NewLine`.
 
 **Culture**
 
@@ -213,9 +221,14 @@ disagrees with a test is the thing to fix.
 - The library writes no escape sequences of its own.
 - Which method of the console's writer is called is observable to a program that replaces `Console.Out` with
   its own writer. The title and the weekday row are one `WriteLine(string)` each. Every cell is one
-  `Write(string)`, except a two-digit day in the Monday column, which is `Write(int)`. A row ends with
-  `WriteLine()`. After the last day come `Write("\n")` and `WriteLine()` **(2.0: D-59, and D-60 for a month
-  that ends on a Sunday)**.
+  `Write(string)`, except a two-digit day in the Monday column, which is `Write(int)`. A row ends with one
+  `WriteLine()`, after its Sunday or, for the last row, after the last day, and one more `WriteLine()` is the
+  blank line **(corrected, D-59 and D-60)**. So every month ends: last day, `WriteLine()`, `WriteLine()`. In
+  1.0.0 it ended: last day, `Write("\n")`, `WriteLine()`, with a `WriteLine()` before those when the last day
+  was a Sunday. A program that replaces `Console.Out` therefore sees one call made another way for every
+  month, and one call fewer for a month that ends on a Sunday.
+- The calls that end a month are made in the color of the last day, as the calls that ended it in 1.0.0 were;
+  no color is set or reset for them, and the final `Console.ResetColor()` still comes after them.
 - The space between two columns is part of the write of the day after it. An empty cell before the 1st is
   written three wide, so the 1st itself is written two wide.
 - Nothing is locked: the class does not keep draws from several threads apart.
@@ -237,7 +250,7 @@ one behavior a correction is about.
 | Title: month name from the current culture's own calendar, three-step indent, the year appended | Private |
 | The fixed English weekday row | Private constant |
 | One console call per cell, the method and text of each, empty cells in the color of the 1st | Private, walking the cells of the layout in order |
-| Row end after Sunday; bare `\n` and a line end after the last day | Private |
+| Row end after Sunday and after the last day, once; one more line end for the blank line (D-59, D-60) | Private. Two lines of the loop that walks the cells, where 1.0.0 wrote a literal `\n` |
 | Color set before every call; three `ResetColor` calls; caller's colors not restored; an undefined color fails when it is first used | Private |
 | No lock, no restoration, no early validation | By not using `ConsoleMonthWriter`, `CalendarTheme` or `MonthRenderer` |
 
@@ -278,7 +291,8 @@ Four independent layers. A change has to pass all of them.
 
 1. **Migration tests** (`ConsoleCalendarGenerator.Tests/Migration/`), which run the library and the frozen
    source of 1.0.0 through the same scenarios and require the library to do exactly what 1.0.0 did, apart from
-   the corrections that have been implemented. At present those are the constructor colors and the null list.
+   the corrections that have been implemented. At present those are the constructor colors, the null list and
+   the two about how a month ends.
 2. **Characterization tests** (`ConsoleCalendarGenerator.Tests/Legacy/`), including digests recorded from the
    published 1.0.0 assembly, and `ConsoleCalendarGenerator.Tests/Facade/`, with digests of every console call
    recorded from the original implementation before it was rebuilt, and a comparison of the drawn grid with

@@ -187,6 +187,29 @@ public class PublicDocumentationTests
         }
     }
 
+    /// <summary>
+    /// The correction of the title (D-61) is described for users in both documents: the title names the
+    /// Gregorian month, what 1.0.0 named instead, under which cultures that shows, and what stays.
+    /// </summary>
+    [TestCase("README.md", "### Changes from 1.0.0")]
+    [TestCase("CHANGELOG.md", "### Breaking changes")]
+    public void TheGregorianTitleCorrection_IsDescribedForUsers(string document, string heading)
+    {
+        string section = SectionOf(Repository.Read(document), heading);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(section, Ordinal.Contains("names the Gregorian month"));
+            Assert.That(section, Ordinal.Contains("the month of the same number"), "what 1.0.0 named");
+            Assert.That(section, Ordinal.Contains("own calendar"));
+            Assert.That(section, Ordinal.Contains("`fa-IR`"), "an example of a culture that shows it");
+            Assert.That(section, Ordinal.Contains("nearly every culture"), "most programs see no change");
+            Assert.That(section, Does.Match("year in the title is still the number"), "the year is not converted");
+            Assert.That(section, Does.Match("five (corrections|behaviors)"), "all five are listed");
+            Assert.That(section, Does.Not.Match("So far there are|when it is made"), "nothing is still to come");
+        }
+    }
+
     /// <summary>The text from a third-level heading to the next heading of the same or a higher level.</summary>
     private static string SectionOf(string text, string heading)
     {

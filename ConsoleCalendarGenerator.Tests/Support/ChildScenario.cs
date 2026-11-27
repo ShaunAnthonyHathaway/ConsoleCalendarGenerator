@@ -24,6 +24,32 @@ internal static class ChildScenario
     /// The text of that calendar as 1.0.0 wrote it. <paramref name="newLine"/> is the console's newline; the
     /// line after the last day ends with the bare "\n" that 1.0.0 wrote as a literal, and then with the newline.
     /// </summary>
+    /// <summary>
+    /// September 2023 with the 14th selected, under whatever the current culture is, in four colors set with the
+    /// setters, which did the same in 1.0.0 as they do now. The month ends on a Saturday, so on a terminal whose
+    /// line end is a line feed the two versions write the same bytes for everything but the title.
+    /// </summary>
+    public static void RenderSeptember()
+    {
+        var calendar = new ConsoleCalendar();
+        calendar.SetTitleColor(ConsoleColor.Red);
+        calendar.SetDayOfWeekColor(ConsoleColor.DarkYellow);
+        calendar.SetDateColor(ConsoleColor.Green);
+        calendar.SetSelectedDateColor(ConsoleColor.Magenta);
+        calendar.GenerateMonth(9, 2023, new List<DateTime> { new DateTime(2023, 9, 14) });
+    }
+
+    /// <summary>The same with the frozen source of version 1.0.0.</summary>
+    public static void RenderSeptemberWithPublished100()
+    {
+        var calendar = new Historical.Published100.ConsoleCalendar();
+        calendar.SetTitleColor(ConsoleColor.Red);
+        calendar.SetDayOfWeekColor(ConsoleColor.DarkYellow);
+        calendar.SetDateColor(ConsoleColor.Green);
+        calendar.SetSelectedDateColor(ConsoleColor.Magenta);
+        calendar.GenerateMonth(9, 2023, new List<DateTime> { new DateTime(2023, 9, 14) });
+    }
+
     public static string PlainTextOfPublished100(string newLine) =>
         "   February 2023" + newLine +
         "Mo Tu We Th Fr Sa Su" + newLine +

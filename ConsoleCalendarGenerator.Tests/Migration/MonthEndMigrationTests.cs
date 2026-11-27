@@ -388,7 +388,6 @@ public class MonthEndMigrationTests
 
         Assert.That(all.IndexOf(ApprovedCorrection.LineTerminator), Is.LessThan(all.IndexOf(ApprovedCorrection.OneBlankLine)));
         Assert.That(ApprovedCorrection.LineTerminator.IsImplemented && ApprovedCorrection.OneBlankLine.IsImplemented, Is.True);
-        Assert.That(ApprovedCorrection.GregorianTitle.IsImplemented, Is.False, "the title is not corrected yet");
     }
 
     /// <summary>The same two functions for the other form in which the tests record calls.</summary>

@@ -143,21 +143,25 @@ public class FacadeCompatibilityTests
     }
 
     /// <summary>
-    /// The title names the month in the culture's own calendar, and so names a different month than the one
-    /// drawn where that calendar is not the Gregorian one. The modern renderer names the Gregorian month.
+    /// The title names the Gregorian month that is drawn, in the culture's language, also where the culture's
+    /// own calendar is not the Gregorian one (D-61). That is the name the modern renderer writes for the same
+    /// month. The legacy class finds it by itself; it does not use the renderer.
     /// </summary>
     [Test]
-    public void UnderANonGregorianCulture_TheLegacyTitleStillFollowsTheCulturesCalendar_UnlikeTheModernTitle()
+    public void UnderANonGregorianCulture_TheLegacyTitleNamesTheGregorianMonth_AsTheModernTitleDoes()
     {
         CultureInfo? persian = TestCultures.TryGet("fa-IR");
         Assume.That(persian, Is.Not.Null, "The culture fa-IR is not available on this system.");
         Assume.That(persian!.DateTimeFormat.Calendar, Is.InstanceOf<PersianCalendar>());
 
-        string legacy = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateMonth(5, 2023), culture: persian).Text.Split('\n')[0];
-        string modern = MonthRenderer.Render(2023, 5, MonthRenderOptions.Default.WithCulture(persian).WithTitleFormat("MMMM")).Lines[0].Text.Trim();
+        for (int month = 1; month <= 12; month++)
+        {
+            string legacy = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateMonth(month, 2023), culture: persian).Text.Split('\n')[0];
+            string modern = MonthRenderer.Render(2023, month, MonthRenderOptions.Default.WithCulture(persian).WithTitleFormat("MMMM")).Lines[0].Text.Trim();
 
-        Assert.That(legacy.Trim(), Is.EqualTo(persian.DateTimeFormat.GetMonthName(5) + " 2023"), "the fifth month of the Persian calendar, with the Gregorian year");
-        Assert.That(modern, Is.Not.EqualTo(persian.DateTimeFormat.GetMonthName(5)), "the modern title is the Persian name of the Gregorian month May");
+            Assert.That(legacy.Trim(), Is.EqualTo(modern + " 2023"), $"month {month}: the Persian name of the Gregorian month, with the Gregorian year");
+            Assert.That(modern, Is.Not.EqualTo(persian.DateTimeFormat.GetMonthName(month)), $"month {month}: not the month of that number in the Persian calendar");
+        }
     }
 
     // ---- no lock ----

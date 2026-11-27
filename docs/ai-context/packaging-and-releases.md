@@ -174,6 +174,7 @@ repository that is deleted afterwards:
 | The same program with the published 1.0.0 (`--published-sample`) | published 1.0.0 from nuget.org | builds, runs, writes the text recorded for 1.0.0; its raw terminal bytes differ from the package's in the blank line after a Sunday and in color sequences only |
 | That program, as compiled against 1.0.0 and not rebuilt, with the library under test in place of the published assembly (`--published-sample`) | the `netstandard2.1` build, substituted | runs, and writes byte for byte what the rebuilt program writes |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
+| The `net10.0` and the `net8.0` application and the Native AOT one, run with `culture-audit` | both builds | under every culture the system has, and under cultures given another of their calendars, every legacy title is the culture's name for the Gregorian month (D-61) |
 
 Each application first prints which build of the library it was given and which version that build says it
 is. The version has to be the version of the package file that was installed, with assembly and file version
@@ -187,6 +188,14 @@ existing consumer of the `netstandard2.1` build. The `net11.0` consumer
 stands for an application such as Campertron. The applications roll forward to whatever runtime is installed;
 that does not affect which library build they are given. Templates are in `eng/consumer-smoke/`; they are not in
 the solution and are not meant to be built in place.
+
+**The culture audit.** Started with the argument `culture-audit`, the same application
+(`AssetProbe/CultureAudit.cs`) draws every month of a year with the legacy class under every culture the system
+has and checks each title against the culture's Gregorian name, which it works out itself. It fails on the
+first title that is another one. It then prints what the system's cultures are: how many, how many count their
+dates in a calendar that is not Gregorian, under how many the title therefore differs from 1.0.0, and how many
+offer no Gregorian calendar. That text differs between systems and is printed, not compared; it is the record,
+in every CI log, of which cultures the title correction touches there.
 
 ### The original sample
 

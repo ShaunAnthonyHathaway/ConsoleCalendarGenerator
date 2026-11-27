@@ -6,7 +6,10 @@ namespace ConsoleCalendarGenerator.Tests.Legacy;
 
 /// <summary>
 /// Culture. Only the month name follows the culture, and it follows CultureInfo.CurrentCulture. The weekday row,
-/// the first day of the week, the day grid and the year do not.
+/// the first day of the week, the day grid and the year do not. The name is the culture's name for the
+/// Gregorian month that is drawn (D-61); what that means under a culture whose calendar is not the Gregorian
+/// one is tested in GregorianTitleTests.cs, and what 1.0.0 did there is recorded in
+/// Historical/Published100CultureTests.cs.
 ///
 /// The tests that need exact strings use cultures built in the test, so they do not depend on the operating
 /// system's culture data. The tests that use real cultures compare with what that culture reports at run time.
@@ -74,31 +77,33 @@ public class CultureTests
 
         foreach (int month in new[] { 1, 5, 9, 12 })
         {
-            string name = culture.DateTimeFormat.GetMonthName(month);
+            string? name = CultureCalendars.GregorianMonthName(culture, month);
+            Assert.That(name, Is.Not.Null, cultureName + " offers no Gregorian calendar.");
 
-            Assert.That(Month(month, 2023, culture), Is.EqualTo(LegacyReference.Month(2023, month, name)),
-                $"{cultureName}, month {month}: the culture's name for month number {month}, then the unchanged English grid");
+            Assert.That(Month(month, 2023, culture), Is.EqualTo(LegacyReference.Month(2023, month, name!)),
+                $"{cultureName}, month {month}: the culture's name for the Gregorian month {month}, then the unchanged English grid");
         }
     }
 
     /// <summary>
-    /// The month number is looked up in the culture's own calendar while the grid stays Gregorian. In a culture
-    /// whose calendar is not Gregorian the title therefore names a different month than the one drawn. This is
-    /// the behavior of 1.0.0, recorded here so that it is changed deliberately or not at all.
+    /// The grid is the Gregorian month, and the title names that month in the culture's language, also in a
+    /// culture whose own calendar is not the Gregorian one. Version 1.0.0 named the month of the same number
+    /// in the culture's own calendar there; version 2.0 corrects that (D-61).
     /// </summary>
     [TestCase("fa-IR")]
-    public void InACultureWithAnotherCalendar_TheTitleNamesThatCalendarsMonthOfTheSameNumber(string cultureName)
+    public void InACultureWithAnotherCalendar_TheTitleNamesTheGregorianMonthThatIsDrawn(string cultureName)
     {
         CultureInfo culture = RequireCulture(cultureName);
         Assume.That(culture.DateTimeFormat.Calendar, Is.Not.InstanceOf<GregorianCalendar>(), cultureName + " uses the Gregorian calendar here.");
+        var gregorian = (CultureInfo)culture.Clone();
+        gregorian.DateTimeFormat.Calendar = culture.OptionalCalendars.OfType<GregorianCalendar>().First();
         var firstOfSeptember = new DateTime(2023, 9, 1);
 
         string text = Month(9, 2023, culture);
         string title = text.Split('\n')[0];
 
-        Assert.That(title, Is.EqualTo(LegacyReference.Title(culture.DateTimeFormat.GetMonthName(9), 2023)));
-        Assert.That(title, Ordinal.DoesNotContain(firstOfSeptember.ToString("MMMM", culture)),
-            "the title is not the culture's name for the month that contains 1 September 2023");
+        Assert.That(title, Is.EqualTo(LegacyReference.Title(firstOfSeptember.ToString("MMMM", gregorian), 2023)),
+            "the title is the culture's name for the Gregorian month that contains 1 September 2023");
         Assert.That(text.Substring(text.IndexOf('\n') + 1), Is.EqualTo(GridOf(LegacyReference.Month(2023, 9, "September"))),
             "the grid is Gregorian September 2023");
     }

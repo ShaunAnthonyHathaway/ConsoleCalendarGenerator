@@ -43,12 +43,11 @@ rule protected nothing any more and only stood in the way of the corrections.
 | 2 | [D-58](decisions.md#d-58-a-null-list-throws-argumentnullexception-for-dates) | A null list throws `NullReferenceException`. | A null list throws `ArgumentNullException` with the parameter name `dates`, still before the month and the year are checked. | **Yes** (pull request #15) |
 | 3 | [D-59](decisions.md#d-59-the-last-row-of-a-month-ends-with-the-consoles-line-terminator) | The last row of days of a month ends with a literal `\n`. | It ends with the console's line terminator, like every other line. | **Yes** (pull request #16) |
 | 4 | [D-60](decisions.md#d-60-every-month-is-followed-by-exactly-one-blank-line) | A month is followed by one blank line, or by two when its last day is a Sunday. | Every month is followed by exactly one blank line. | **Yes** (pull request #16) |
-| 5 | [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month) | The title names the month of that number in the current culture's own calendar. | The title names the Gregorian month that the grid shows, also under a culture whose calendar is not Gregorian. | Not yet |
+| 5 | [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month) | The title names the month of that number in the current culture's own calendar. | The title names the Gregorian month that the grid shows, also under a culture whose calendar is not Gregorian. | **Yes** (pull request #17) |
 
-**Four of the five are implemented: the constructor colors, the null list, the line terminator and the blank
-line.** Only the title is still as in 1.0.0. In everything else `master` behaves exactly as 1.0.0 does, and
-the tests require that. The last column changes in the pull request that implements a
-correction.
+**All five are implemented: the constructor colors, the null list, the line terminator, the blank line and
+the title.** In everything else `master` behaves exactly as 1.0.0 does, and the tests require that. There is no
+sixth correction, and none may be added without a decision by Shaun.
 
 ### How a correction is made
 
@@ -181,9 +180,31 @@ disagrees with a test is the thing to fix.
 **Culture**
 
 - The month name comes from `CultureInfo.CurrentCulture` (not `CurrentUICulture`). Nothing else is localized.
-- The month number is looked up in the culture's own calendar while the grid is always Gregorian. In a culture
-  whose calendar is not Gregorian (for example `fa-IR`), the title names a different month than the grid shows
-  **(2.0: D-61)**.
+- **The title names the Gregorian month, the one the grid shows (corrected in 2.0, D-61).** The name is the
+  current culture's name for that month of the Gregorian calendar. The exact rule, which is the contract:
+  1. `CultureInfo.CurrentCulture` and its `DateTimeFormat` are read once for each month drawn, after the title
+     color is set and before the title is written, where 1.0.0 read them.
+  2. If the calendar of those formats is a `GregorianCalendar`, of any kind, the name is
+     `DateTimeFormat.GetMonthName(Month)`. That is the call 1.0.0 made, so under every such culture the title is
+     identical to 1.0.0, month names that a program set on the culture included.
+  3. Otherwise the name is taken from a Gregorian calendar among `CultureInfo.OptionalCalendars`: the first one
+     of the kind `GregorianCalendarTypes.Localized`, or failing that the first of another kind. The calendar is
+     set on a copy of the formats (`Clone()`), and the name is `GetMonthName(Month)` of the copy. A calendar the
+     formats refuse (`ArgumentException`, possible only when the formats are not the culture's own) is skipped,
+     so the lookup adds no exception that 1.0.0 did not throw.
+  4. If no Gregorian calendar is offered or taken, the name is the invariant culture's. No culture of any
+     system is known to reach this; it names the right month in English and never a month of another calendar.
+  5. Nothing is changed and nothing is kept: not the culture, not its formats, not their calendar, and there is
+     no cache. Month names a program set on a culture whose calendar is not Gregorian are names of that
+     calendar's months and are not used.
+- In 1.0.0 the name was `DateTimeFormat.GetMonthName(Month)` whatever the calendar of the formats was. Under a
+  culture whose calendar is not Gregorian and whose months are not the Gregorian ones (for example `fa-IR`
+  with the Persian calendar), the title therefore named a different month than the grid shows. Under a culture
+  whose other calendar has the Gregorian months (Thai Buddhist, Japanese, Korean, Taiwan), both versions write
+  the same name.
+- The indent of the title still has its three steps by `string.Length` of the name that is written (five
+  spaces up to 4, four up to 7, three beyond). Where the Gregorian name falls on another step than the name
+  1.0.0 wrote, the indent follows the name written. It is not centering and counts UTF-16 code units.
 - The year is the argument, never converted to the culture's calendar.
 
 **Selected dates**
@@ -242,12 +263,12 @@ one behavior a correction is about.
 | Behavior | Where it lives |
 |---|---|
 | Public members, parameter names, unsealed class | The same declarations as 1.0.0 |
-| Constructor color assignments, each argument to the element it is named for (D-57); getters and setters | Four private fields. The constructors are the one place where the class has been corrected so far |
+| Constructor color assignments, each argument to the element it is named for (D-57); getters and setters | Four private fields |
 | A null list fails first, with `ArgumentNullException` for `dates` (D-58) | A null check as the first statement of the two methods that take a list, where 1.0.0 had none and failed on reading the list |
 | An invalid month or year fails with the runtime's own `ArgumentOutOfRangeException` | The same `DateTime.DaysInMonth(Year, Month)` call, in the same position |
 | Which column and which row each day is in; four, five or six rows; Monday first | `MonthLayout.Create(Year, Month, DayOfWeek.Monday)` |
 | A date selects a day by year, month and day; the list is not changed | A private lookup by day of the month |
-| Title: month name from the current culture's own calendar, three-step indent, the year appended | Private |
+| Title: the current culture's name for the Gregorian month (D-61), three-step indent, the year appended | Private. Two small private methods choose the name, where 1.0.0 asked the culture's formats for the month number whatever their calendar was. The modern renderer is not used for it |
 | The fixed English weekday row | Private constant |
 | One console call per cell, the method and text of each, empty cells in the color of the 1st | Private, walking the cells of the layout in order |
 | Row end after Sunday and after the last day, once; one more line end for the blank line (D-59, D-60) | Private. Two lines of the loop that walks the cells, where 1.0.0 wrote a literal `\n` |

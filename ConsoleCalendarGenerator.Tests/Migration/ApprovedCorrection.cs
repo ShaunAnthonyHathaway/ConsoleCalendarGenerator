@@ -166,12 +166,24 @@ internal sealed class ApprovedCorrection
                 observation.ExceptionParameterName,
                 observation.ExceptionMessage);
 
-    /// <summary>The title names the Gregorian month that the grid shows. Not implemented.</summary>
+    /// <summary>
+    /// The title names the Gregorian month that the grid shows. Implemented: under a culture whose dates use a
+    /// calendar that is not the Gregorian one, the text of every title call is the title with the culture's
+    /// name for the Gregorian month where 1.0.0 had its name for that month number of its own calendar
+    /// (<see cref="Migration.GregorianTitle.Corrected"/>). The call, its color, its place and every other call
+    /// stay as they were. Under every other culture nothing changes. The culture is the one the scenario is
+    /// run under.
+    /// </summary>
     public static ApprovedCorrection GregorianTitle { get; } = new(
         "D-61",
         "The title names the Gregorian month the grid shows. In 1.0.0 it is the month of that number in the"
         + " current culture's own calendar, which is another month under a culture whose calendar is not Gregorian.",
-        () => MigrationMatrix.CultureTitle);
+        () => MigrationMatrix.CultureTitle,
+        corrected: (scenario, expected) => WithCalls(expected, Migration.GregorianTitle.Corrected(
+            expected.Calls,
+            scenario.ResolveCulture() ?? System.Globalization.CultureInfo.InvariantCulture,
+            scenario.Year,
+            scenario.Draw is LegacyDraw.Year or LegacyDraw.YearWithDates ? Enumerable.Range(1, 12).ToArray() : new[] { scenario.Month })));
 
     /// <summary>The five approved corrections, in the order they are applied.</summary>
     public static IReadOnlyList<ApprovedCorrection> All { get; } =

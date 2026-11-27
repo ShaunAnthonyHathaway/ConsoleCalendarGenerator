@@ -8,12 +8,12 @@ namespace CalendarGenerator
     // The API published in ConsoleCalendarGenerator 1.0.0, kept for existing callers. Its public surface, its
     // output, every single call it makes on the console and its exceptions are a compatibility contract,
     // including what is plainly wrong; see docs/ai-context/compatibility.md. Version 2.0 corrects five listed
-    // behaviors, each in a change of its own; that file says which are made. Nothing else may be "corrected".
+    // behaviors, all of which are made; that file lists them. Nothing else may be "corrected".
     //
     // Where each day goes comes from MonthLayout, the modern layout model. Everything else about how 1.0.0 draws
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave
-    // differently: they take the title from the Gregorian calendar, restore the caller's colors, write whole
-    // lines, and reject invalid colors early.
+    // differently: they format the title, restore the caller's colors, write whole lines, and reject invalid
+    // colors early.
     /// <summary>
     /// The calendar of version 1.0.0. It draws a month, or the twelve months of a year, directly on the console,
     /// in four colors.
@@ -59,7 +59,8 @@ namespace CalendarGenerator
         /// <remarks>
         /// This is the same as calling <see cref="GenerateMonth(int, int)"/> for the months 1 to 12. There is no heading
         /// for the year. Every month, December included, is followed by one empty line, and nothing more is added
-        /// between the months or at the end.
+        /// between the months or at the end. Every title names the Gregorian month below it, in the language of
+        /// <see cref="CultureInfo.CurrentCulture"/>.
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
@@ -81,7 +82,8 @@ namespace CalendarGenerator
         /// <remarks>
         /// This is the same as calling <see cref="GenerateMonth(int, int, List{DateTime})"/> for the months 1 to 12
         /// with the same list. There is no heading for the year. Every month, December included, is followed by one
-        /// empty line, and nothing more is added between the months or at the end.
+        /// empty line, and nothing more is added between the months or at the end. Every title names the Gregorian
+        /// month below it, in the language of <see cref="CultureInfo.CurrentCulture"/>.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
@@ -137,10 +139,14 @@ namespace CalendarGenerator
         /// Sunday; version 2.0 corrects that.
         /// </para>
         /// <para>
-        /// <b>Culture.</b> The name of the month is what the calendar of <see cref="CultureInfo.CurrentCulture"/> calls
-        /// its month number <paramref name="Month"/>. The days are always those of the Gregorian month. Under a culture
-        /// whose own calendar is not the Gregorian one, the title can therefore name a different month than the one
-        /// drawn. The year is never converted.
+        /// <b>Culture.</b> The days are always those of the Gregorian month, and the title names that month: it is the
+        /// name <see cref="CultureInfo.CurrentCulture"/> has for the month of the Gregorian calendar, also when the
+        /// culture's own calendar is another one. Version 1.0.0 wrote the culture's name for month number
+        /// <paramref name="Month"/> of its own calendar instead, and so named a different month than the one drawn
+        /// under such a culture, for example <c>fa-IR</c> with the Persian calendar; version 2.0 corrects that. The
+        /// culture is only read, and <see cref="CultureInfo.CurrentUICulture"/> is not used. The weekday row is the
+        /// English one and weeks start on Monday whatever the culture is. The year is written as given and is never
+        /// converted.
         /// </para>
         /// <para>
         /// <b>The console.</b> Text is written to <see cref="Console.Out"/> piece by piece, and the color of each piece
@@ -355,16 +361,69 @@ namespace CalendarGenerator
             return isSelected;
         }
 
-        // The month name comes from the current culture's own calendar, while the grid and the year are Gregorian.
-        // Under a culture whose calendar is not Gregorian the title therefore names a different month than the
-        // one drawn. The indent has three steps by the length of the name; it is not centering.
+        // The title names the Gregorian month, the one the grid shows, in the language of the current culture.
+        // The year is the argument, never converted. The indent has three steps by the length of the name; it
+        // is not centering.
         private void WriteTitle(int Month, int Year)
         {
             Console.ForegroundColor = _titleColor;
-            string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Month);
+            string monthName = GregorianMonthName(Month);
             string indent = monthName.Length <= 4 ? "     " : monthName.Length <= 7 ? "    " : "   ";
             Console.WriteLine(indent + monthName + " " + Year);
             Console.ResetColor();
+        }
+
+        // The current culture's name for a month of the Gregorian calendar (D-61). Version 1.0.0 asked the
+        // culture's date formats for month number Month whatever their calendar was, and so named a month of
+        // another calendar under a culture whose dates do not use the Gregorian one: the ninth Persian month
+        // above the grid of September.
+        //
+        // Nearly every culture's dates use the Gregorian calendar, and for those this is the call 1.0.0 made,
+        // names set by the program included. Any other culture offers the Gregorian calendar among its optional
+        // calendars, and its names for that calendar are used: the culture's own kind of Gregorian calendar
+        // first, because the other kinds that some systems offer name the months in English or French. A
+        // culture that offers no Gregorian calendar at all, of which none is known, gets the invariant names:
+        // the right month in English, never a month of another calendar.
+        private static string GregorianMonthName(int Month)
+        {
+            CultureInfo culture = CultureInfo.CurrentCulture;
+            DateTimeFormatInfo format = culture.DateTimeFormat;
+            if (format.Calendar is GregorianCalendar)
+            {
+                return format.GetMonthName(Month);
+            }
+
+            Calendar[] offered = culture.OptionalCalendars;
+            return GregorianMonthName(Month, format, offered, localized: true)
+                ?? GregorianMonthName(Month, format, offered, localized: false)
+                ?? CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(Month);
+        }
+
+        // The name that the formats have for the month once they use a Gregorian calendar among those offered,
+        // of the culture's own kind or of the other kinds, or null when there is none they take. The calendar
+        // is set on a copy that is made here and thrown away, so neither the culture nor its formats, which may
+        // be shared and read-only, are changed. Formats that are not the culture's own may refuse a calendar
+        // the culture offers; that is not allowed to become an exception which 1.0.0 did not throw.
+        private static string? GregorianMonthName(int Month, DateTimeFormatInfo format, Calendar[] offered, bool localized)
+        {
+            foreach (Calendar calendar in offered)
+            {
+                if (calendar is GregorianCalendar gregorian
+                    && (gregorian.CalendarType == GregorianCalendarTypes.Localized) == localized)
+                {
+                    var copy = (DateTimeFormatInfo)format.Clone();
+                    try
+                    {
+                        copy.Calendar = gregorian;
+                    }
+                    catch (ArgumentException)
+                    {
+                        continue;
+                    }
+                    return copy.GetMonthName(Month);
+                }
+            }
+            return null;
         }
 
         private void WriteWeekdayRow()

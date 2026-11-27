@@ -60,12 +60,15 @@ in_readme="$(tr -d '\r' < "$readme" | grep -o -E "\]\(($repository_url|$raw_url)
 
 if [ "$check" = true ]; then
   # What the README of a release must have: the links that are part of the version at the tag, the others as listed.
-  expected="$( { while IFS= read -r link; do
-      case "$link" in
-        */master/*) printf '%s\n' "${link/\/master\///$tag/}" ;;
-        *) fail "the link $link moves to the tag, but does not name the default branch" ;;
-      esac
-    done <<< "$moving"; printf '%s\n' "$staying"; } | LC_ALL=C sort -u)"
+  # Built line by line, outside a command substitution: the bash that macOS ships cannot read a "case" inside one.
+  at_the_tag=""
+  while IFS= read -r link; do
+    if [ "${link/\/master\//}" = "$link" ]; then
+      fail "the link $link moves to the tag, but does not name the default branch"
+    fi
+    at_the_tag="$at_the_tag${link/\/master\///$tag/}"$'\n'
+  done <<< "$moving"
+  expected="$(printf '%s%s\n' "$at_the_tag" "$staying" | LC_ALL=C sort -u)"
   if [ "$in_readme" != "$expected" ]; then
     echo "In the README:" >&2
     echo "$in_readme" >&2

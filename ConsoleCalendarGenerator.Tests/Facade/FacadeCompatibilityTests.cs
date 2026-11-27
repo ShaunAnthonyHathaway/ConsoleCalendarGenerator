@@ -115,14 +115,18 @@ public class FacadeCompatibilityTests
     // ---- line endings and markers ----
 
     [Test]
-    public void TheLegacyClass_StillEndsItsLastRowWithABareLineFeed_UnlikeTheModernWriters()
+    public void TheLegacyClass_EndsEveryLineWithTheWritersTerminator_LikeTheModernWriters_AndAddsABlankLine()
     {
         Captured legacy = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateMonth(2, 2023), newLine: "\r\n");
         Captured modern = ConsoleCapture.Run(
             () => ConsoleMonthWriter.Write(MonthRenderer.Render(2023, 2, MonthRenderOptions.Default), CalendarTheme.None), newLine: "\r\n");
 
-        Assert.That(legacy.Text, Does.EndWith("27 28\n\r\n").Using(StringComparison.Ordinal));
+        // Since version 2.0 the legacy class no longer ends its last row with a bare line feed (D-59). What is
+        // left of the difference is the blank line it writes after a month, which the modern writers do not.
+        Assert.That(legacy.Text, Does.EndWith("27 28\r\n\r\n").Using(StringComparison.Ordinal));
         Assert.That(modern.Text, Does.EndWith("27 28\r\n").Using(StringComparison.Ordinal));
+        Assert.That(modern.Text, Does.Not.EndWith("\r\n\r\n"));
+        Assert.That(legacy.Text.Replace("\r\n", string.Empty), Ordinal.DoesNotContain("\n"));
         Assert.That(modern.Text.Replace("\r\n", string.Empty), Ordinal.DoesNotContain("\n"));
     }
 

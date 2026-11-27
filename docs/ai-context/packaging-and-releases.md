@@ -170,8 +170,8 @@ repository that is deleted afterwards:
 | `net10.0` application | the `net10.0` build | builds, runs, expected output |
 | `net8.0` application | the `netstandard2.1` build | builds, runs, expected output |
 | `net11.0` application | the `net10.0` build | builds, runs, expected output |
-| The sample program that accompanied 1.0.0, unchanged | the `net10.0` build | compiles; on Linux with the `script` program it is also run on a pseudo-terminal and writes the expected text |
-| The same program with the published 1.0.0 (`--published-sample`) | published 1.0.0 from nuget.org | builds, runs, writes the same text; its raw terminal bytes differ from the package's in color sequences only |
+| The sample program that accompanied 1.0.0, unchanged | the `net10.0` build | compiles; on Linux with the `script` program it is also run on a pseudo-terminal and writes the text expected of 2.0 |
+| The same program with the published 1.0.0 (`--published-sample`) | published 1.0.0 from nuget.org | builds, runs, writes the text recorded for 1.0.0; its raw terminal bytes differ from the package's in the blank line after a Sunday and in color sequences only |
 | That program, as compiled against 1.0.0 and not rebuilt, with the library under test in place of the published assembly (`--published-sample`) | the `netstandard2.1` build, substituted | runs, and writes byte for byte what the rebuilt program writes |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
@@ -210,24 +210,56 @@ compared ([D-70](decisions.md#d-70-the-original-sample-is-compared-in-one-define
 | Captured, "raw" | every byte the terminal received: the text, the color and keypad escape sequences the .NET runtime writes, the form feed and the two escape sequences the program writes to clear the screen, and one `x` after each prompt, which the runtime echoes when it reads a key. The terminal echoes nothing itself, and `script -q` adds nothing |
 | Captured, "text" | the raw bytes without escape sequences and without carriage returns |
 
-**What is compared.** The text, with `eng/consumer-smoke/OriginalSample/expected-text.txt`, exactly. The raw
-bytes depend on the runtime and the terminal database, so they are compared only between two runs on the same
-machine: with `--published-sample`, the run with the published 1.0.0 and the run with the package must be
-identical once the sequences that set a color are removed from both.
+**What is compared.** The text, exactly, with one file for each version, because 2.0 corrects what 1.0.0
+wrote:
 
-**Measured on 2026-11-27** (Linux, .NET runtime 11.0.0, util-linux 2.42.4, ncurses 6.6), for the record and not
-as a criterion:
+| File in `eng/consumer-smoke/OriginalSample/` | What it is | Compared with |
+|---|---|---|
+| `expected-text-1.0.0.txt` | What the program writes with the published 1.0.0, recorded from a run of that package. Historical: it never changes, and a test holds its SHA-256 | the run with the published 1.0.0 (`--published-sample`) |
+| `expected-text-2.0.txt` | What the program writes with 2.0 | the run with the package under test, and the run of the program compiled against 1.0.0 with the new library put in its place |
+
+The two files differ in one way: 1.0.0 wrote two blank lines after a month whose last day is a Sunday, and 2.0
+writes one (D-60). The program draws six such months, April 2023 four times and December 2023 twice, so the
+2.0 text is six lines shorter. The script checks that this is the whole difference between the two files, and
+`Migration/OriginalSampleTextTests` checks it again without a terminal, together with two more things: that
+the frozen source of 1.0.0 writes exactly the text recorded from the published package, and that the library
+writes exactly the 2.0 text. The other corrections do not show in the text: the colors of D-57 are escape
+sequences, the program passes no null list (D-58), and the last row of a month ending with the console's line
+terminator instead of a literal line feed (D-59) is the same character on this terminal, whose terminator is
+a line feed.
+
+**The console calls** of the program's calendars are compared in the tests, not here: the twelve calendars it
+draws are scenarios of the migration matrix (`MigrationMatrix.OriginalSample`), where the library is compared
+with the frozen source call by call, with the colors of every call.
+
+**The raw bytes** depend on the runtime and the terminal database, so they are compared only between two runs
+on the same machine. With `--published-sample`, the run with the published 1.0.0 and the run with the package
+must be the same bytes once two things are done to what 1.0.0 wrote: the second blank line after a month that
+ends on a Sunday is taken out (D-60), and then the sequences that set a color are removed from both (D-57).
+The run of the program compiled against 1.0.0 with the new library must be byte for byte the run of the
+rebuilt program.
+
+**Measured on 2026-11-27** (Linux, .NET runtime 11.0.0, util-linux 2.42.4, ncurses 6.6; the Linux CI runner has
+given the same hashes), for the record and not as a criterion:
 
 | Run | Raw bytes | SHA-256 of the raw bytes | Text |
 |---|---|---|---|
 | Published 1.0.0 | 21,738 | `cb4664cd9417416a6de600359ce49f2a09705679282e41776a2e681a15f8c43b` | 4,869 bytes, SHA-256 `ad83e16e54f45f7de0a48bf885379c085178e815b444329638fab8b368d9eb6d` |
-| 2.0 with the constructor colors corrected | 21,738 | `1ef9b52c3ca0094a0511983bdf7133864bf1d1ce44233242ac55a33784e3ff6e` | the same |
+| 2.0 after the constructor colors (D-57) and the null list (D-58) | 21,738 | `1ef9b52c3ca0094a0511983bdf7133864bf1d1ce44233242ac55a33784e3ff6e` | the same |
+| 2.0 after the end of a month as well (D-59, D-60) | 21,726 | `c1b563dd108771435f35a7e76ac5f5a250ec7ff52c10f70b4cab1cf13bf24822` | 4,863 bytes, SHA-256 `260f0c0aafcd4781af8ebe09a8ef3730dad192786713c5913db4720dfa441d18` |
 
-The two raw streams have the same 2,522 color sequences in the same places and differ in 46 bytes, each the
-color digit of one sequence, which is the constructor correction and nothing else: the five titles of the
-one-argument calendar are red where they were yellow (5), its seventeen weekday rows cyan where they were red
-(17), and the twelve titles and twelve weekday rows of the four-argument calendar have traded red and blue
-(24). The sequences are the same length, so the byte count does not change.
+What the differences are:
+
+- **D-57.** The raw streams of 1.0.0 and of 2.0 have the same 2,522 color sequences in the same order and differ
+  in 46 bytes, each the color digit of one sequence: the five titles of the one-argument calendar are red where
+  they were yellow (5), its seventeen weekday rows cyan where they were red (17), and the twelve titles and
+  twelve weekday rows of the four-argument calendar have traded red and blue (24). The sequences are the same
+  length, so the byte count did not change.
+- **D-60.** Six line ends are gone, one after each of the six months that end on a Sunday. On the terminal a
+  line end is a carriage return and a line feed, so the raw stream is 12 bytes shorter and the text 6.
+- **D-59** changes no byte here. The program writes `\n` either way, as text in 1.0.0 and as the writer's
+  terminator in 2.0, and the terminal turns both into `\r\n`. It shows where the terminator is not a line
+  feed, which is Windows, and there the redirected-output tests cover it.
 
 **The two numbers reported before.** Earlier reports gave 21,742 bytes and 21,738 bytes for this program with
 the published assembly. Both are reproduced exactly, and they differ in one thing. When the four keys are
@@ -237,9 +269,6 @@ above. When the keys arrive after the program is waiting for them, or echo is of
 terminal echoes nothing. The run behind the 21,738 sent its keys after a delay. What the run behind the 21,742
 sent, and when, was not recorded, so that it was this case is a reproduction of the number and not a record
 of the run. Neither number was wrong, and neither is a criterion now.
-
-When a later correction changes what the sample writes, which the line terminator and the blank line will,
-`expected-text.txt` is split in that pull request into what 1.0.0 writes and what 2.0 writes.
 
 ## Release boundaries
 

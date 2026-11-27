@@ -18,6 +18,12 @@ namespace ConsoleCalendarGenerator.Tests.Migration;
 /// The 1.0.0 side of every comparison is in Historical/Published100NullListTests.cs on its own, and the 2.0
 /// side in Legacy/ValidationTests.cs.
 /// </para>
+/// <para>
+/// Version 2.0 has corrected other things as well: the constructor colors before this, and how a month ends
+/// after it. So that these tests keep saying what they said, the 1.0.0 side is 1.0.0 with those other
+/// corrections applied, except in the one test that is about two corrections together; what is compared is
+/// still this correction and nothing else.
+/// </para>
 /// </summary>
 [TestFixture]
 public class NullListMigrationTests
@@ -38,7 +44,17 @@ public class NullListMigrationTests
         BackgroundBefore = ConsoleColor.DarkBlue,
     };
 
-    private static LegacyObservation In100(LegacyScenario scenario) => LegacyObservation.Of(LegacySubject.Published100, scenario, CultureInfo.InvariantCulture);
+    /// <summary>
+    /// What 1.0.0 did in a scenario, with the corrections other than this one applied (the constructor colors,
+    /// the end of a month), so that what is left to differ from the library is the exception for a null list
+    /// alone.
+    /// </summary>
+    private static LegacyObservation In100(LegacyScenario scenario) =>
+        ApprovedCorrection.ExpectedWithout(new[] { ApprovedCorrection.NullDateList }, scenario, CultureInfo.InvariantCulture);
+
+    /// <summary>What 1.0.0 did in a scenario, with no correction applied at all.</summary>
+    private static LegacyObservation InUncorrected100(LegacyScenario scenario) =>
+        LegacyObservation.Of(LegacySubject.Published100, scenario, CultureInfo.InvariantCulture);
 
     private static LegacyObservation In20(LegacyScenario scenario) => LegacyObservation.Of(LegacySubject.Library, scenario, CultureInfo.InvariantCulture);
 
@@ -162,7 +178,7 @@ public class NullListMigrationTests
         {
             LegacyScenario scenario = NullList(LegacyDraw.MonthWithDates, 2, 2023).WithConstructorAndSetters(arguments, Array.Empty<(LegacyColorRole, ConsoleColor)>());
 
-            LegacyObservation published100 = In100(scenario);
+            LegacyObservation published100 = InUncorrected100(scenario);
             LegacyObservation library = In20(scenario);
 
             Assert.That(library.AspectsThatDifferFrom(published100), Is.EqualTo(LegacyAspects.StoredColors | TheException), string.Join(", ", arguments));

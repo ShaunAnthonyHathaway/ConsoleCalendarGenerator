@@ -71,13 +71,14 @@ public class GenerateYearTests
     }
 
     [Test]
-    public void MonthsAreSeparatedByTheBlankLinesThatEndEachMonth()
+    public void MonthsAreSeparatedByTheOneBlankLineThatEndsEachMonth()
     {
         string text = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateYear(2023)).Text;
 
         Assert.That(text, Ordinal.Contains("30 31\n\n   February 2023\n"), "one blank line after January");
-        Assert.That(text, Ordinal.Contains("24 25 26 27 28 29 30\n\n\n     May 2023\n"), "two after April, which ends on a Sunday");
-        Assert.That(text, Does.EndWith("25 26 27 28 29 30 31\n\n\n").Using(StringComparison.Ordinal), "December 2023 ends on a Sunday as well");
+        Assert.That(text, Ordinal.Contains("24 25 26 27 28 29 30\n\n     May 2023\n"), "one after April as well, although it ends on a Sunday");
+        Assert.That(text, Does.EndWith("25 26 27 28 29 30 31\n\n").Using(StringComparison.Ordinal), "and one after December, with nothing added for the year");
+        Assert.That(text, Ordinal.DoesNotContain("\n\n\n"), "nowhere are there two blank lines");
     }
 
     [Test]

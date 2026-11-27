@@ -126,19 +126,45 @@ internal sealed class ApprovedCorrection
         scenario.UICulture ?? System.Globalization.CultureInfo.InvariantCulture,
         () => new ArgumentNullException(NullDateListParameter).Message);
 
-    /// <summary>The last row of days ends with the console's line terminator. Not implemented.</summary>
+    /// <summary>
+    /// The last row of days ends with the console's line terminator. Implemented: every call with which 1.0.0
+    /// wrote the literal line feed after the last day is a call that ends the line, in the same color; no other
+    /// call is touched (<see cref="MonthEnd.WithTheConsolesTerminator(IReadOnlyList{Support.RecordedCall})"/>).
+    /// The text follows from the calls, so it changes only where the writer's terminator is not a line feed.
+    /// </summary>
     public static ApprovedCorrection LineTerminator { get; } = new(
         "D-59",
         "The last row of days of a month ends with the console's line terminator. In 1.0.0 it ends with a"
         + " literal line feed.",
-        () => MigrationMatrix.LineTerminator);
+        () => MigrationMatrix.LineTerminator,
+        corrected: (_, expected) => WithCalls(expected, MonthEnd.WithTheConsolesTerminator(expected.Calls)));
 
-    /// <summary>Every month is followed by exactly one blank line. Not implemented.</summary>
+    /// <summary>
+    /// Every month is followed by exactly one blank line. Implemented: where three line ends follow each other,
+    /// which after the correction above is the end of a month whose last day is a Sunday and nothing else, one
+    /// is removed (<see cref="MonthEnd.WithOneBlankLine(IReadOnlyList{Support.RecordedCall})"/>). It is applied
+    /// after the correction above, in the order of <see cref="All"/>.
+    /// </summary>
     public static ApprovedCorrection OneBlankLine { get; } = new(
         "D-60",
         "Every month is followed by exactly one blank line. In 1.0.0 a month whose last day is a Sunday is"
         + " followed by two.",
-        () => MigrationMatrix.BlankLineAfterSunday);
+        () => MigrationMatrix.BlankLineAfterSunday,
+        corrected: (_, expected) => WithCalls(expected, MonthEnd.WithOneBlankLine(expected.Calls)));
+
+    /// <summary>The same observation with other calls, or the observation itself when the calls are the same list.</summary>
+    private static LegacyObservation WithCalls(LegacyObservation observation, IReadOnlyList<Support.RecordedCall> calls) =>
+        ReferenceEquals(calls, observation.Calls)
+            ? observation
+            : new LegacyObservation(
+                observation.StoredColors,
+                calls,
+                observation.NewLine,
+                observation.ForegroundAfter,
+                observation.BackgroundAfter,
+                observation.ExceptionType,
+                observation.ExceptionParameterName,
+                observation.ExceptionMessage);
 
     /// <summary>The title names the Gregorian month that the grid shows. Not implemented.</summary>
     public static ApprovedCorrection GregorianTitle { get; } = new(
@@ -179,6 +205,20 @@ internal sealed class ApprovedCorrection
     /// </summary>
     public static LegacyObservation ExpectedOfTheLibrary(LegacyScenario scenario, LegacyObservation published100) =>
         Expected(scenario, published100, All);
+
+    /// <summary>
+    /// What the library would do in a scenario if some of the implemented corrections had not been made: what
+    /// 1.0.0 did, with every other implemented correction applied. A test of one correction compares the library
+    /// with this, leaving that correction out, so that what differs is that correction alone and not the ones
+    /// made before or after it. With nothing left out it is what the library is expected to do.
+    /// </summary>
+    public static LegacyObservation ExpectedWithout(
+        IReadOnlyCollection<ApprovedCorrection> leftOut, LegacyScenario scenario, System.Globalization.CultureInfo culture)
+    {
+        ApprovedCorrection[] applied = All.Where(correction => !leftOut.Contains(correction)).ToArray();
+        LegacyObservation published100 = LegacyObservation.Of(LegacySubject.Published100, ScenarioFor100(scenario, applied), culture);
+        return Expected(scenario, published100, applied);
+    }
 
     /// <summary>The same for any list of corrections. Corrections that are not implemented change nothing.</summary>
     public static LegacyObservation Expected(LegacyScenario scenario, LegacyObservation published100, IEnumerable<ApprovedCorrection> corrections)

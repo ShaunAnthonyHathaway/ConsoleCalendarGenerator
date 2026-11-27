@@ -17,8 +17,8 @@
 # The sample program that accompanied 1.0.0 is compiled everywhere. On Linux with the util-linux "script" program
 # it is also run, on a pseudo-terminal, and what it writes is compared with a file; see "The original sample"
 # below for the exact scenario. --published-sample runs the same scenario with the published 1.0.0 package as
-# well, compares the two, and runs the program that was compiled against 1.0.0 with the library under test put in
-# its place. That is the only part of this script that takes ConsoleCalendarGenerator from nuget.org, and it does
+# well, compares the two by the differences 2.0 has on purpose, and runs the program that was compiled against
+# 1.0.0 with the library under test put in its place. That is the only part of this script that takes ConsoleCalendarGenerator from nuget.org, and it does
 # so in a folder of its own.
 
 set -euo pipefail
@@ -180,8 +180,21 @@ echo "ok: the 1.0.0 sample program compiles unchanged"
 #              echoes nothing, and "script -q" adds nothing of its own.
 #              "text": the raw bytes without escape sequences and without carriage returns.
 #
-# The text is what is compared with a file. The raw bytes depend on the runtime and on the terminal database, so
-# they are compared between two runs on the same machine and never with a recorded value.
+# The text is what is compared with a file, and there is one file for each version, because 2.0 corrects what
+# 1.0.0 wrote:
+#
+#   expected-text-1.0.0.txt   what the program writes with the published 1.0.0. It is historical and never changes.
+#   expected-text-2.0.txt     what it writes with the package under test.
+#
+# The two differ in one way: 1.0.0 wrote two blank lines after a month whose last day is a Sunday, and 2.0 writes
+# one, as after every month (D-60). This script checks that this is the whole difference between the two files.
+# The other corrections do not show in the text: other colors for the calendars made with constructor arguments
+# (D-57) are escape sequences; the last row of a month ending with the console's line terminator instead of a
+# literal line feed (D-59) is the same byte on this terminal, whose terminator is a line feed; and the program
+# passes no null list (D-58).
+#
+# The raw bytes depend on the runtime and on the terminal database, so they are compared between two runs on the
+# same machine and never with a recorded value.
 
 # sample_run <application dll> <file for the raw bytes>
 sample_run() {
@@ -213,22 +226,54 @@ sha256_of() {
   sha256sum "$1" | cut -d ' ' -f 1
 }
 
-# sample_check_text <what> <raw file>
+expected_text_100="$templates/OriginalSample/expected-text-1.0.0.txt"
+expected_text_20="$templates/OriginalSample/expected-text-2.0.txt"
+
+# sample_check_text <what> <raw file> <file with the expected text>
 sample_check_text() {
   if sample_text "$2" | LC_ALL=C grep -q $'\x1b'; then
     fail "$1 wrote an escape sequence this script does not know how to remove"
   fi
-  if ! sample_text "$2" | cmp -s - "$templates/OriginalSample/expected-text.txt"; then
-    sample_text "$2" | diff "$templates/OriginalSample/expected-text.txt" - | head -20 >&2 || true
-    fail "$1 does not write the text in eng/consumer-smoke/OriginalSample/expected-text.txt"
+  if ! sample_text "$2" | cmp -s - "$3"; then
+    sample_text "$2" | diff "$3" - | head -20 >&2 || true
+    fail "$1 does not write the text in eng/consumer-smoke/OriginalSample/$(basename "$3")"
   fi
+}
+
+# with_one_blank_line_after_every_month < text of 1.0.0 > that text as 2.0 writes it (D-60)
+#
+# The last row of a month that ends on a Sunday is a full week: twenty characters of digits and spaces. In 1.0.0
+# two blank lines follow such a row, in 2.0 one. A full week inside a month is followed by the next row, not by
+# a blank line, so the first blank line directly after a full week is the one 2.0 does not write.
+with_one_blank_line_after_every_month() {
+  awk '
+    after_a_full_week && $0 == "" { after_a_full_week = 0; next }
+    { after_a_full_week = (length($0) == 20 && $0 ~ /^[ 0-9]*$/) }
+    { print }'
+}
+
+# with_one_blank_line_after_every_month_raw <raw file of 1.0.0> -> those raw bytes as 2.0 writes them (D-60)
+#
+# In the raw bytes a month ends with its line ends followed by the sequence that resets the colors. Three line
+# ends before it are the month that ends on a Sunday; every other month has two.
+with_one_blank_line_after_every_month_raw() {
+  LC_ALL=C perl -0pe 's/\r\n\r\n\r\n(\x1b\[39;49m)/\r\n\r\n$1/g' "$1"
 }
 
 if [ "$(uname -s)" = "Linux" ] && command -v script > /dev/null && command -v stty > /dev/null; then
   under_test="$work/original-sample/bin/Release/net10.0"
   sample_run "$under_test/OriginalSample.dll" "$work/sample-under-test.raw"
-  sample_check_text "the 1.0.0 sample program, with the package under test," "$work/sample-under-test.raw"
-  echo "ok: the 1.0.0 sample program, run on a pseudo-terminal with the package under test, writes the expected text"
+  sample_check_text "the 1.0.0 sample program, with the package under test," "$work/sample-under-test.raw" "$expected_text_20"
+  echo "ok: the 1.0.0 sample program, run on a pseudo-terminal with the package under test, writes the text expected of 2.0"
+
+  # The two expected texts differ by the one blank line after each month that ends on a Sunday, and by nothing else.
+  with_one_blank_line_after_every_month < "$expected_text_100" > "$work/expected-text-1.0.0-corrected.txt"
+  awk '{ print }' "$expected_text_20" > "$work/expected-text-2.0-lines.txt"
+  cmp -s "$work/expected-text-1.0.0-corrected.txt" "$work/expected-text-2.0-lines.txt" \
+    || fail "expected-text-2.0.txt is not expected-text-1.0.0.txt with one blank line after every month"
+  blank_lines_removed=$(( $(awk 'END { print NR }' "$expected_text_100") - $(awk 'END { print NR }' "$expected_text_20") ))
+  [ "$blank_lines_removed" -gt 0 ] || fail "the two expected texts do not differ, although the program draws months that end on a Sunday"
+  echo "ok: the text expected of 2.0 is the text of 1.0.0 without the second blank line after the $blank_lines_removed months drawn that end on a Sunday"
 
   if [ "$published_sample" = true ]; then
     # The same program against the published 1.0.0, in a folder of its own with nuget.org as its only source.
@@ -268,22 +313,24 @@ CONFIG
     grep -q 'api.nuget.org' "$published_metadata" || fail "the published 1.0.0 was not restored from nuget.org: $(cat "$published_metadata")"
 
     sample_run "$compiled_for_100/OriginalSample.dll" "$work/sample-published.raw"
-    sample_check_text "the 1.0.0 sample program, with the published 1.0.0," "$work/sample-published.raw"
-    echo "ok: with the published 1.0.0 it writes the same text"
+    sample_check_text "the 1.0.0 sample program, with the published 1.0.0," "$work/sample-published.raw" "$expected_text_100"
+    echo "ok: with the published 1.0.0 it writes the text recorded for 1.0.0"
 
-    # Raw bytes: the two differ where the library chooses another color, and nowhere else.
+    # Raw bytes. The two runs differ in what 2.0 corrects and in nothing else: after the second blank line of
+    # the months that end on a Sunday is taken out of what 1.0.0 wrote (D-60), the two are the same bytes except
+    # inside the sequences that set a color (D-57).
     echo "    raw bytes, published 1.0.0:    $(wc -c < "$work/sample-published.raw" | tr -d ' ') bytes, SHA-256 $(sha256_of "$work/sample-published.raw")"
     echo "    raw bytes, package under test: $(wc -c < "$work/sample-under-test.raw" | tr -d ' ') bytes, SHA-256 $(sha256_of "$work/sample-under-test.raw")"
-    echo "    text, both:                    $(sample_text "$work/sample-under-test.raw" | wc -c | tr -d ' ') bytes, SHA-256 $(sample_text "$work/sample-under-test.raw" | sha256sum | cut -d ' ' -f 1)"
-    if cmp -s "$work/sample-published.raw" "$work/sample-under-test.raw"; then
-      echo "ok: the raw terminal bytes are identical too"
-    else
-      sample_without_colors "$work/sample-published.raw" > "$work/sample-published.uncolored"
-      sample_without_colors "$work/sample-under-test.raw" > "$work/sample-under-test.uncolored"
-      cmp -s "$work/sample-published.uncolored" "$work/sample-under-test.uncolored" \
-        || fail "the raw terminal bytes of the 1.0.0 sample program differ from the published 1.0.0 in more than color sequences"
-      echo "ok: the raw terminal bytes differ from the published 1.0.0 in color sequences only"
-    fi
+    echo "    text, published 1.0.0:         $(sample_text "$work/sample-published.raw" | wc -c | tr -d ' ') bytes, SHA-256 $(sample_text "$work/sample-published.raw" | sha256sum | cut -d ' ' -f 1)"
+    echo "    text, package under test:      $(sample_text "$work/sample-under-test.raw" | wc -c | tr -d ' ') bytes, SHA-256 $(sample_text "$work/sample-under-test.raw" | sha256sum | cut -d ' ' -f 1)"
+    with_one_blank_line_after_every_month_raw "$work/sample-published.raw" > "$work/sample-published.corrected"
+    sample_without_colors "$work/sample-published.corrected" > "$work/sample-published.uncolored"
+    sample_without_colors "$work/sample-under-test.raw" > "$work/sample-under-test.uncolored"
+    cmp -s "$work/sample-published.uncolored" "$work/sample-under-test.uncolored" \
+      || fail "the raw terminal bytes of the 1.0.0 sample program differ from the published 1.0.0 in more than the blank line after a Sunday and color sequences"
+    [ "$(wc -c < "$work/sample-published.corrected")" -eq "$(wc -c < "$work/sample-under-test.raw")" ] \
+      || fail "the raw terminal bytes of the 1.0.0 sample program have another length than the published 1.0.0 without its second blank lines"
+    echo "ok: the raw terminal bytes differ from the published 1.0.0 in the blank line after a Sunday and in color sequences only"
 
     # Binary compatibility: the program as compiled against 1.0.0, not rebuilt, with the library under test in
     # place of the published assembly. It is the netstandard2.1 build, which is the one 1.0.0 has.
@@ -294,7 +341,7 @@ CONFIG
     unzip -p "$package" lib/netstandard2.1/ConsoleCalendarGenerator.dll > "$substituted/ConsoleCalendarGenerator.dll"
     cmp -s "$substituted/OriginalSample.dll" "$compiled_for_100/OriginalSample.dll" || fail "the substituted program was rebuilt"
     sample_run "$substituted/OriginalSample.dll" "$work/sample-substituted.raw"
-    sample_check_text "the program compiled against 1.0.0, running the library under test," "$work/sample-substituted.raw"
+    sample_check_text "the program compiled against 1.0.0, running the library under test," "$work/sample-substituted.raw" "$expected_text_20"
     cmp -s "$work/sample-substituted.raw" "$work/sample-under-test.raw" \
       || fail "the program compiled against 1.0.0 draws differently with the library under test than the program compiled against it"
     echo "ok: the program compiled against 1.0.0 runs unchanged with the library under test, byte for byte like the rebuilt one"

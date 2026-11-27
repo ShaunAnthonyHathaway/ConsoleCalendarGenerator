@@ -241,6 +241,32 @@ public class XmlDocumentationTests
         }
     }
 
+    /// <summary>
+    /// How a month ends is documented as version 2.0 does it (D-59 and D-60): every line ends with the console
+    /// writer's line terminator, and exactly one empty line follows a month. The comments say what 1.0.0 did,
+    /// and no longer describe it as what happens.
+    /// </summary>
+    [Test]
+    public void TheLegacyMethodsThatDraw_DocumentHowAMonthEnds_AndSayWhat100Did()
+    {
+        MethodInfo month = typeof(ConsoleCalendar).GetMethod("GenerateMonth", new[] { typeof(int), typeof(int), typeof(List<DateTime>) })!;
+        string remarks = TextOf(Documentation.Value[IdOf(month)].Element("remarks"));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(remarks, Ordinal.Contains("followed by exactly one empty line"));
+            Assert.That(remarks, Ordinal.Contains("Every line, the last line of days and the empty line after it included, ends with the line terminator"));
+            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 wrote two after a month whose last day is a Sunday"));
+            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 ended the last line of days with a line feed"));
+            Assert.That(remarks, Does.Not.Match("or by two when|except the last line of days|contains both forms"), "the old behavior is not described as current");
+        }
+
+        foreach (MethodInfo year in typeof(ConsoleCalendar).GetMethods(Declared).Where(method => method.Name == "GenerateYear"))
+        {
+            Assert.That(TextOf(Documentation.Value[IdOf(year)].Element("remarks")), Ordinal.Contains("Every month, December included, is followed by one empty line"), IdOf(year));
+        }
+    }
+
     // ---- nothing turns the check off ----
 
     [Test]

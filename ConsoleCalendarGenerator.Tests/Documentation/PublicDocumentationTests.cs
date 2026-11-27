@@ -166,6 +166,27 @@ public class PublicDocumentationTests
         }
     }
 
+    /// <summary>
+    /// How a month ends is corrected (D-59 and D-60), and both documents say so: one line terminator for every
+    /// line, with what that means on Windows, and exactly one blank line after every month.
+    /// </summary>
+    [TestCase("README.md", "### Changes from 1.0.0")]
+    [TestCase("CHANGELOG.md", "### Breaking changes")]
+    public void TheEndOfMonthCorrections_AreDescribedForUsers(string document, string heading)
+    {
+        string section = SectionOf(Repository.Read(document), heading);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(section, Ordinal.Contains("line terminator"));
+            Assert.That(section, Ordinal.Contains("bare line feed"), "what 1.0.0 wrote");
+            Assert.That(section, Ordinal.Contains("no longer mixes LF and CRLF"), "what changes on Windows");
+            Assert.That(section, Ordinal.Contains("Windows"));
+            Assert.That(section, Ordinal.Contains("exactly one blank line"));
+            Assert.That(section, Ordinal.Contains("Sunday"), "which months had two");
+        }
+    }
+
     /// <summary>The text from a third-level heading to the next heading of the same or a higher level.</summary>
     private static string SectionOf(string text, string heading)
     {

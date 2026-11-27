@@ -23,21 +23,19 @@ namespace ConsoleCalendarGenerator.Tests.Facade;
 /// The scenarios take the implementation to run, so that Historical/Published100DigestTests.cs can put the
 /// frozen source of 1.0.0 through the same code and compare it with the same two values.
 ///
-/// Since version 2.0 corrected which element a constructor argument colors (D-57), both values are computed
-/// with the library's calendars given the colors that 1.0.0 gave them. The values are the ones recorded from
-/// the original implementation and are not recorded again. These tests therefore no longer say anything about
-/// the constructors, which Legacy/ConstructorColorTests.cs and Migration/ConstructorColorMigrationTests.cs
-/// cover; they say that with the same colors held, the library still makes every call the original made, in
-/// the same color.
+/// Since version 2.0 corrected which element a constructor argument colors (D-57), the library's calendars are
+/// given the colors that 1.0.0 gave them. These tests therefore say nothing about the constructors, which
+/// Legacy/ConstructorColorTests.cs and Migration/ConstructorColorMigrationTests.cs cover; they say that with
+/// the same colors held, the library makes the calls the original made, in the same color.
 ///
-/// Since version 2.0 corrected the exception for a null list (D-58), the library no longer reproduces the value
-/// for the calls: that value includes the type of the exception that ended each scenario, and eighteen of the
-/// scenarios pass a null list. The value is not recorded again, and the library is not made to look as if it
-/// still threw the old exception. Instead the library is compared with the frozen source of 1.0.0 scenario by
-/// scenario, in the same text the value is a hash of: every scenario must be identical, except that those
-/// eighteen end with ArgumentNullException where 1.0.0 ended with NullReferenceException, with the same nothing
-/// written before. The recorded value itself stays tied to 1.0.0 by Historical/Published100DigestTests.cs. The
-/// value for the colors does not include the exception and is still reproduced.
+/// <b>The values belong to the original implementation and are never recorded again.</b>
+/// Historical/Published100DigestTests.cs compares the frozen source of 1.0.0 with both, and keeps doing so. The
+/// library no longer reproduces them, on purpose: version 2.0 throws another exception for a null list (D-58),
+/// ends the last row of every month with the console's line terminator (D-59) and follows every month with
+/// exactly one blank line (D-60). So the library is not compared with the values. It is compared with the
+/// frozen source directly, scenario by scenario, in the same text the values are hashes of: every scenario must
+/// be identical, except for those three differences, each written out below and applied to what 1.0.0 did and
+/// to nothing else. A failure names the scenario.
 /// </summary>
 [TestFixture]
 public class PreFacadeBaselineTests
@@ -45,56 +43,93 @@ public class PreFacadeBaselineTests
     internal const string CallsBeforeTheFacade = "718a48c018593e81c16fd1c15739889effeeca101db9549edc63792980113c7d";
     internal const string ColorsBeforeTheFacade = "7693515e206b0278351d66cf6f8ca1692cc810497265913838ed39435a83f78b";
 
-    private const string EndedByNullReference = " -> System.NullReferenceException";
-    private const string EndedByArgumentNull = " -> System.ArgumentNullException";
+    private const string EndedByNullReference = "System.NullReferenceException";
+    private const string EndedByArgumentNull = "System.ArgumentNullException";
+
+    /// <summary>
+    /// What one scenario did: every call on the console's writer with the colors in effect, how the scenario
+    /// ended, and the colors left behind. The two texts are what the two recorded values are hashes of.
+    /// </summary>
+    internal sealed record Recording(string Name, IReadOnlyList<RecordedCall> Calls, string Outcome, string ColorsAfter)
+    {
+        /// <summary>Every call as <c>kind[text]</c>, then how the scenario ended.</summary>
+        public string CallsText => string.Concat(Calls.Select(call =>
+            call.Method + "[" + call.Text.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal) + "]")) + " -> " + Outcome;
+
+        /// <summary>The foreground and background color of every call, then the colors left behind.</summary>
+        public string ColorsText => string.Concat(Calls.Select(call => (int)call.Foreground + "/" + (int)call.Background + " ")) + "-> " + ColorsAfter;
+    }
+
+    /// <summary>
+    /// What the library is to do in a scenario, given what 1.0.0 did in it: the same, with the three approved
+    /// differences. A month ends as <see cref="MonthEnd"/> says, and a scenario that 1.0.0 ended with
+    /// NullReferenceException, which it did only for a null list and before writing anything, ends with
+    /// ArgumentNullException.
+    /// </summary>
+    private static Recording Corrected(Recording original)
+    {
+        string outcome = original.Outcome;
+        if (outcome == EndedByNullReference)
+        {
+            Assert.That(original.Calls, Is.Empty, original.Name + ": 1.0.0 wrote nothing before a null list failed");
+            Assert.That(original.Name, Ordinal.Contains("null"), "only the scenarios that pass a null list ended this way");
+            outcome = EndedByArgumentNull;
+        }
+        return original with { Calls = MonthEnd.Corrected(original.Calls), Outcome = outcome };
+    }
 
     /// <summary>
     /// The method, the text and the order of every call on the console's writer, and every exception, scenario
-    /// by scenario: what the frozen source of 1.0.0 gives, which is what the recorded value is a hash of, with
-    /// the one approved difference written out.
+    /// by scenario: what the frozen source of 1.0.0 gives, with the approved differences written out.
     /// </summary>
     [Test]
-    public void EveryCallOnTheConsolesWriter_IsWhatTheOriginalMade_ScenarioByScenario_ApartFromTheExceptionForANullList()
+    public void EveryCallOnTheConsolesWriter_IsWhatTheOriginalMade_ScenarioByScenario_ApartFromTheApprovedDifferences()
     {
-        (string Name, string Calls, string Colors)[] original = Scenarios(LegacySubject.Published100).ToArray();
-        (string Name, string Calls, string Colors)[] library = Scenarios(LegacySubject.LibraryWithTheConstructorColorsOf100).ToArray();
+        Recording[] original = Scenarios(LegacySubject.Published100).ToArray();
+        Recording[] library = Scenarios(LegacySubject.LibraryWithTheConstructorColorsOf100).ToArray();
 
         Assert.That(library.Select(scenario => scenario.Name), Is.EqualTo(original.Select(scenario => scenario.Name)));
-        int withANullList = 0;
+        Assert.That(original, Has.Length.EqualTo(100), "the scenarios the recorded value covers");
         for (int index = 0; index < original.Length; index++)
         {
-            string expected = original[index].Calls;
-            if (expected.EndsWith(EndedByNullReference, StringComparison.Ordinal))
-            {
-                // 1.0.0 threw this only for a null list, and it wrote nothing first.
-                Assert.That(expected, Is.EqualTo(EndedByNullReference), original[index].Name);
-                Assert.That(original[index].Name, Ordinal.Contains("null"), "only the scenarios that pass a null list ended this way");
-                expected = EndedByArgumentNull;
-                withANullList++;
-            }
-
-            Assert.That(library[index].Calls, Is.EqualTo(expected), original[index].Name);
+            Assert.That(library[index].CallsText, Is.EqualTo(Corrected(original[index]).CallsText), original[index].Name);
         }
-        Assert.That(withANullList, Is.EqualTo(18), "13 months and 3 years that are invalid as well, and one valid month and year");
+
+        Assert.That(original.Count(scenario => scenario.Outcome == EndedByNullReference), Is.EqualTo(18),
+            "13 months and 3 years that are invalid as well, and one valid month and year, each with a null list");
         Assert.That(original.Count(scenario => scenario.Name.Contains("null", StringComparison.Ordinal)), Is.EqualTo(18));
-        Assert.That(original, Has.Length.EqualTo(100), "the scenarios the recorded value covers");
+        Assert.That(original.Count(scenario => !ReferenceEquals(MonthEnd.Corrected(scenario.Calls), scenario.Calls)), Is.EqualTo(MonthsAreDrawnToTheirEndIn),
+            "the scenarios in which at least one month is drawn to its end, and so ends differently");
     }
+
+    /// <summary>
+    /// How many of the 100 scenarios draw at least one month to its end: the 12 that draw months and years with
+    /// and without selected dates, the 5 constructors, the setters, the 17 with month names of other lengths and
+    /// kinds, and the 2 in which a selected-date color that is not defined is never used. In the other 64 the
+    /// call fails before a month ends, or nothing is drawn at all.
+    /// </summary>
+    private const int MonthsAreDrawnToTheirEndIn = 36;
 
     /// <summary>The foreground and background color in effect for every one of those calls, and afterwards.</summary>
     [Test]
     [Platform(Exclude = "Win", Reason = ConsoleState.ColorsObservableOnUnixOnly)]
-    public void TheColorOfEveryCall_IsWhatItWasBeforeTheFacade_GivenTheConstructorColorsOf100()
+    public void TheColorOfEveryCall_IsWhatTheOriginalUsed_ScenarioByScenario_ApartFromTheApprovedDifferences()
     {
-        Assert.That(Digest(colors: true, LegacySubject.LibraryWithTheConstructorColorsOf100), Is.EqualTo(ColorsBeforeTheFacade),
-            "The legacy class sets colors differently than the original implementation. The tests in Legacy/ show where.");
+        Recording[] original = Scenarios(LegacySubject.Published100).ToArray();
+        Recording[] library = Scenarios(LegacySubject.LibraryWithTheConstructorColorsOf100).ToArray();
+
+        for (int index = 0; index < original.Length; index++)
+        {
+            Assert.That(library[index].ColorsText, Is.EqualTo(Corrected(original[index]).ColorsText), original[index].Name);
+        }
     }
 
     internal static string Digest(bool colors, LegacySubject subject)
     {
         var all = new StringBuilder();
-        foreach ((string name, string calls, string colorsOfCalls) in Scenarios(subject))
+        foreach (Recording scenario in Scenarios(subject))
         {
-            all.Append(name).Append('=').Append(colors ? colorsOfCalls : calls).Append((char)1);
+            all.Append(scenario.Name).Append('=').Append(colors ? scenario.ColorsText : scenario.CallsText).Append((char)1);
         }
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(all.ToString()))).ToLowerInvariant();
     }
@@ -119,7 +154,7 @@ public class PreFacadeBaselineTests
         new DateTime(9999, 12, 31),
     };
 
-    internal static IEnumerable<(string Name, string Calls, string Colors)> Scenarios(LegacySubject subject)
+    internal static IEnumerable<Recording> Scenarios(LegacySubject subject)
     {
         ILegacyCalendar plain = subject.Create();
 
@@ -261,10 +296,10 @@ public class PreFacadeBaselineTests
     }
 
     /// <summary>
-    /// Runs one scenario with the console's writer replaced, and gives back its calls, the colors of its calls
-    /// with the colors left behind, and the type of the exception that ended it, if one did.
+    /// Runs one scenario with the console's writer replaced, and gives back its calls with the colors in effect
+    /// for each, the type of the exception that ended it, if one did, and the colors left behind.
     /// </summary>
-    private static (string Name, string Calls, string Colors) Run(
+    private static Recording Run(
         string name,
         Action scenario,
         string newLine = "\n",
@@ -309,6 +344,6 @@ public class PreFacadeBaselineTests
             CultureInfo.CurrentUICulture = originalUiCulture;
             Console.ResetColor();
         }
-        return (name, writer.Calls + " -> " + outcome, writer.Colors + "-> " + after);
+        return new Recording(name, writer.Recorded.ToArray(), outcome, after);
     }
 }

@@ -24,9 +24,14 @@ public class RedirectedOutputTests
         }
     }
 
+    /// <summary>
+    /// On Windows every line ends with a carriage return and a line feed, the last row of days included. Version
+    /// 1.0.0 ended that row with a bare line feed; what it sent is kept in
+    /// Historical/Published100RedirectedOutputTests.cs.
+    /// </summary>
     [Test]
     [Platform(Include = "Win", Reason = "Windows is where the console's newline is \\r\\n.")]
-    public void OnWindows_RedirectedStandardOutput_HasMixedLineEndings()
+    public void OnWindows_RedirectedStandardOutput_EndsEveryLineWithCarriageReturnLineFeed()
     {
         ChildResult result = ChildProcess.RunRedirected();
 
@@ -37,8 +42,9 @@ public class RedirectedOutputTests
             " 6  7  8  9 10 11 12\r\n" +
             "13 14 15 16 17 18 19\r\n" +
             "20 21 22 23 24 25 26\r\n" +
-            "27 28\n" +
+            "27 28\r\n" +
             "\r\n"));
+        Assert.That(result.StandardOutput.Replace("\r\n", string.Empty), Ordinal.DoesNotContain("\n"), "no bare line feed is left");
     }
 
     [Test]

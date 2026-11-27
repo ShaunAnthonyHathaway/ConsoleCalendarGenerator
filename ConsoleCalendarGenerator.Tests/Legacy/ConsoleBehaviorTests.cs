@@ -17,8 +17,8 @@ public class ConsoleBehaviorTests
 
     /// <summary>
     /// The title and the weekday row are one WriteLine each. Every day, and every empty cell before the 1st, is a
-    /// separate Write. A row ends with an empty WriteLine after Sunday; the last row ends with a literal "\n"
-    /// followed by an empty WriteLine.
+    /// separate Write. A row ends with an empty WriteLine after Sunday, and the last row with an empty WriteLine
+    /// after the last day; one more empty WriteLine is the blank line after the month.
     /// </summary>
     [Test]
     public void AMonth_IsWrittenAsOneLinePerHeading_AndOneWritePerCell()
@@ -32,15 +32,27 @@ public class ConsoleBehaviorTests
             "[ 6][  7][  8][  9][ 10][ 11][ 12]<NL>" +
             "[13][ 14][ 15][ 16][ 17][ 18][ 19]<NL>" +
             "[20][ 21][ 22][ 23][ 24][ 25][ 26]<NL>" +
-            "[27][ 28][\\n]<NL>"));
+            "[27][ 28]<NL><NL>"));
     }
 
     [Test]
-    public void AMonthEndingOnSunday_WritesTheRowEnd_ThenTheLiteralLineFeed_ThenAnotherLineEnd()
+    public void AMonthEndingOnSunday_EndsItsLastRowOnce_ThenWritesTheBlankLine_LikeAnyMonth()
     {
         Captured captured = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateMonth(2, 2021));
 
-        Assert.That(captured.Transcript, Does.EndWith("[22][ 23][ 24][ 25][ 26][ 27][ 28]<NL>[\\n]<NL>").Using(StringComparison.Ordinal));
+        Assert.That(captured.Transcript, Does.EndWith("[22][ 23][ 24][ 25][ 26][ 27][ 28]<NL><NL>").Using(StringComparison.Ordinal));
+        Assert.That(captured.Transcript, Does.Not.EndWith("<NL><NL><NL>"));
+    }
+
+    /// <summary>No call ever passes a line feed as text: every line end is the writer's own.</summary>
+    [Test]
+    public void NoWrite_ContainsALineFeed()
+    {
+        Captured captured = ConsoleCapture.Run(() => new ConsoleCalendar().GenerateYear(2023, Fourteenth));
+
+        Assert.That(captured.Events.Where(written => written.Payload.Contains('\n') || written.Payload.Contains('\r')), Is.Empty);
+        Assert.That(captured.Events.Count(written => written.EndsLine && written.Payload.Length == 0), Is.EqualTo(53 + 10 + 12),
+            "one line end after each of the 53 Sundays of 2023, one after the last day of the ten months that do not end on a Sunday, and one blank line for each of the twelve months");
     }
 
     [Test]

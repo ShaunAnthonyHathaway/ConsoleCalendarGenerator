@@ -22,3 +22,8 @@ trim_trailing_whitespace = false
 [*.sh]
 indent_size = 2
 end_of_line = lf
+
+# The legacy class has no XML documentation yet, so the missing-comment warning is off for this file only.
+# Every other public type in the library must be documented. See docs/ai-context/decisions.md (D-11).
+[ConsoleCalendarGenerator/ConsoleCalendar.cs]
+dotnet_diagnostic.CS1591.severity = none

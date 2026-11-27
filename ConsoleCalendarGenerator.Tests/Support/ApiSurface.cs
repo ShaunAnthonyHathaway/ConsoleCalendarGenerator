@@ -5,10 +5,13 @@ namespace ConsoleCalendarGenerator.Tests.Support;
 /// <summary>Describes an assembly's public API as sorted text lines, one per type and member.</summary>
 internal static class ApiSurface
 {
-    public static IReadOnlyList<string> Describe(Assembly assembly)
+    /// <param name="inNamespace">When given, only the types declared in exactly this namespace are described.</param>
+    public static IReadOnlyList<string> Describe(Assembly assembly, string? inNamespace = null)
     {
         var lines = new List<string> { "assembly " + assembly.GetName().Name };
-        foreach (Type type in assembly.GetExportedTypes().OrderBy(t => t.FullName, StringComparer.Ordinal))
+        foreach (Type type in assembly.GetExportedTypes()
+            .Where(t => inNamespace == null || t.Namespace == inNamespace)
+            .OrderBy(t => t.FullName, StringComparer.Ordinal))
         {
             lines.Add(DescribeType(type));
             const BindingFlags declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;

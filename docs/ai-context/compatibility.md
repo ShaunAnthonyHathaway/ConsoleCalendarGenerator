@@ -110,7 +110,9 @@ Three independent layers. A change has to pass all of them.
 
 1. **Characterization tests** (`ConsoleCalendarGenerator.Tests/Legacy/`), including digests recorded from the
    published 1.0.0 assembly. They run against both library builds. See [testing.md](testing.md).
-2. **`PublicApiTests`,** which compares the public surface, by reflection, with the list above.
+2. **`PublicApiTests`,** which compares the public surface of the `CalendarGenerator` namespace, by reflection,
+   with the list above. The modern API is listed the same way in `Layout/LayoutApiTests`, which also fails if
+   the assembly exports a type outside the two namespaces.
 3. **Package validation** on every `dotnet pack`: the `netstandard2.1` build is compared with the one in the
    1.0.0 package, the `net10.0` build with the `netstandard2.1` build, and renamed parameters count as breaks.
    See [packaging-and-releases.md](packaging-and-releases.md#package-validation).

@@ -28,7 +28,10 @@ dotnet build ConsoleCalendarGenerator.sln --configuration Release --no-restore -
 
 The expected result is **0 warnings and 0 errors**. CI builds Release with `-warnaserror`, so a warning fails the
 build there. Do not add warning suppressions to get past it; fix the cause, or record a narrow, explained
-exception the way `CS1591` is handled in the library project.
+exception the way `CS1591` is handled for the legacy source file in `.editorconfig`.
+
+A public type or member without an XML documentation comment is such a warning (`CS1591`) everywhere in the
+library except `ConsoleCalendar.cs`. New public API is documented in the change that adds it.
 
 To build one library target on its own:
 
@@ -88,9 +91,11 @@ tracked or new unignored files.
   their default level for every target (including `netstandard2.1`, where they are off by default),
   `IsPackable` off (the library turns it on), and `ContinuousIntegrationBuild` on GitHub Actions. Put a setting
   here only if every project should have it; anything else belongs in a project file.
-- **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. It is not enforced in CI, and
-  the two legacy source files (`ConsoleCalendar.cs`, the example's `Program.cs`) do not fully conform. Do not
-  reformat them as a side effect of other work.
+- **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. They are not enforced in CI,
+  and the two legacy source files (`ConsoleCalendar.cs`, the example's `Program.cs`) do not fully conform. Do
+  not reformat them as a side effect of other work. The file has one entry that does affect the build: it turns
+  `CS1591` off for `ConsoleCalendarGenerator/ConsoleCalendar.cs`
+  ([D-11](decisions.md#d-11-public-xml-documentation-is-deferred)).
 - **Implicit usings** are off in the library, so its dependencies stay visible across both targets, and on in the
   example and the tests.
 

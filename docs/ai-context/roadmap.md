@@ -15,28 +15,29 @@ phase's pull request is #2.
 | Pages disabled | The repository's GitHub Pages setting was turned off (a setting change, approved by Shaun; no commit). | none | none |
 | PR 2: characterization tests | Added `ConsoleCalendarGenerator.Tests`, which records the behavior of published 1.0.0. | #3 | `879d513` |
 | PR 3: build and packaging foundations | Multi-targeted the library, added package metadata, symbols, package validation against 1.0.0, package verification and consumer smoke tests. | #4 | `af70943` |
-| AI-maintenance documentation | Added `CLAUDE.md` and `docs/ai-context/`. | #5 | see `git log` |
+| AI-maintenance documentation | Added `CLAUDE.md` and `docs/ai-context/`. | #5 | `cb55109` |
+| Layout model | Added `MonthLayout`, `MonthLayoutWeek` and `MonthLayoutCell`, a pure model of a month as weeks and weekday columns for any first day of the week, with 186 tests. | #6 | see `git log` |
 
-All of the above happened on 2026-11-27. No production code has changed in any of them.
+All of the above happened on 2026-11-27. The layout model is the first phase that added production code. The
+legacy class is unchanged in all of them.
 
 ## Remaining sequence (planned)
 
 In this order. Each item is one or more focused pull requests.
 
-1. **Layout model.** A pure model of a month: weeks, days, first weekday. No text, no console.
-2. **Options and text rendering.** Options, a deterministic text renderer, styled segments, culture and
-   first-weekday support.
-3. **States and output.** Day states, markers, a theme that maps roles to colors, and a `TextWriter`/console
+1. **Options and text rendering.** Options, a deterministic text renderer over `MonthLayout`, styled segments,
+   culture and first-weekday support.
+2. **States and output.** Day states, markers, a theme that maps roles to colors, and a `TextWriter`/console
    writer.
-4. **Legacy facade.** `CalendarGenerator.ConsoleCalendar` reimplemented over the new code, with every
+3. **Legacy facade.** `CalendarGenerator.ConsoleCalendar` reimplemented over the new code, with every
    characterization test passing unchanged.
-5. **Campertron parity fixtures,** inside this repository only. See [testing.md](testing.md#planned-tests).
-6. **User-facing material.** Full replacement of the README, the example, the duplicated docs, the screenshots
-   and the rest of the user-facing material, plus XML documentation of the public API.
-7. **Release-readiness validation.**
-8. **1.x release decision,** and any prerelease work Shaun approves.
-9. **2.0 breaking corrections.**
-10. **2.0 documentation, migration guidance, release readiness, NuGet publication and verification.**
+4. **Campertron parity fixtures,** inside this repository only. See [testing.md](testing.md#planned-tests).
+5. **User-facing material.** Full replacement of the README, the example, the duplicated docs, the screenshots
+   and the rest of the user-facing material, plus XML documentation of the legacy class.
+6. **Release-readiness validation.**
+7. **1.x release decision,** and any prerelease work Shaun approves.
+8. **2.0 breaking corrections.**
+9. **2.0 documentation, migration guidance, release readiness, NuGet publication and verification.**
 
 What this sequence does and does not say:
 
@@ -49,5 +50,5 @@ What this sequence does and does not say:
 
 ## Next action
 
-Begin the layout model, and only after this documentation phase has been reviewed and the phase has been scoped.
-Read [architecture.md](architecture.md) and [open-questions.md](open-questions.md) first.
+Begin options and text rendering, and only after Shaun has reviewed the layout model and scoped that phase. Read
+[architecture.md](architecture.md) and [open-questions.md](open-questions.md) first.

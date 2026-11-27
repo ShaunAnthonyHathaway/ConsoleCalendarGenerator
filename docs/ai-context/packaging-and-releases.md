@@ -30,8 +30,10 @@ Points that are easy to get wrong:
 - **Never build a package numbered 1.0.0.** That version is published. `eng/verify-package.sh` and
   `eng/consumer-smoke.sh` both refuse it.
 - **The version suffix is removed only as part of an approved release.**
-- **The XML documentation files are nearly empty.** The public members have no comments yet, and `CS1591` is
-  silenced in the project until they do. See [decisions.md](decisions.md#d-11-public-xml-documentation-is-deferred).
+- **The XML documentation files cover the modern API only.** The legacy class has no comments yet, and `CS1591`
+  is silenced for its source file until it does. Everything else must be documented or the build fails. See
+  [D-11](decisions.md#d-11-public-xml-documentation-is-deferred) and
+  [D-29](decisions.md#d-29-modern-public-api-is-documented-when-it-is-added).
 - **Readme images must be absolute `https` URLs on a host nuget.org allows,** such as
   `raw.githubusercontent.com`. Relative paths and `github.com/.../blob/...?raw=true` links are not rendered there.
 - **The `net10.0` build is marked trim- and AOT-compatible** (`IsAotCompatible`), which also turns on the
@@ -89,7 +91,8 @@ bash eng/verify-package.sh artifacts/package
 
 Checks the packed files without building anything: exactly one `.nupkg` and one `.snupkg` and nothing else in
 the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0 and matches the
-file names; readme images; the documentation files; and Source Link in both PDBs.
+file names; readme images; the documentation files, including that both contain the modern API's
+documentation; and Source Link in both PDBs.
 
 The file list is exact on purpose. Adding a library target, a packed file or a dependency means updating the
 script in the same change.
@@ -117,7 +120,9 @@ repository that is deleted afterwards:
 | The sample program that accompanied 1.0.0, unchanged | | compiles |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
-The `net8.0` consumer stands for every existing consumer of the `netstandard2.1` build. The `net11.0` consumer
+Each application creates a `MonthLayout` and draws a month with the legacy class, so both APIs are exercised
+from the package in every kind of consumer, Native AOT included. The `net8.0` consumer stands for every
+existing consumer of the `netstandard2.1` build. The `net11.0` consumer
 stands for an application such as Campertron. The applications roll forward to whatever runtime is installed;
 that does not affect which library build they are given. Templates are in `eng/consumer-smoke/`; they are not in
 the solution and are not meant to be built in place.

@@ -48,8 +48,9 @@ that the library has a single place that decides where a day goes.
 - **From the modern API:** `MonthLayout` only, for the column and the row of every day. The class no longer has
   a grid algorithm of its own: the loop that cycled through two-letter weekday names (`GetNextShortDay`) and
   its `Started` flag are gone.
-- **Kept private in the class, deliberately:** the title (month name from the current culture's own calendar,
-  three-step indent, the year appended), the weekday row, which console method is called for each cell and
+- **Kept private in the class, deliberately:** the title (the current culture's name for the Gregorian month,
+  found by two private methods of the class and not by the renderer; three-step indent, the year appended), the
+  weekday row, which console method is called for each cell and
   with which text, the color set before every call, the three `Console.ResetColor()` calls, the two line ends
   after the last day, and the order in which invalid arguments fail. The modern renderer, theme and writers
   are not used, because each of them deliberately behaves differently; see

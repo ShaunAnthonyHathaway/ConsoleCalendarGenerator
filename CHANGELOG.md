@@ -34,9 +34,8 @@ date has been set. The package built from this repository is numbered `2.0.0-dev
 
 ### Breaking changes
 
-Version 2.0 corrects a small number of behaviors of `CalendarGenerator.ConsoleCalendar` that were wrong in
-1.0.0. Each one is listed here when it is made, with what to change in a program that relied on the old
-behavior. The public API of the class does not change, so programs compile and load as before.
+Version 2.0 corrects five behaviors of `CalendarGenerator.ConsoleCalendar` that were wrong in 1.0.0. Each one
+is listed here, with what to change in a program that relied on the old behavior. The public API of the class does not change, so programs compile and load as before.
 
 - **The constructors that take colors give each color to the element it is named for.** `TitleColor` colors
   the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the weekday row.
@@ -72,6 +71,17 @@ behavior. The public API of the class does not change, so programs compile and l
   followed by two.
   - Such a month is one line shorter, and so is the output of `GenerateYear` for each such month in the year.
   - A program that counts lines or compares the output with stored text has to allow for it.
+- **The title of a legacy month names the Gregorian month it shows.** The name is the current culture's name
+  for that month of the Gregorian calendar. In 1.0.0 it was the culture's name for the month of the same number
+  in the culture's own calendar.
+  - Under a culture whose calendar is the Gregorian one, which is nearly every culture, nothing changes.
+  - Under a culture whose calendar is another one, such as `fa-IR` where the system gives it the Persian
+    calendar, the title named a different month than the days below it. It now names the month that is drawn,
+    in the same language.
+  - The year in the title is still the number passed in and is never converted. The weekday row, the first day
+    of the week and the colors are unchanged, and the culture is only read.
+  - The title is still indented by the length of the name, in the same three steps, so it can start a column
+    or two further left or right where the two names differ in length.
 
 ### Compatibility
 

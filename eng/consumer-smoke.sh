@@ -14,6 +14,9 @@
 # --native-aot also publishes an application with Native AOT against the package and runs it. That needs the
 # platform's native build tools (for example clang on Linux).
 #
+# The applications also draw every month under every culture the system has and check the title of the legacy
+# calendar; see culture_audit below. What they find about the system's cultures is printed for the record.
+#
 # The sample program that accompanied 1.0.0 is compiled everywhere. On Linux with the util-linux "script" program
 # it is also run, on a pseudo-terminal, and what it writes is compared with a file; see "The original sample"
 # below for the exact scenario. --published-sample runs the same scenario with the published 1.0.0 package as
@@ -127,6 +130,21 @@ check_output() {
   fi
 }
 
+# culture_audit <what> <command to run the probe> -> under every culture the system has, the legacy title must be
+# the culture's name for the Gregorian month (D-61). Which cultures a system has, and which of them count their
+# dates in another calendar, differs from system to system; what the probe found is printed, not compared.
+culture_audit() {
+  local what="$1"
+  shift
+  local audit
+  if ! audit="$("$@" culture-audit | tr -d '\r')"; then
+    echo "$audit" >&2
+    fail "under some culture, $what does not title a month with the culture's name for the Gregorian month"
+  fi
+  echo "ok: $what titles every month with the current culture's name for the Gregorian month"
+  echo "$audit" | sed 's/^/    /'
+}
+
 # run_probe <application target framework> <library build it must get>
 run_probe() {
   local framework="$1"
@@ -140,8 +158,10 @@ run_probe() {
 }
 
 run_probe net10.0 ".NETCoreApp,Version=v10.0"
+culture_audit "the net10.0 build, in a net10.0 application," dotnet "$work/probe-net10.0/bin/Release/net10.0/AssetProbe.dll"
 # net8.0 predates net10.0, so it must fall back to the netstandard2.1 build, as every existing consumer does.
 run_probe net8.0 ".NETStandard,Version=v2.1"
+culture_audit "the netstandard2.1 build, in a net8.0 application," dotnet "$work/probe-net8.0/bin/Release/net8.0/AssetProbe.dll"
 # A newer application, such as one on net11.0, must be given the net10.0 build.
 run_probe net11.0 ".NETCoreApp,Version=v10.0"
 
@@ -364,6 +384,7 @@ if [ "$native_aot" = true ]; then
   output="$("$executable" | tr -d '\r')" || fail "the Native AOT application did not run"
   check_output "the Native AOT application" ".NETCoreApp,Version=v10.0" "$output"
   echo "ok: a Native AOT application publishes without warnings and draws the expected calendar"
+  culture_audit "the Native AOT application" "$executable"
 fi
 
 echo "All consumer checks passed."

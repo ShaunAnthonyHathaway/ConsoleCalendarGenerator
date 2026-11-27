@@ -334,7 +334,7 @@ The XML documentation of the class describes the rest.
 
 The next version, 2.0, corrects a few things this class got wrong in 1.0.0. No constructor, method or parameter
 name changes, so existing programs compile and load as before; what changes is how they behave in the cases
-below. So far there are four corrections.
+below. There are five corrections.
 
 **Constructor colors.** In the constructors that take colors, each argument now colors what it is named for:
 `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the
@@ -367,6 +367,16 @@ as on Linux and macOS, the text is the same as before.
 whose last day is a Sunday was followed by two. Such a month, and a year that contains one, is now one line
 shorter for each. A program that counts lines or compares the output with stored text has to allow for both
 changes.
+
+**The title names the Gregorian month.** The days are always those of a month of the Gregorian calendar, and
+the title now names that month, in the language of the current culture. In 1.0.0 the name was the current
+culture's name for the month of the same number in the culture's own calendar. Under a culture whose calendar is
+the Gregorian one, which is nearly every culture, that is the same name and nothing changes. Under a culture
+whose calendar is another one, the title named a different month than the one drawn: under `fa-IR`, where the
+system gives that culture the Persian calendar, September was titled with the ninth month of the Persian
+calendar. It is now titled with the Persian name for September. The year in the title is still the number you
+pass, the weekday row is still English, and weeks still start on Monday. The title is indented by the length of
+the name as before, so where the two names differ in length it can start a column or two further left or right.
 
 ## Supported frameworks
 

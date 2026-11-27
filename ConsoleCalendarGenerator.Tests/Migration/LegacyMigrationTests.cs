@@ -13,9 +13,9 @@ namespace ConsoleCalendarGenerator.Tests.Migration;
 /// whether it is an accident or a correction made without being recorded.
 /// </para>
 /// <para>
-/// Implemented so far: the constructor colors (D-57) and the exception for a null list (D-58). Nothing here
-/// says what one of the other three corrections will do before it is implemented; until then the expectation
-/// for it is 1.0.0.
+/// All five corrections are implemented: the constructor colors (D-57), the exception for a null list (D-58),
+/// the line terminator of the last row (D-59), the one blank line after every month (D-60) and the Gregorian
+/// title (D-61). Each has a fixture of its own beside this one that shows it alone.
 /// </para>
 /// </summary>
 [TestFixture]
@@ -48,8 +48,9 @@ public class LegacyMigrationTests
     }
 
     /// <summary>
-    /// Every culture of the runtime whose own calendar is not the Gregorian one, for every month of a year. The
-    /// two implementations are compared with each other, so the names the system has do not matter.
+    /// Every culture of the runtime whose own calendar is not the Gregorian one, for every month of a year.
+    /// What is expected of the library is what 1.0.0 wrote with the title corrected, and both names come from
+    /// the culture at run time, so the names the system has do not matter.
     /// </summary>
     [Test]
     public void EveryCultureWhoseCalendarIsNotGregorian()

@@ -27,32 +27,33 @@ phase's pull request is #2.
 | 2.0 groundwork | Replaced the 1.x compatibility rules with the 2.0 migration policy; changed the development version to `2.0.0-dev` and the assembly and file version to `2.0.0.0`; froze the source of 1.0.0 in the tests as a historical reference; added the migration tests that compare the library with it. No runtime behavior and no public API changed, and none of the five corrections was made. | #13 | `09ffd05` |
 | Constructor colors (D-57) | The first runtime change of 2.0: in the four constructors that take colors, each argument colors the element it is named for. Only the assignments and the comments of those constructors changed in the library. The migration tests recognize exactly that difference from 1.0.0; the 1.0.0 behavior stays recorded against the frozen source. Also defined one exact scenario for running the original sample, and a check that a program compiled against 1.0.0 runs with the new library unrebuilt. | #14 | `fcc6d5c` |
 | Null list (D-58) | The second runtime change of 2.0: the two methods that take a list throw `ArgumentNullException` for `dates` when it is null, where 1.0.0 threw `NullReferenceException`. Still first, with nothing written and nothing touched. Only a null check in each of the two methods and their comments changed in the library. The migration tests recognize exactly that difference; the one recorded digest that covers null lists became an explicit comparison with the frozen source. | #15 | `042c3bc` |
-| Line terminator and blank line (D-59, D-60) | The third and fourth runtime changes of 2.0, in one pull request because both change the same calls at the end of a month: the last row of days ends with the console's line terminator, where 1.0.0 wrote a literal line feed, and every month is followed by exactly one blank line, where 1.0.0 wrote two after a month ending on a Sunday. Two lines of the library. The first corrections that change text: the remaining library-side digest comparisons became explicit comparisons with the frozen source, and the original sample has an expected text for each version. | #16 | see `git log` |
+| Line terminator and blank line (D-59, D-60) | The third and fourth runtime changes of 2.0, in one pull request because both change the same calls at the end of a month: the last row of days ends with the console's line terminator, where 1.0.0 wrote a literal line feed, and every month is followed by exactly one blank line, where 1.0.0 wrote two after a month ending on a Sunday. Two lines of the library. The first corrections that change text: the remaining library-side digest comparisons became explicit comparisons with the frozen source, and the original sample has an expected text for each version. | #16 | `09e4034` |
+| Gregorian title (D-61) | The fifth and last runtime change of 2.0: the title of a legacy month is the current culture's name for the Gregorian month that is drawn, where 1.0.0 wrote the culture's name for the month of the same number in its own calendar. Nothing changes under a culture whose calendar is Gregorian. One changed line and two small private methods in the library. The migration tests recognize exactly that difference, in the text of title calls only; the 1.0.0 behavior is recorded against the frozen source. The consumer smoke tests now check the title under every culture of the system and print which cultures it has. | #17 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
-behavior of the legacy class was unchanged in every phase before the constructor colors.
+behavior of the legacy class was unchanged in every phase before the constructor colors. With the Gregorian
+title, **all five approved runtime corrections are made**; no other runtime change is approved.
 
 ## Remaining sequence
 
 The 2.0 implementation sequence, in this order. Each item is one focused pull request, and each needs its own
 brief from Shaun before it starts.
 
-The order of the corrections is the one Shaun approved when he reviewed the groundwork. Four are done: the
-constructor colors, the null list, and the line terminator and the blank line together. One is left.
+The five corrections are done, in the order Shaun approved: the constructor colors, the null list, the line
+terminator and the blank line together, and the Gregorian title. What is left is not runtime work.
 
-1. **Gregorian titles in the legacy class** ([D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)).
-2. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
+1. **2.0 documentation and migration guidance, and release readiness:** the final README, changelog and
    migration notes, the links to the tag `v2.0.0`
    ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)), the final version number, and
-   a release-readiness audit.
-3. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
+   a release-readiness audit. Shaun scopes whether that is one phase or several.
+2. **Repository settings,** as a phase Shaun approves separately: private vulnerability reporting
    ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever else the
    readiness audit names.
-4. **Publication and verification:** a manual push of the exact validated artifacts
+3. **Publication and verification:** a manual push of the exact validated artifacts
    ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)), each step approved
    separately, then verification from nuget.org and a factual handoff for the Campertron project.
 
-Items 2 to 4 are the planned release steps of
+These are the planned release steps of
 [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
 What this sequence does and does not say:
@@ -67,44 +68,22 @@ What this sequence does and does not say:
 
 ## Next action
 
-**The Gregorian title** (item 1, [D-61](decisions.md#d-61-legacy-titles-name-the-gregorian-month)), the last of
-the five corrections, and only after Shaun has scoped it. Read [compatibility.md](compatibility.md), above all
-[How a correction is made](compatibility.md#how-a-correction-is-made), and
-[testing.md](testing.md#the-migration-tests) first. The three merged correction pull requests are the worked
-examples.
+**The final 2.0 documentation and migration guidance** (item 1), and only after Shaun has scoped it. No
+runtime change is part of it: the five corrections are made, the migration tests hold everything else to
+1.0.0, and a sixth correction needs a decision by Shaun.
 
-What that pull request starts from:
+What that phase starts from:
 
-- Apart from the four corrections made, `master` behaves exactly as 1.0.0 does. `LegacyMigrationTests`
-  requires it, and fails as soon as a title changes under a culture whose calendar is not Gregorian, until the
-  correction is given its function in `Migration/ApprovedCorrection.cs`. It is a change of the observation:
-  the text of the title call, under those cultures only.
-- The decision says the title uses the Gregorian month name that corresponds to the grid. Where that name is
-  taken from (the current culture's own names for the Gregorian months, as the modern renderer does in
-  [D-33](decisions.md#d-33-the-culture-supplies-language-only), or something else) and what happens under a
-  culture that offers no Gregorian calendar are for the brief of that pull request.
-- Which cultures are affected depends on the system's culture data. On the Linux system the tests were written
-  on, 15 cultures have a calendar that is not Gregorian: those of the Persian calendar, whose months do not
-  line up with the Gregorian ones, and those of the Thai Buddhist calendar, whose months do, so that their
-  title already names the right month. Exact text must not be taken from system data; compare with what the
-  culture reports at run time.
-- The 1.0.0 behavior is pinned in `Legacy/CultureTests`
-  (`InACultureWithAnotherCalendar_TheTitleNamesThatCalendarsMonthOfTheSameNumber`, and the real-culture cases
-  of `InARealCulture_OnlyTheMonthNameInTheTitleChanges`), in `Facade/FacadeCompatibilityTests`
-  (`UnderANonGregorianCulture_TheLegacyTitleStillFollowsTheCulturesCalendar_UnlikeTheModernTitle`), in the XML
-  remarks of `GenerateMonth`, and in the behavior list of
-  [compatibility.md](compatibility.md#behavior-of-the-legacy-class). `Historical/Published100BehaviorTests`
-  already records the 1.0.0 side and is not touched.
-- No recorded digest is compared with the library any more, and none of the four covers a culture whose
-  calendar is not Gregorian, so nothing about digests has to change.
-- The original sample runs under the invariant culture, so neither of its expected texts changes. The Campertron
-  parity tests are about the modern API and are not affected; two of their fixtures already document that the
-  modern title is Gregorian where Campertron's is not.
-- The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` get their
-  entries. After this correction the class-level XML remarks, which still speak of "every 1.x version", are
-  the main thing left for the final documentation.
+- `master` behaves exactly as 1.0.0 does apart from the five corrections, and `LegacyMigrationTests` requires
+  it. Each correction has a fixture of its own in `Migration/` that shows it alone, and what 1.0.0 did in each
+  place is recorded in `Historical/`.
+- The README's "Changes from 1.0.0" section and the "Breaking changes" section of `CHANGELOG.md` describe all
+  five corrections, each written when it was made. They have not been edited as a whole.
+- The XML comments of `GenerateMonth`, `GenerateYear` and the constructors describe the corrected behavior and
+  say what 1.0.0 did. The class-level remarks still speak of "every 1.x version".
+- The package is still `2.0.0-dev`; the final version number is not set.
 
-What the later items have to deal with, none of it to be done earlier:
+What that phase and the later items have to deal with, none of it done yet:
 
 - **The README is packed into the package and currently says the modern API is not published** and that the
   legacy API works exactly as in 1.0.0. Its "Status", "Installation" and "Legacy API" sections, the

@@ -4,6 +4,13 @@ using System.Runtime.Versioning;
 using CalendarGenerator;
 using ConsoleCalendarGenerator;
 
+// With the argument "culture-audit" the application checks the legacy title under every culture the system has
+// and reports what it found; see CultureAudit.cs. That output differs between systems and is not compared.
+if (args.Length == 1 && args[0] == "culture-audit")
+{
+    return CultureAudit.Run();
+}
+
 // Reports which build of the library this application was given, then uses both APIs from it.
 string? libraryBuild = typeof(ConsoleCalendar).Assembly.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
 Console.WriteLine("library build: " + libraryBuild);
@@ -52,3 +59,4 @@ ConsoleMonthWriter.Write(marked, CalendarTheme.None);
 // The legacy API: draws the month.
 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 new ConsoleCalendar(ConsoleColor.Red).GenerateMonth(2, 2023, new List<DateTime> { new DateTime(2023, 2, 14) });
+return 0;

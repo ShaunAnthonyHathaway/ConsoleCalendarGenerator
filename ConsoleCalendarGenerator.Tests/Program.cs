@@ -7,13 +7,23 @@ namespace ConsoleCalendarGenerator.Tests;
 /// Entry point used only when the tests start this assembly as a child process (Support/ChildProcess.cs). It
 /// draws one fixed calendar to the real console streams, which a test in the same process cannot observe: with
 /// the legacy class, with the modern console writer, or with the frozen source of the legacy class as it was
-/// in version 1.0.0.
+/// in version 1.0.0. Two more commands draw a month under a culture named after the colon, with the legacy
+/// class and with the frozen source.
 /// </summary>
 internal static class Program
 {
     internal const string RenderCommand = "render-child-scenario";
     internal const string WriteModernCommand = "write-modern-child-scenario";
     internal const string RenderPublished100Command = "render-child-scenario-with-published-100";
+
+    /// <summary>Followed by a label of <see cref="CultureCalendars.Resolve"/>: September 2023 under that culture.</summary>
+    internal const string RenderUnderCultureCommand = "render-september-under:";
+
+    /// <summary>The same with the frozen source of 1.0.0.</summary>
+    internal const string RenderPublished100UnderCultureCommand = "render-september-with-published-100-under:";
+
+    /// <summary>The exit code when this machine does not have the culture a command names.</summary>
+    internal const int CultureNotAvailable = 3;
 
     private static int Main(string[] args)
     {
@@ -33,6 +43,25 @@ internal static class Program
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
             ChildScenario.RenderWithPublished100();
             return 0;
+        }
+
+        foreach ((string command, Action render) in new (string, Action)[]
+        {
+            (RenderUnderCultureCommand, ChildScenario.RenderSeptember),
+            (RenderPublished100UnderCultureCommand, ChildScenario.RenderSeptemberWithPublished100),
+        })
+        {
+            if (args.Length == 1 && args[0].StartsWith(command, StringComparison.Ordinal))
+            {
+                CultureInfo? culture = CultureCalendars.Resolve(args[0].Substring(command.Length));
+                if (culture == null)
+                {
+                    return CultureNotAvailable;
+                }
+                CultureInfo.CurrentCulture = culture;
+                render();
+                return 0;
+            }
         }
 
         Console.Error.WriteLine("This is a test assembly. Run it with 'dotnet test'.");

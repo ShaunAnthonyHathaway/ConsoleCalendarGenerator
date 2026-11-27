@@ -267,6 +267,35 @@ public class XmlDocumentationTests
         }
     }
 
+    /// <summary>
+    /// The title is documented as version 2.0 writes it (D-61): the current culture's name for the Gregorian
+    /// month. The comments say what 1.0.0 did, and no longer describe the other month as what happens. What the
+    /// culture does not decide is still documented: the English weekday row, weeks from Monday, the year.
+    /// </summary>
+    [Test]
+    public void TheLegacyMethodsThatDraw_DocumentTheGregorianTitle_AndSayWhat100Did()
+    {
+        MethodInfo month = typeof(ConsoleCalendar).GetMethod("GenerateMonth", new[] { typeof(int), typeof(int), typeof(List<DateTime>) })!;
+        string remarks = TextOf(Documentation.Value[IdOf(month)].Element("remarks"));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(remarks, Ordinal.Contains("the title names that month"));
+            Assert.That(remarks, Ordinal.Contains("has for the month of the Gregorian calendar"));
+            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 wrote the culture's name for month number"));
+            Assert.That(remarks, Ordinal.Contains("version 2.0 corrects that"));
+            Assert.That(remarks, Ordinal.Contains("weeks start on Monday"));
+            Assert.That(remarks, Ordinal.Contains("The weekday row is the English one"));
+            Assert.That(remarks, Ordinal.Contains("never converted"));
+            Assert.That(remarks, Does.Not.Match("can therefore name a different month|what the calendar of"), "the old behavior is not described as current");
+        }
+
+        foreach (MethodInfo year in typeof(ConsoleCalendar).GetMethods(Declared).Where(method => method.Name == "GenerateYear"))
+        {
+            Assert.That(TextOf(Documentation.Value[IdOf(year)].Element("remarks")), Ordinal.Contains("Every title names the Gregorian month below it"), IdOf(year));
+        }
+    }
+
     // ---- nothing turns the check off ----
 
     [Test]

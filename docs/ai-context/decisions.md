@@ -569,7 +569,9 @@ reviewed it. How each published behavior is kept is listed in
 
 - **Status:** Approved. Implemented by adding nothing. Resolves the former open question Q-06.
 - **Decision:** The modern API has no option, overload or type whose purpose is to reproduce legacy output. The
-  legacy title, with the month name from the culture's own calendar, exists only inside the facade.
+  legacy title, with the month name from the culture's own calendar, exists only inside the facade. (Later: 2.0
+  corrects that title, [D-61](#d-61-legacy-titles-name-the-gregorian-month); the modern API still has no
+  legacy option.)
 - **Reason:** The facade reproduces 1.0.0 exactly without any such option, so the only known user of one would
   have been the facade itself. A profile would have put a published defect into the modern surface for good.
 - **Consequences:** The modern title stays Gregorian in every case
@@ -875,7 +877,7 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-61: Legacy titles name the Gregorian month
 
-- **Status:** Approved. **Not implemented.**
+- **Status:** Approved. **Implemented** (pull request #17). The fifth and last of the corrections.
 - **Decision:** The title of a month drawn by the legacy class uses the Gregorian month name that corresponds
   to the Gregorian grid, also under a culture whose default calendar is not Gregorian.
 - **Reason:** 1.0.0 looks the month number up in the current culture's own calendar, so under a culture such as
@@ -884,6 +886,34 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 - **Consequences:** Under a culture whose calendar is Gregorian nothing changes. The correction is made inside
   the legacy class; the modern API gets no option for it
   ([D-45](#d-45-no-public-compatibility-profile) stands).
+- **Where the name comes from:** the current culture's own names for the months of the Gregorian calendar, so
+  the language of the title stays that of `CultureInfo.CurrentCulture`. Formats whose calendar is Gregorian
+  are asked directly, which is the call 1.0.0 made. For any other culture a Gregorian calendar among its
+  `OptionalCalendars` is set on a copy of its formats, the culture's own kind (`Localized`) before the other
+  kinds, which name the months in English or French on the systems that offer them. The exact rule is in
+  [compatibility.md](compatibility.md#behavior-of-the-legacy-class). It is the same idea as the modern
+  renderer's ([D-33](#d-33-the-culture-supplies-language-only)), written separately inside the legacy class,
+  which still uses nothing of the renderer.
+- **A culture that offers no Gregorian calendar:** none is known. The .NET runtime takes a culture's calendars
+  from the operating system's data, where every region lists the Gregorian calendar, and falls back to the
+  Gregorian calendar alone when the system reports none; no public API gives a culture's Gregorian names
+  except through a calendar it offers. If such a culture existed, the title would be the invariant name of the
+  month: the right month in English. That was preferred to the culture's own name, which would be the wrong
+  month silently, and to an exception, which 1.0.0 did not throw. The modern renderer falls back the same way.
+- **What it changes besides the name:** the indent, only because it has three steps by the length of the name
+  that is written. Nothing else: one `WriteLine(string)` in the title color, the reset after it, the year as
+  given, the English weekday row, weeks from Monday, and no change to the culture or its formats.
+- **Which cultures are affected** depends on the operating system's data and is not the same everywhere, so
+  no list is part of the contract. The rule is: a culture whose dates use a calendar that is not Gregorian and
+  whose month names differ from its Gregorian ones. Cultures of the Thai Buddhist calendar, and cultures given
+  the Japanese, Korean or Taiwan calendar, have the Gregorian months and draw the same title in both versions.
+  What each CI system has is in [testing.md](testing.md#cultures-and-the-title).
+- **How it is tested:** in the migration tests it is one exact change to the calls 1.0.0 made
+  (`Migration/GregorianTitle.cs`): the text of a title call that is, character for character, the title 1.0.0
+  wrote for the month that is due becomes the title with the Gregorian name. Anything else where a title
+  belongs is refused. Both names are computed from the culture at run time by test code that does not use the
+  library; no name of a real culture is spelled out in a test. No recorded digest covers a culture whose
+  calendar is not Gregorian, so none was involved ([D-71](#d-71-a-recorded-digest-is-never-bent-to-let-a-correction-through)).
 
 ### D-62: The legacy class keeps every signature, and nothing is obsolete
 

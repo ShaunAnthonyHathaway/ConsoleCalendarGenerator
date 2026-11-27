@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **2,200 tests**: 209 tests of the legacy API, 25 tests of the legacy class
-as a facade, 87 tests of the frozen source of 1.0.0, 330 migration tests that compare the library with it, 184
+`ConsoleCalendarGenerator.Tests` holds **2,361 tests**: 299 tests of the legacy API, 25 tests of the legacy class
+as a facade, 109 tests of the frozen source of 1.0.0, 376 migration tests that compare the library with it, 184
 tests of the layout model, 275 tests of text rendering, 98 tests of day states and markers, 52 tests of the
-theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 107
+theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 110
 tests of the documentation and the example, 2 tests of the modern public surface, 16 tests of the version
 identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
@@ -52,7 +52,9 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Legacy/LineEndingTests` | 31 | Line endings and the blank line after a month in 2.0: the writer's terminator ends every line, under three terminators; exactly one blank line after a month ending on each day of the week, of each length, with four, five and six rows, and after the first and the last month there is; the calls that end a month; whole years |
 | `Legacy/GenerateYearTests` | 9 | `GenerateYear` against twelve `GenerateMonth` calls |
 | `Legacy/SelectedDateTests` | 14 | Which dates are highlighted |
-| `Legacy/CultureTests` | 18 | What follows the culture and what does not |
+| `Legacy/CultureTests` | 18 | What follows the culture and what does not: the month name from the current culture and not the UI culture, the English weekday row from Monday, the year as given; under real cultures, the culture's name for the Gregorian month above the unchanged grid |
+| `Legacy/GregorianTitleTests` | 80 | The title in 2.0 (D-61): the current culture's name for the Gregorian month, for every month under each of 19 focused cultures and under every culture of the runtime; cultures given another of their calendars; names a program set; a culture given the formats of another; made-up cultures that offer no Gregorian calendar, several kinds of it, or one their formats refuse; the UI culture; that the culture, its formats and its calendar are left as they were; that one culture leaves nothing behind for the next; the year as given, also outside the range of the culture's own calendar; and the three steps of the indent, counted in UTF-16 code units |
+| `Legacy/GregorianTitleTerminalTests` | 10 | The title on a real console (`Terminal` category): a child process draws a month with the library and another with the frozen source of 1.0.0 under a culture with another calendar, and with the name exchanged the output is the same byte for byte, the color sequence before the title and the reset after it included |
 | `Legacy/ValidationTests` | 39 | Exceptions for invalid input: the runtime's range exception for a month or a year, and in 2.0 `ArgumentNullException` for a null list, first, with nothing written, no color touched, nothing in the process changed and the culture not yet asked for a name |
 | `Legacy/ConsoleBehaviorTests` | 11 | The individual writes, the color of each, and what is left behind; that no write contains a line feed |
 | `Legacy/RedirectedOutputTests` | 4 | The real console streams, through a child process; on Windows, that every line ends with a carriage return and a line feed |
@@ -60,7 +62,7 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Legacy/Published100BaselineTests` | 2 | Everything the two digests recorded from the published 1.0.0 assembly cover, compared write by write with the frozen source of 1.0.0, with the end of a month written out |
 | `Facade/PreFacadeBaselineTests` | 2 | Every call on the console's writer and the color of every call, in the 100 scenarios the two pre-facade digests cover, compared scenario by scenario with the frozen source of 1.0.0, with the exception for a null list and the end of a month written out |
 | `Facade/FacadeLayoutTests` | 6 | That the legacy class draws every day where `MonthLayout` puts it |
-| `Facade/FacadeCompatibilityTests` | 17 | The places where the legacy class must stay different from the modern API: the runtime's own exception, colors reset and failing late, the blank line after a month, no marker, the culture's own calendar, and no lock |
+| `Facade/FacadeCompatibilityTests` | 17 | The places where the legacy class must stay different from the modern API: the runtime's own exception, colors reset and failing late, the blank line after a month, no marker, and no lock; and that under a culture with another calendar the legacy title is the name the modern renderer writes, found without using it |
 | `Historical/Published100SourceTests` | 8 | That the frozen source is the original file byte for byte, that its header records where it comes from, that its class is named apart from the library's and has the same public members, and that nothing of it is in the library or can be packed |
 | `Historical/Published100DigestTests` | 4 | That the frozen source reproduces the four values recorded from 1.0.0: two from the published assembly, two from the class before the facade |
 | `Historical/Published100MonthEndTests` | 27 | How a month ended in 1.0.0, complete: the literal line feed after the last day and the calls around it, the text under three terminators for a month ending on each day of the week, the second blank line after a Sunday in every one of the 345 such months from 1900 through 2100, whole years, and the colors of those calls |
@@ -68,8 +70,10 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Historical/Published100NullListTests` | 19 | A null list in 1.0.0, complete: `NullReferenceException`, naming no parameter, before an invalid month or year, with nothing written and the caller's colors as they were |
 | `Historical/Published100ConstructorTests` | 15 | The constructors of 1.0.0, complete: the colors each one held, the colors drawn, and where an argument that is not a color failed |
 | `Historical/Published100BehaviorTests` | 11 | What 1.0.0 did in the five places that 2.0 corrects, written out against the frozen source: constructor colors, the null list, the bare line feed, the two blank lines after a Sunday, the title under a culture with another calendar |
+| `Historical/Published100CultureTests` | 22 | The title and the culture in 1.0.0, complete: the culture's own name for the month number, under nine focused cultures for every month and under every culture of the runtime; that under the Persian calendar no month had the name of the Gregorian month drawn; cultures given another of their calendars; the year as given; the UI culture; the indent; and that the culture was left as it was |
 | `Migration/LegacyMigrationTests` | 153 | The library against the frozen source: 146 scenarios of the matrix, one test each, the 12 calendars of the original sample among them; every month from 1900 through 2100 and of the years 1 and 9999; every culture whose calendar is not Gregorian; the selections the recorded digests use; 500 generated scenarios; and that the five corrections are the five decisions |
 | `Migration/MonthEndMigrationTests` | 31 | The two corrections of how a month ends (D-59, D-60) as the exact difference between 1.0.0 and the library: the calls that end a month in both, for a month ending on each day of the week under three terminators; each correction on its own; every month of 203 years; whole years; the colors of those calls; that nothing differs where no month ends; and the two functions that state the corrections |
+| `Migration/GregorianTitleMigrationTests` | 46 | The title correction (D-61) as the exact difference between 1.0.0 and the library: for every month under each of 19 focused cultures, the text of the title call and nothing else, and nothing at all where the two names are the same; a whole year with colors, selected dates and the terminator of Windows; the culture matrix, written to the test's output; the title's call and color; where drawing fails; every culture of the runtime; and that the function which states the correction changes only a title that is exactly the one 1.0.0 wrote and refuses anything else |
 | `Migration/OriginalSampleTextTests` | 5 | The two expected texts of the original sample: that the one recorded from the published package is unchanged and is what the frozen source writes, that the other is what the library writes, and that they differ only in the second blank line after a month that ends on a Sunday |
 | `Migration/NullListMigrationTests` | 80 | The null-list correction (D-58) as the exact difference between 1.0.0 and the library: 16 ways to pass a null list, in each of which only the exception differs; the two corrections together; 26 calls that pass a list, valid or not, in which nothing differs; and that the correction as the migration tests state it changes the exception of a null list and nothing else |
 | `Migration/ConstructorColorMigrationTests` | 41 | The constructor correction (D-57) as the exact difference between 1.0.0 and the library: the colors held and drawn by each constructor in both; that with the same arguments only colors differ, and among them only the title's and the weekday row's; how a program keeps its appearance; 14 cases of where an undefined argument fails in each; and that both descriptions of the constructors match what they describe |
@@ -114,8 +118,8 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 9 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
 | `Documentation/DocumentationLinkTests` | 20 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows |
-| `Documentation/PublicDocumentationTests` | 41 | Which documents exist; the frameworks, versions and commands they name; that the version in development is called unpublished; that the README and the changelog describe each correction made; nothing machine-specific and nothing about a consumer |
-| `Documentation/XmlDocumentationTests` | 12 | Every public type, member and parameter of the built documentation file has text; the comments of the legacy constructors say that each argument colors what it is named for and that 1.0.0 did otherwise; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException` and what 1.0.0 threw; no documentation warning is suppressed |
+| `Documentation/PublicDocumentationTests` | 43 | Which documents exist; the frameworks, versions and commands they name; that the version in development is called unpublished; that the README and the changelog describe each correction made; nothing machine-specific and nothing about a consumer |
+| `Documentation/XmlDocumentationTests` | 13 | Every public type, member and parameter of the built documentation file has text; the comments of the legacy constructors say that each argument colors what it is named for and that 1.0.0 did otherwise; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException` and what 1.0.0 threw; no documentation warning is suppressed |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `VersionIdentityTests` | 16 | The assembly version, the file version and the informational version of the library build under test; that the major version of the assembly is that of the package; that nothing says it is 1.0.0; that the project file sets those versions; that package validation compares with 1.0.0 and nothing is suppressed; that the maintenance notes name the development version the repository builds |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
@@ -153,6 +157,11 @@ say what the modern API must do, and a failure there means the code is wrong.
   this one, and one that draws the legacy scenario with the frozen source of 1.0.0, for the historical tests
   of real process output.
 - `TerminalOutput`: recognizes and removes escape sequences, for the modern terminal tests.
+- `CultureCalendars`: what a culture calls the months, in its own calendar and in the Gregorian one, worked out
+  without the library and by another route than the library's (a copy of the whole culture, and a date
+  formatted with `MMMM`); the labels of the focused cultures and the culture each stands for; and everything
+  about a culture's dates that drawing must leave alone. `CultureOffering` is a culture that says which
+  calendars it offers, for the cases no real culture shows. See [Cultures and the title](#cultures-and-the-title).
 - `CallRecordingWriter`: like `RecordingWriter`, but it also records which method was called for each write
   (`Write(string)`, `Write(int)`, `WriteLine()`, `WriteLine(string)`), which a caller's own writer can tell apart.
   It keeps the calls as text, for the digests, and one by one, for the migration tests.
@@ -176,6 +185,8 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 - `MigrationMatrix`: the scenarios, in one group for each of the five corrections, one for everything else,
   and one with the calendars the original sample draws.
 - `MonthEnd`: the two corrections of how a month ends, as exact changes to a list of calls.
+- `GregorianTitle`: the correction of the title, as an exact change to a list of calls, and the title each
+  version writes under a culture.
 - `ApprovedCorrection`: the five corrections, each with its decision, its scenarios and, once it is
   implemented, what it changes, in one of two forms.
 
@@ -183,9 +194,12 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 2,186 pass | 5 Windows-only | 9 pass |
-| macOS | 2,186 pass | 5 Windows-only | not part of CI |
-| Windows | 2,097 pass | 94 that need Linux or macOS | not part of CI |
+| Linux | 2,336 pass | 5 Windows-only | 19 pass |
+| macOS | 2,336 pass | 5 Windows-only | not part of CI |
+| Windows | 2,247 pass | 94 that need Linux or macOS | not part of CI |
+
+One more test is inconclusive in the normal run on each system: the case of `Legacy/GregorianTitleTests` that is
+for a system on which `ar-SA` counts in a calendar that is not Gregorian, which none of the three CI systems is.
 
 The parity tests have no platform conditions. A few of them compare titles that come from the operating
 system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
@@ -244,12 +258,15 @@ cultures built in the test.
 
 ### The Terminal category
 
-Nine tests, three for the legacy class, three for the modern console writer and three for the example
-program, need a terminal database entry for `xterm-256color`, and seven of those also need Linux and the
-util-linux `script` program to create a pseudo-terminal. They are in the `Terminal` category, are excluded from
-the normal run by filter, run in their own CI step on Linux, and ignore themselves where they cannot run. They
-check that color sequences are present or absent and that the text is unchanged; they do not compare escape
-sequences byte for byte, because the .NET runtime writes those, not the library. Keep anything that depends on
+Nineteen tests, three for the legacy class, ten for its title under cultures with another calendar, three for
+the modern console writer and three for the example program, need a terminal database entry for
+`xterm-256color`, and twelve of those also need Linux and the util-linux `script` program to create a
+pseudo-terminal. They are in the `Terminal` category, are excluded from the normal run by filter, run in their
+own CI step on Linux, and ignore themselves where they cannot run. They check that color sequences are present
+or absent and that the text is unchanged; they do not compare escape sequences with fixed bytes, because the
+.NET runtime writes those, not the library. The ten tests of the title compare two runs with each other
+instead, the library's and the frozen source's, which must be the same byte for byte once the name is
+exchanged. Keep anything that depends on
 the machine's terminal setup in this category, out of the normal run.
 
 ### The published-1.0.0 digests
@@ -337,9 +354,10 @@ The rules:
 
 `Migration/LegacyMigrationTests` runs the library's class and the frozen source of 1.0.0 through the same
 scenarios and compares what a caller can observe. The rule it enforces: **the library does what 1.0.0 did, in
-every scenario and every aspect, apart from the corrections that are implemented.** Four are: the constructor
-colors (D-57), the exception for a null list (D-58), the line terminator of the last row (D-59) and the one
-blank line after every month (D-60). In everything else the two must be identical.
+every scenario and every aspect, apart from the corrections that are implemented.** All five are: the
+constructor colors (D-57), the exception for a null list (D-58), the line terminator of the last row (D-59),
+the one blank line after every month (D-60) and the Gregorian title (D-61). In everything else the two must be
+identical.
 
 What is compared (`LegacyAspects`):
 
@@ -378,7 +396,11 @@ that states the correction exactly:
   `ArgumentNullException`, the parameter name `dates` and the runtime's message for it; for every other
   scenario, and for a null-list scenario that ended any other way, the argument unchanged. So the allowance is
   exactly three aspects (exception type, parameter name, message) in exactly the scenarios that pass a null
-  list, and nothing else was widened.
+  list, and nothing else was widened. The end of a month and the title are stated this way too, each as an
+  exact change to the list of calls (`MonthEnd`, `GregorianTitle`). For the title: under a culture whose dates
+  use the Gregorian calendar, nothing; under any other, the text of each title call, which must be character
+  for character the title 1.0.0 wrote for the month that is due, becomes the title with the culture's
+  Gregorian name. Anything else where a title belongs is refused with an error.
 
 From then on the library is compared with 1.0.0 plus that correction, still in every aspect and every
 scenario. So:
@@ -400,7 +422,11 @@ The rules:
 - The corrected behavior itself is stated by tests of its own, added with the correction. The migration tests
   say that nothing else changed. For D-57 those are `Legacy/ConstructorColorTests`, with the literal 2.0
   expectations, and `Migration/ConstructorColorMigrationTests`, with 1.0.0 and 2.0 side by side. For D-58 they
-  are `Legacy/ValidationTests` and `Migration/NullListMigrationTests`.
+  are `Legacy/ValidationTests` and `Migration/NullListMigrationTests`; for D-59 and D-60, `Legacy/LineEndingTests`
+  and `Migration/MonthEndMigrationTests`; for D-61, `Legacy/GregorianTitleTests` and
+  `Migration/GregorianTitleMigrationTests`.
+- **Each correction's fixture sees its own correction alone.** It compares the library with 1.0.0 plus every
+  other correction (`ApprovedCorrection.ExpectedWithout`), so a correction made later does not show in it.
 - **Exception messages are compared, not spelled out.** Where a message matters, a test compares it with what
   the runtime gives for the same exception in the same process under the same UI culture. No test contains the
   text of a framework message.
@@ -462,8 +488,45 @@ literal line feed anywhere but at the end of a month, or more blank lines than 1
 error. So everything that did not change is still compared exactly, and a failure names the write or the
 scenario.
 
-**What the last correction has to do.** Nothing about digests: no recorded value is compared with the library
-any more, and none of the four covers a culture whose calendar is not Gregorian.
+**The last correction,** the Gregorian title, needed nothing about digests: no recorded value is compared with
+the library any more, and none of the four covers a culture whose calendar is not Gregorian.
+
+### Cultures and the title
+
+The title is the one thing in the legacy class that depends on the operating system's culture data, and that
+data differs between systems and between versions of a system. The tests of the title (D-61) are built around
+that:
+
+- **No name of a real culture is spelled out.** Both names, the one 1.0.0 wrote and the Gregorian one, are
+  computed from the culture at run time by `Support/CultureCalendars`. It does not use the library, and it finds
+  the Gregorian name by another route than the library: it copies the whole culture, sets the Gregorian
+  calendar, and formats a date of that month with `MMMM`.
+- **No test assumes which calendar a system gives a culture.** `ar-SA` counted in the Um Al Qura calendar in
+  older culture data and counts in the Gregorian one in newer data. A test that needs a calendar that is not
+  Gregorian asks for it and is inconclusive where the culture does not have it.
+- **Cultures given another calendar are the same everywhere.** A label such as `ar-SA+UmAlQuraCalendar` or
+  `he-IL+HebrewCalendar` stands for a writable copy of the culture whose formats were given one of the other
+  calendars the culture offers, which is what a program does to use that calendar. These exist on every system
+  that has the culture, so the Hijri, Um Al Qura and Hebrew calendars are tested on all three CI systems
+  whatever the systems' defaults are. `CultureCalendars.Focused` lists the 19 cultures the tests name.
+- **Cultures that no system has are made in the test** (`CultureOffering`, a `CultureInfo` that says which
+  calendars it offers): one that offers no Gregorian calendar, one that offers several kinds of it, and one
+  whose formats refuse the Gregorian calendar it offers. They pin the fallbacks of the lookup.
+- **Every culture of the runtime is scanned** by three tests (the frozen source, the library, and the two side
+  by side), and by the consumer smoke tests against the package. The smoke script prints what it found, so the
+  log of every CI run records the cultures of that system.
+
+What the scan found when the correction was made (.NET 11 runtime, the systems' own ICU data):
+
+| System | Cultures | Dates in a calendar that is not Gregorian | Title differs from 1.0.0 | Offer no Gregorian calendar |
+|---|---|---|---|---|
+| Linux (local, and the CI runner) | 907 | 15: 12 Persian, 3 Thai Buddhist | 12, the Persian ones | 0 |
+
+On that Linux system the twelve are `ckb-IR`, `fa`, `fa-AF`, `fa-IR`, `lrc`, `lrc-IR`, `mzn`, `mzn-IR`, `ps`,
+`ps-AF`, `uz-Arab` and `uz-Arab-AF`. The three of the Thai Buddhist calendar (`shn-TH`, `th`, `th-TH`) have the
+Gregorian months, so both versions write the same title there. `ar-SA` and `he-IL` count in the Gregorian
+calendar. No culture was skipped. None of these numbers is asserted by a test: a test asserts the rule, for
+whatever cultures the machine has.
 
 ### The Campertron parity fixtures
 
@@ -640,6 +703,16 @@ the first and the third are caught by the calls and by the tests that use a term
 feed; in the text of a default console they show only on Windows, which is what the Windows-only tests are
 for.
 
+The tests of the title correction were checked with twelve deliberately wrong versions, each of which failed
+the suite: the name of 1.0.0 kept (60 tests failed); always the invariant name (151); the UI culture asked
+(155); the indent taken from the name 1.0.0 wrote (52); the culture's own name where no Gregorian calendar is
+offered (2, the tests written for that); a refused calendar thrown on (1, the test written for that); the
+Gregorian calendar set on the culture's own writable formats instead of a copy (17); the culture's year in
+place of the argument (95); the genitive name (25); the current culture replaced while drawing (13); the
+abbreviated name (36); and the title written with `Write` and a separate line end (192). One thing no test on
+these systems can tell apart: whether the culture's own kind of Gregorian calendar is preferred to the other
+kinds, because the systems' data offers only that kind. The preference is for systems that offer more.
+
 ## Rules for adding tests
 
 - **Never weaken a legacy, facade, historical or migration test** to make a change pass. A failing
@@ -667,6 +740,5 @@ for.
 
 ## Planned tests
 
-With the one correction still to be made, the Gregorian title, in its pull request: tests that state the corrected
-behavior outright, and the function of that correction in `Migration/ApprovedCorrection.cs`. Nothing else is
-planned.
+None. All five corrections have their tests. The final documentation phase changes the documentation tests
+with the documents they check.

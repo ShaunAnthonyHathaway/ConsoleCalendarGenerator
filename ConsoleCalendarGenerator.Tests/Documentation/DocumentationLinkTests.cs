@@ -19,7 +19,14 @@ public class DocumentationLinkTests
     private const string RawFiles = "https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/";
 
     /// <summary>Pages of the repository on GitHub that are not files.</summary>
-    private static readonly string[] RepositoryPages = { RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/commits/master" };
+    /// <summary>The same address for the files as they are at the tag of the release.</summary>
+    private const string RawFilesAtTheTag = "https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/" + ReleaseTag + "/";
+
+    /// <summary>
+    /// Pages of the repository that are not files of it. The page of the release is where the changelog sends
+    /// a reader for version 2.0.0; it exists from the moment the release is published on GitHub.
+    /// </summary>
+    private static readonly string[] RepositoryPages = { RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/releases/tag/" + ReleaseTag };
 
     private static readonly string[] Documents = Repository.PublicDocuments;
 
@@ -50,6 +57,22 @@ public class DocumentationLinkTests
             else if (target.StartsWith(RawFiles, StringComparison.Ordinal))
             {
                 Assert.That(Repository.HasFile(target.Substring(RawFiles.Length)), what + " is not a file of the repository");
+            }
+            // A link at the tag of the release. The tag is put on the commit that is the release, so what the
+            // link names must be in this checkout; that is checked here, and the address has to have exactly one
+            // of these three shapes. Whether the tag exists yet is not: until it does, a well-formed address
+            // answers "not found", which is expected, and these tests never use the network.
+            else if (target.StartsWith(RepositoryPage + "/blob/" + ReleaseTag + "/", StringComparison.Ordinal))
+            {
+                Assert.That(Repository.HasFile(target.Substring((RepositoryPage + "/blob/" + ReleaseTag + "/").Length)), what + " is not a file of the repository");
+            }
+            else if (target.StartsWith(RepositoryPage + "/tree/" + ReleaseTag + "/", StringComparison.Ordinal))
+            {
+                Assert.That(Repository.HasFolder(target.Substring((RepositoryPage + "/tree/" + ReleaseTag + "/").Length)), what + " is not a folder of the repository");
+            }
+            else if (target.StartsWith(RawFilesAtTheTag, StringComparison.Ordinal))
+            {
+                Assert.That(Repository.HasFile(target.Substring(RawFilesAtTheTag.Length)), what + " is not a file of the repository");
             }
             else if (target.StartsWith(RepositoryPage, StringComparison.Ordinal))
             {
@@ -102,7 +125,8 @@ public class DocumentationLinkTests
     /// version exists, so a link whose target is part of the version, the image, a file, a folder of code, must
     /// then point at the tag of the release, where it cannot change. A link to a document that states the
     /// project's current policy stays on the default branch, because the current policy is what a reader of
-    /// any version should get. Until the tag exists, all of them point at the default branch.
+    /// any version should get. The list states every address as it is on the default branch; the repository
+    /// now holds the release, so the README has the first group at the tag.
     /// </summary>
     internal static readonly (string Target, bool PointsAtTheTagOnceReleased)[] ReadmeLinksIntoTheRepository = ReadTheList();
 
@@ -143,9 +167,13 @@ public class DocumentationLinkTests
     /// <summary>What a link that is part of the version becomes in the README of the released package.</summary>
     internal static string AtTheReleaseTag(string target) => target.Replace("/master/", "/" + ReleaseTag + "/", StringComparison.Ordinal);
 
+    /// <summary>The address a listed link has in the README of this release.</summary>
+    private static string InTheReadmeOfTheRelease((string Target, bool PointsAtTheTagOnceReleased) link) =>
+        link.PointsAtTheTagOnceReleased ? AtTheReleaseTag(link.Target) : link.Target;
+
     /// <summary>
-    /// A link added to the README has to be put in the list above, which is where it is decided whether the
-    /// release moves it to the tag. A link that is in neither group fails here.
+    /// A link added to the README has to be put in the list, which is where it is decided whether it belongs to
+    /// the version or to current policy. A link that is in neither group fails here.
     /// </summary>
     [Test]
     public void EveryLinkOfTheReadmeIntoTheRepository_IsClassifiedForTheRelease()
@@ -155,35 +183,44 @@ public class DocumentationLinkTests
             .Where(target => target.StartsWith(RepositoryPage, StringComparison.Ordinal) || target.StartsWith("https://raw.githubusercontent.com/", StringComparison.Ordinal))
             .Distinct();
 
-        Assert.That(intoTheRepository, Is.EquivalentTo(ReadmeLinksIntoTheRepository.Select(link => link.Target)));
+        Assert.That(intoTheRepository, Is.EquivalentTo(ReadmeLinksIntoTheRepository.Select(InTheReadmeOfTheRelease)));
     }
 
     /// <summary>
-    /// The tag does not exist while the repository builds a development version, so nothing may point at it
-    /// yet: such a link would lead nowhere. When the version suffix is removed to prepare the release, this
-    /// test fails, and the links marked above are the ones to change in that same change.
+    /// The repository holds the release, so the substitution has been made: the three links that are part of
+    /// the version point at the tag, exactly, and nothing else does. The links of current policy are on the
+    /// default branch, in the README and in the other documents alike.
     /// </summary>
     [Test]
-    public void WhileTheVersionIsADevelopmentVersion_NoLinkPointsAtTheReleaseTag()
+    public void TheLinksThatArePartOfTheVersion_PointAtTheTagOfTheRelease_AndNoOthersDo()
     {
         string project = Repository.Read("ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj");
-        Assert.That(project, Ordinal.Contains("<VersionSuffix>dev</VersionSuffix>"),
-            "The version is no longer a development version. Point the links marked in ReadmeLinksIntoTheRepository at the release tag, and replace this test with one that requires it.");
+        Assert.That(project, Does.Not.Contain("<VersionSuffix>"), "the repository holds a release");
 
-        foreach (string document in Documents)
+        string[] inTheReadme = LinksOf("README.md").Select(link => link.Target).ToArray();
+        foreach ((string target, bool moves) in ReadmeLinksIntoTheRepository)
         {
-            IEnumerable<string> atTheTag = LinksOf(document)
-                .Select(link => link.Target)
-                .Where(target => target.StartsWith(RepositoryPage, StringComparison.Ordinal) || target.StartsWith("https://raw.githubusercontent.com/", StringComparison.Ordinal))
-                .Where(target => target.Contains("/" + ReleaseTag, StringComparison.Ordinal));
-            Assert.That(atTheTag, Is.Empty, document);
+            if (moves)
+            {
+                Assert.That(target, Ordinal.Contains("/master/"), "the list states every address on the default branch");
+                Assert.That(inTheReadme, Has.Member(AtTheReleaseTag(target)), target + " is not at the tag");
+                Assert.That(inTheReadme, Has.No.Member(target), target + " is still on the default branch");
+            }
+            else
+            {
+                Assert.That(inTheReadme, Has.Member(target), target + " is not on the default branch");
+            }
+        }
+        Assert.That(inTheReadme.Count(target => target.Contains("/" + ReleaseTag + "/", StringComparison.Ordinal)),
+            Is.EqualTo(ReadmeLinksIntoTheRepository.Count(link => link.PointsAtTheTagOnceReleased)), "three links at the tag, and no more");
+
+        // No other document, and not the package's own metadata, points at a file at the tag.
+        foreach (string document in Documents.Where(document => document != "README.md"))
+        {
+            Assert.That(LinksOf(document).Select(link => link.Target).Where(target => Regex.IsMatch(target, "/(blob|tree)/" + Regex.Escape(ReleaseTag) + "/|" + Regex.Escape(RawFilesAtTheTag))),
+                Is.Empty, document);
         }
         Assert.That(project, Ordinal.DoesNotContain(ReleaseTag));
-        foreach ((string target, bool _) in ReadmeLinksIntoTheRepository.Where(link => link.PointsAtTheTagOnceReleased))
-        {
-            Assert.That(target, Ordinal.Contains("/master/"), target);
-            Assert.That(AtTheReleaseTag(target), Is.Not.EqualTo(target).And.Contains("/" + ReleaseTag + "/"), "the tag form is known");
-        }
     }
 
     /// <summary>
@@ -237,8 +274,9 @@ public class DocumentationLinkTests
         Assert.That(images, Is.Not.Empty);
         foreach (MarkdownLink image in images)
         {
-            Assert.That(image.Target, Does.StartWith(RawFiles + "docs/images/").Using(StringComparison.Ordinal));
-            Assert.That(Repository.HasFile(image.Target.Substring(RawFiles.Length)), image.Target);
+            // The image is part of the version: it is served from the tag of the release, where it cannot change.
+            Assert.That(image.Target, Does.StartWith(RawFilesAtTheTag + "docs/images/").Using(StringComparison.Ordinal));
+            Assert.That(Repository.HasFile(image.Target.Substring(RawFilesAtTheTag.Length)), image.Target);
         }
     }
 
@@ -267,7 +305,7 @@ public class DocumentationLinkTests
     {
         IEnumerable<string> shown = LinksOf("README.md")
             .Where(link => link.IsImage)
-            .Select(link => link.Target.Substring(RawFiles.Length))
+            .Select(link => link.Target.Substring(RawFilesAtTheTag.Length))
             .OrderBy(path => path, StringComparer.Ordinal);
 
         Assert.That(Repository.FilesWithExtension(".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico"), Is.EqualTo(shown));

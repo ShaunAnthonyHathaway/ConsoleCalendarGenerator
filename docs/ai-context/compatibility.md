@@ -359,9 +359,10 @@ others.
 - **`AssemblyVersion` is the major version only,** always matching the package's major version: it was `1.0.0.0`
   in 1.0.0 and is `2.0.0.0` now, for 2.0 and every later 2.x version
   ([D-65](decisions.md#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)).
-- **The package version** is SemVer and is what identifies a release to consumers. The repository builds the
-  development version `2.0.0-dev`, which is never published. The release will be 2.0.0
+- **The package version** is SemVer and is what identifies a release to consumers. The repository builds
+  `2.0.0`, with no suffix: it is the source of the release
   ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)).
+  Every build carries that number; only the candidate is the release.
 - **The file version** follows the version prefix: `2.0.0.0`.
 - **The informational version** carries the package version and the commit, added by the SDK's Source Link
   support. Keep it.

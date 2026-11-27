@@ -12,15 +12,22 @@
 #
 # applies only the rules for the packed readme, to a file, as they hold for a package of that version. It is
 # how eng/release-links.sh checks the readme of a release before there is a package of it.
+#
+#   eng/verify-package.sh --published <package file>
+#
+# checks one package file as nuget.org serves it after publication. nuget.org signs every package: the file it
+# serves has one entry more than the file that was pushed, ".signature.p7s". That entry is required here and
+# every other check is the same. There is no symbol package to look at, because nuget.org does not serve one
+# back; eng/verify-published-package.sh says how the symbols are checked.
 
 set -euo pipefail
 shopt -s nullglob
 
 repository_url="https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator"
 
-# The version this repository builds: a development version of 2.0, with the assembly and file version of the
-# 2.x line. Both are changed here in the same change that changes them in the project file.
-expected_version="2.0.0-dev"
+# The version this repository builds: 2.0.0, with the assembly and file version of the 2.x line. Both are
+# changed here in the same change that changes them in the project file.
+expected_version="2.0.0"
 expected_assembly_version="2.0.0.0"
 
 fail() {
@@ -60,23 +67,37 @@ if [ "${1:-}" = "--check-readme" ]; then
   exit 0
 fi
 
-directory="${1:-artifacts/package}"
-
-# ---- exactly one package and one symbol package, and nothing else ----
-
-packages=("$directory"/ConsoleCalendarGenerator.*.nupkg)
-symbols=("$directory"/ConsoleCalendarGenerator.*.snupkg)
-everything=("$directory"/*)
-[ "${#packages[@]}" -eq 1 ] || fail "expected exactly one ConsoleCalendarGenerator .nupkg in $directory, found ${#packages[@]}"
-[ "${#symbols[@]}" -eq 1 ] || fail "expected exactly one ConsoleCalendarGenerator .snupkg in $directory, found ${#symbols[@]}"
-[ "${#everything[@]}" -eq 2 ] || fail "expected only the two packages in $directory, found: ${everything[*]}"
-package="${packages[0]}"
-symbol_package="${symbols[0]}"
-echo "Package:        $package"
-echo "Symbol package: $symbol_package"
-
 # The files every package has besides its content.
 packaging_parts='^(_rels/\.rels|\[Content_Types\]\.xml|package/services/metadata/core-properties/[0-9a-z]+\.psmdcp|ConsoleCalendarGenerator\.nuspec)$'
+
+published=false
+if [ "${1:-}" = "--published" ]; then
+  [ "$#" -eq 2 ] || fail "usage: eng/verify-package.sh --published <package file as nuget.org serves it>"
+  published=true
+  package="$2"
+  symbol_package=""
+  [ -f "$package" ] || fail "there is no file $package"
+  # The one thing nuget.org adds, and it must be there: a package without it did not come from nuget.org.
+  signatures="$(unzip -Z1 "$package" | tr -d '\r' | grep -c -x -F '.signature.p7s' || true)"
+  [ "$signatures" -eq 1 ] || fail "the package has no .signature.p7s: nuget.org signs every package it serves, so this file is not one it served"
+  packaging_parts="${packaging_parts%)\$}|\.signature\.p7s)\$"
+  echo "Package:        $package, as served by nuget.org, with its signature"
+else
+  directory="${1:-artifacts/package}"
+
+  # ---- exactly one package and one symbol package, and nothing else ----
+
+  packages=("$directory"/ConsoleCalendarGenerator.*.nupkg)
+  symbols=("$directory"/ConsoleCalendarGenerator.*.snupkg)
+  everything=("$directory"/*)
+  [ "${#packages[@]}" -eq 1 ] || fail "expected exactly one ConsoleCalendarGenerator .nupkg in $directory, found ${#packages[@]}"
+  [ "${#symbols[@]}" -eq 1 ] || fail "expected exactly one ConsoleCalendarGenerator .snupkg in $directory, found ${#symbols[@]}"
+  [ "${#everything[@]}" -eq 2 ] || fail "expected only the two packages in $directory, found: ${everything[*]}"
+  package="${packages[0]}"
+  symbol_package="${symbols[0]}"
+  echo "Package:        $package"
+  echo "Symbol package: $symbol_package"
+fi
 
 content_of() {
   unzip -Z1 "$1" | tr -d '\r' | grep -v -E "$packaging_parts" | LC_ALL=C sort
@@ -98,13 +119,15 @@ if [ "$actual_content" != "$expected_content" ]; then
   fail "the package does not contain exactly the expected files"
 fi
 
-expected_symbols="lib/net10.0/ConsoleCalendarGenerator.pdb
+if [ "$published" = false ]; then
+  expected_symbols="lib/net10.0/ConsoleCalendarGenerator.pdb
 lib/netstandard2.1/ConsoleCalendarGenerator.pdb"
-actual_symbols="$(content_of "$symbol_package")"
-if [ "$actual_symbols" != "$expected_symbols" ]; then
-  echo "Actual content:" >&2
-  echo "$actual_symbols" >&2
-  fail "the symbol package does not contain exactly the two symbol files"
+  actual_symbols="$(content_of "$symbol_package")"
+  if [ "$actual_symbols" != "$expected_symbols" ]; then
+    echo "Actual content:" >&2
+    echo "$actual_symbols" >&2
+    fail "the symbol package does not contain exactly the two symbol files"
+  fi
 fi
 
 # ---- metadata ----
@@ -138,8 +161,10 @@ version="$(sed -n -E 's:.*<version>(.+)</version>.*:\1:p' <<< "$nuspec")"
 [ -n "$version" ] || fail "nuspec: no version"
 [ "$version" != "1.0.0" ] || fail "version 1.0.0 is already published; a build from this repository must not use it"
 [ "$version" = "$expected_version" ] || fail "the package is version $version, and this repository builds $expected_version"
-[ "$(basename "$package")" = "ConsoleCalendarGenerator.$version.nupkg" ] || fail "the package file name does not match version $version"
-[ "$(basename "$symbol_package")" = "ConsoleCalendarGenerator.$version.snupkg" ] || fail "the symbol package file name does not match version $version"
+if [ "$published" = false ]; then
+  [ "$(basename "$package")" = "ConsoleCalendarGenerator.$version.nupkg" ] || fail "the package file name does not match version $version"
+  [ "$(basename "$symbol_package")" = "ConsoleCalendarGenerator.$version.snupkg" ] || fail "the symbol package file name does not match version $version"
+fi
 echo "Version:        $version"
 
 commit="$(sed -n -E 's:.*<repository [^>]*commit="([0-9a-f]{40})".*:\1:p' <<< "$nuspec")"
@@ -209,15 +234,21 @@ for framework in net10.0 netstandard2.1; do
       fi
     done
   done
-  for marker in 'ConsoleCalendarGenerator.Tests' 'Published100'; do
-    if unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" | LC_ALL=C grep -a -c -F "$marker" > /dev/null; then
-      fail "lib/$framework/ConsoleCalendarGenerator.pdb names a source file of the tests ($marker)"
-    fi
-  done
-  # Source Link: the symbols must say where on GitHub the exact sources are.
-  unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" \
-    | grep -a -c 'https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/' > /dev/null \
-    || fail "lib/$framework/ConsoleCalendarGenerator.pdb has no Source Link to the repository"
+  if [ "$published" = false ]; then
+    for marker in 'ConsoleCalendarGenerator.Tests' 'Published100'; do
+      if unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" | LC_ALL=C grep -a -c -F "$marker" > /dev/null; then
+        fail "lib/$framework/ConsoleCalendarGenerator.pdb names a source file of the tests ($marker)"
+      fi
+    done
+    # Source Link: the symbols must say where on GitHub the exact sources are.
+    unzip -p "$symbol_package" "lib/$framework/ConsoleCalendarGenerator.pdb" \
+      | grep -a -c 'https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/' > /dev/null \
+      || fail "lib/$framework/ConsoleCalendarGenerator.pdb has no Source Link to the repository"
+  fi
 done
 
-echo "The package and the symbol package are as expected."
+if [ "$published" = true ]; then
+  echo "The published package is as expected."
+else
+  echo "The package and the symbol package are as expected."
+fi

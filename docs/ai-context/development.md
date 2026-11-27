@@ -72,7 +72,7 @@ bash eng/consumer-smoke.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package --native-aot     # also publishes and runs a Native AOT application
 bash eng/consumer-smoke.sh artifacts/package --native-aot --published-sample     # Linux: also the 1.0.0 sample with the published 1.0.0
 bash eng/upgrade-smoke.sh artifacts/package                    # a program upgraded from the published 1.0.0
-bash eng/release-rehearsal.sh                                  # what release preparation would do; changes nothing
+bash eng/release-state.sh                                      # the repository agrees with itself about its version
 ```
 
 The release bundle needs a build that names no folder of the machine, and a checkout with nothing uncommitted:
@@ -87,8 +87,11 @@ bash eng/direct-reference-smoke.sh artifacts/release-bundle
 
 Packing is explicit; a build never creates a package. Packing also runs package validation against published
 1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md). The package and the
-bundle these commands make are of the development version `2.0.0-dev`. None of them publishes anything, and no
-command that needs a credential belongs in this file.
+bundle these commands make call themselves `2.0.0`, like every build of this source, and are **not** the
+release: the release is the one candidate, which is never built again
+([packaging-and-releases.md](packaging-and-releases.md#the-candidate)). Do not publish, attach or hand on what
+these commands make. None of them publishes anything, and no command that needs a credential belongs in this
+file.
 
 ## Generated output and cleaning
 
@@ -145,13 +148,15 @@ What to do when one of them changes:
 - **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
   same file is shown on nuget.org. The other three documents may use relative links. A new link from the
   README into this repository also has to be added to the list in `DocumentationLinkTests`, with whether it
-  moves to the release tag when 2.0 is released, and to the table of the
-  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist). Until then all of
-  them point at `master`.
-- **What a document says about the state of the project.** The repository builds `2.0.0-dev`, and 2.0 is not
-  published. The documents say exactly that, and tests hold them to it. Do not write that 2.0 is published,
-  give a command that installs it, or point a link at the tag `v2.0.0`, before release preparation does all of
-  that in one change.
+  moves to the release tag when a version is released, and to the table of the
+  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist). In the list every
+  address is written as it is on `master`; in the README of 2.0.0 the ones that are part of the version are at
+  `v2.0.0`.
+- **What a document says about the state of the project.** The repository is the source of 2.0.0, and 2.0.0 is
+  not published. The public documents name the version and say nothing that publication would make false
+  ([D-78](decisions.md#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false)): do
+  not write that 2.0.0 is published, tagged or released, and do not write that it is unpublished either, in a
+  file that is packed into the package. Tests hold the documents to it.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a
   terminal, and only needs redoing when the "Colors" example changes what it draws. The tools are not part of
   the build: util-linux `script` and ImageMagick with Pango.
@@ -192,13 +197,19 @@ once per operating system:
 8. `eng/verify-package.sh`
 9. `eng/consumer-smoke.sh` (with `--native-aot --published-sample` on Linux, which also runs the sample
    program of 1.0.0 with the published 1.0.0 and checks binary compatibility)
-10. `eng/release-bundle.sh`: the four files of a release, for the development version, made and checked
+10. `eng/release-bundle.sh`: the four files of a release, made and checked
 11. `eng/release-bundle-tamper-test.sh`: the check refuses a damaged bundle
 12. `eng/direct-reference-smoke.sh`: a program that references an assembly of the archive directly
 13. `eng/upgrade-smoke.sh`: a program upgraded from the published 1.0.0
-14. `eng/release-rehearsal.sh`: what release preparation would do, with nothing changed
-15. Upload the `.nupkg` and `.snupkg` as the artifact `nuget-packages`, kept seven days, and the bundle as the
+14. `eng/verify-published-package-selftest.sh`: the comparison that follows publication, rehearsed with the
+    signed 1.0.0 that nuget.org serves
+15. `eng/release-state.sh`: the repository agrees with itself about the version it holds
+16. Upload the `.nupkg` and `.snupkg` as the artifact `nuget-packages`, kept seven days, and the bundle as the
     artifact `release-bundle`, kept 90 days (Linux only)
+
+**Never run a workflow run again whose bundle is, or may become, the candidate of a release.** A rerun builds
+again and leaves the run with a second attempt, after which its artifact can no longer be designated
+([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)).
 
 It has read-only repository permission, uses no secrets, has no manual trigger and publishes nothing. Keep it
 that way; see [packaging-and-releases.md](packaging-and-releases.md#release-boundaries). `WorkflowTests` and

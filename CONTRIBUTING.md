@@ -6,10 +6,14 @@ agreed on before you spend time on it. To report a security problem, see [SECURI
 
 ## Where the project is
 
-The repository is developing version 2.0, which is not published. What it builds is a development package
-numbered `2.0.0-dev`, which is not published either; the only published version is 1.0.0. Version 2.0 adds the modern API and makes five
-corrections to the legacy class. All five are made, and no further breaking change is planned: one would need
-the maintainer's agreement before any code.
+The repository holds version 2.0.0, final in the source: the modern API, and the legacy class with five
+corrections. Whether it is published is shown on the
+[package's page on nuget.org](https://www.nuget.org/packages/ConsoleCalendarGenerator); until it is listed
+there, the published version is 1.0.0. No further breaking change is planned: one would need the maintainer's
+agreement before any code.
+
+Every build of this source calls itself 2.0.0, a build on your machine included. Only one build is the
+release: the one the maintainer designates, once. Please do not publish, share or attach a package you built.
 
 ## What you need
 

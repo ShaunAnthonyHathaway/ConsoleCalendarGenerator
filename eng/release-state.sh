@@ -1,26 +1,30 @@
 #!/usr/bin/env bash
 #
-# A rehearsal of release preparation that changes nothing. It answers one question on every build: if the
-# release were prepared from this commit, would the steps of the checklist work?
+# Checks that the repository agrees with itself about what it is: the source of a release, or of a development
+# version on the way to one. It builds no package, creates no file in the repository, needs no tag and
+# publishes nothing.
 #
-#   eng/release-rehearsal.sh
+#   eng/release-state.sh
 #
-# It builds no package, creates no file in the repository, needs no tag and publishes nothing. In particular it
-# never produces a package or an archive that carries the release version: the version identity is worked out
-# by evaluating the project, not by building it. What it checks:
+# The project file decides which it is.
 #
-#   1. The repository still builds a development version, and nothing claims a release.
-#   2. With the version suffix removed, the project evaluates to the release identity: package version
-#      <major>.<minor>.<patch>, assembly and file version <major>.0.0.0 and the file version of the prefix, an
-#      informational version made of the package version and the commit, and release notes that are the
-#      changelog of this repository.
-#   3. The links of the README that are part of the version can be moved to the tag of the release, by the one
-#      substitution of eng/release-links.sh, and the result is a readme the package check accepts.
-#   4. The changelog has one "Unreleased" section, which can be given the version and a date.
-#   5. Every place that states the development version by number is found, and listed for the person who
-#      prepares the release.
+# With no version suffix, the repository holds a release, and everything that states that must agree:
+#   1. The project evaluates to the release identity: package version <major>.<minor>.<patch>, assembly version
+#      <major>.0.0.0, the file version of the prefix, an informational version made of the package version and
+#      the commit, and release notes that are the changelog of this repository.
+#   2. The package check and the version tests expect that version, and no place still states a development
+#      version.
+#   3. The README has the links that are part of the version at the tag of the release, and the others on the
+#      default branch (eng/release-links.sh --check).
+#   4. The changelog's first section is the section of that version. Its heading carries the date of
+#      publication, or says that the version is not yet published; it never carries a date that was guessed.
 #
-# The checklist itself is in docs/ai-context/packaging-and-releases.md.
+# With a version suffix, the repository holds a development version, and this is a rehearsal: it works out
+# whether release preparation would succeed from this commit, without doing any of it. It never produces a
+# package or an archive that carries the release version: the identity is evaluated, not built.
+#
+# Either way, that a tag or a published package exists is not something this script looks for or needs.
+# The steps of a release are in docs/ai-context/packaging-and-releases.md.
 
 set -euo pipefail
 # shellcheck source=eng/common.sh
@@ -37,11 +41,61 @@ property() {
   dotnet msbuild "$project" -p:TargetFramework=net10.0 "$@" -getProperty:"$name" | tr -d '\r'
 }
 
-echo "== 1. Today: a development version"
 prefix="$(sed -n -E 's:.*<VersionPrefix>([^<]+)</VersionPrefix>.*:\1:p' "$project")"
 suffix="$(sed -n -E 's:.*<VersionSuffix>([^<]+)</VersionSuffix>.*:\1:p' "$project")"
 grep -q -E '^[0-9]+\.[0-9]+\.[0-9]+$' <<< "$prefix" || fail "the project file has no version prefix of the form major.minor.patch"
-[ -n "$suffix" ] || fail "the project file has no version suffix: this is not a development version, and a rehearsal is not what is needed"
+commit="$(git -C "$repository" rev-parse HEAD)"
+major="${prefix%%.*}"
+
+if [ -z "$suffix" ]; then
+  # ---- the repository holds a release ----
+  tag="v$prefix"
+  echo "== 1. The release identity"
+  [ "$(property PackageVersion)" = "$prefix" ] || fail "the package version is '$(property PackageVersion)', not $prefix"
+  [ "$(property AssemblyVersion)" = "$major.0.0.0" ] || fail "the assembly version is '$(property AssemblyVersion)', not $major.0.0.0"
+  [ "$(property FileVersion)" = "$prefix.0" ] || fail "the file version is '$(property FileVersion)', not $prefix.0"
+  informational="$(property InformationalVersion -t:AddSourceRevisionToInformationalVersion)"
+  [ "$informational" = "$prefix+$commit" ] || fail "the informational version is '$informational', not $prefix+$commit"
+  [ "$(property PackageId)" = "ConsoleCalendarGenerator" ] || fail "the package ID is not ConsoleCalendarGenerator"
+  notes="$(property PackageReleaseNotes)"
+  [ "$notes" = "$repository_url/blob/master/CHANGELOG.md" ] || fail "the release notes are '$notes', not the changelog on the default branch"
+  echo "Package:        ConsoleCalendarGenerator $prefix"
+  echo "Assembly:       $major.0.0.0, file $prefix.0, informational $informational"
+  echo "Release notes:  $notes"
+  echo "The files of a build of it: $(package_name "$prefix"), $(symbols_name "$prefix"), $(binaries_name "$prefix"), $checksums_name"
+
+  echo "== 2. No development version is stated"
+  grep -q -F "expected_version=\"$prefix\"" "$repository/eng/verify-package.sh" || fail "eng/verify-package.sh does not expect version $prefix"
+  grep -q -F "\"$prefix\"" "$repository/ConsoleCalendarGenerator.Tests/VersionIdentityTests.cs" || fail "VersionIdentityTests does not name version $prefix"
+  for file in ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj eng/verify-package.sh ConsoleCalendarGenerator.Tests/VersionIdentityTests.cs README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md CLAUDE.md; do
+    if grep -q -E "$prefix-[A-Za-z]" "$repository/$file"; then fail "$file still states a development version of $prefix"; fi
+  done
+  echo "The package check and the version tests expect $prefix, and the public documents state no development version."
+
+  echo "== 3. The README's links"
+  bash "$repository/eng/release-links.sh" "$tag" --check
+
+  echo "== 4. The changelog"
+  changelog="$(tr -d '\r' < "$repository/CHANGELOG.md")"
+  first="$(grep '^## ' <<< "$changelog" | sed -n 1p)"
+  if ! grep -q -E "^## \[$prefix\] - ([0-9]{4}-[0-9]{2}-[0-9]{2}|not yet published)$" <<< "$first"; then
+    fail "the first section of the changelog is '$first', not the section of $prefix with its date or 'not yet published'"
+  fi
+  if grep -q '^## \[Unreleased\]' <<< "$changelog"; then fail "the changelog has an Unreleased section beside the section of $prefix"; fi
+  grep -q "^\[$prefix\]: $repository_url/releases/tag/$tag\$" <<< "$changelog" || fail "the changelog has no link definition for $prefix that points at the release $tag"
+  for section in "### Added" "### Changed" "### Breaking changes" "### Compatibility"; do
+    grep -q -x -F "$section" <<< "$changelog" || fail "the changelog has no '$section'"
+  done
+  echo "Changelog:      $first"
+
+  echo
+  echo "The repository holds the release $prefix, and agrees with itself about it. Nothing was built, changed, tagged or published."
+  exit 0
+fi
+
+# ---- the repository holds a development version: a rehearsal of release preparation ----
+
+echo "== 1. Today: a development version"
 development="$prefix-$suffix"
 [ "$(property PackageVersion)" = "$development" ] || fail "the project does not evaluate to $development"
 tag="v$prefix"
@@ -58,8 +112,6 @@ release_assembly_version="$(property AssemblyVersion -p:VersionSuffix=)"
 release_file_version="$(property FileVersion -p:VersionSuffix=)"
 release_informational_version="$(property InformationalVersion -p:VersionSuffix= -t:AddSourceRevisionToInformationalVersion)"
 release_notes="$(property PackageReleaseNotes -p:VersionSuffix=)"
-commit="$(git -C "$repository" rev-parse HEAD)"
-major="${prefix%%.*}"
 [ "$release_package_version" = "$prefix" ] || fail "without the suffix the package version is '$release_package_version', not $prefix"
 [ "$release_assembly_version" = "$major.0.0.0" ] || fail "without the suffix the assembly version is '$release_assembly_version', not $major.0.0.0"
 [ "$release_file_version" = "$prefix.0" ] || fail "without the suffix the file version is '$release_file_version', not $prefix.0"
@@ -98,7 +150,7 @@ must_state() {
   # must_state <file> <fixed text that states the version there>
   local line
   line="$(grep -n -F "$2" "$repository/$1" | head -1 | cut -d: -f1)"
-  [ -n "$line" ] || fail "$1 no longer states the development version as '$2'; update eng/release-rehearsal.sh and the checklist"
+  [ -n "$line" ] || fail "$1 no longer states the development version as '$2'; update eng/release-state.sh and the checklist"
   printf '  %s:%s\n' "$1" "$line"
 }
 echo "Change together with the project file:"
@@ -108,7 +160,7 @@ must_state "ConsoleCalendarGenerator.Tests/VersionIdentityTests.cs" "$developmen
 echo "Documents that name it, each to be read again:"
 for document in CHANGELOG.md CONTRIBUTING.md CLAUDE.md docs/ai-context/packaging-and-releases.md docs/ai-context/compatibility.md docs/ai-context/roadmap.md; do
   count="$(grep -c -F "$development" "$repository/$document" || true)"
-  [ "$count" -gt 0 ] || fail "$document no longer names $development; update eng/release-rehearsal.sh and the checklist"
+  [ "$count" -gt 0 ] || fail "$document no longer names $development; update eng/release-state.sh and the checklist"
   printf '  %s (%s)\n' "$document" "$count"
 done
 

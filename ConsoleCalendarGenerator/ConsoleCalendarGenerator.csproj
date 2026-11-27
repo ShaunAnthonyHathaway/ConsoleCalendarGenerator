@@ -24,12 +24,13 @@
     <PackageId>ConsoleCalendarGenerator</PackageId>
 
     <!--
-      Development version of 2.0, the next version to be published. 1.0.0 is the only published version; nothing
-      built from this repository may carry that number. The release will be 2.0.0: the suffix is removed only
-      in the change that prepares an approved release, and no prerelease is published.
+      Version 2.0.0, with no suffix: this is the source of the release. Every build of it identifies itself as
+      2.0.0, wherever it is made, but only one build is the release: the candidate, which is designated once
+      and never built again (docs/ai-context/packaging-and-releases.md). A published version is never changed;
+      after 2.0.0 the next change of this number is a new version, with a development suffix until it is
+      released. Nothing built from this repository may be numbered 1.0.0, which is published.
     -->
     <VersionPrefix>2.0.0</VersionPrefix>
-    <VersionSuffix>dev</VersionSuffix>
     <!--
       The assembly version is the major version of the package and nothing more: 2.0.0.0 for every 2.x version,
       as it was 1.0.0.0 in 1.0.0. The file version follows the version prefix. The informational version is the
@@ -47,9 +48,9 @@
     <Description>Lays out and renders month calendars for .NET console applications: as plain text, as structured segments you can style yourself, or straight to the console in color. Marked dates show in the text itself, in any culture and with any first day of the week. Includes the ConsoleCalendar class of version 1.0 for existing code.</Description>
     <PackageTags>console;calendar;month;terminal;cli;date;text;layout</PackageTags>
     <!--
-      Where the changes of a version are listed. While the package is a development version this is the
-      changelog on the default branch. Whether a released package points at the tag of its release instead is
-      settled when the release is prepared; see docs/ai-context/packaging-and-releases.md.
+      Where the changes of a version are listed: the changelog on the default branch, for the release as well.
+      The changelog is a document of current policy, like the other documents the readme links on that branch;
+      it gets the date of a release when the release is published, which a copy at the tag could never show.
     -->
     <PackageReleaseNotes>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

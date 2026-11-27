@@ -956,7 +956,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-65: The repository builds 2.0.0-dev, with assembly and file version 2.0.0.0
 
-- **Status:** Approved. Implemented in the 2.0 groundwork. Supersedes
+- **Status:** Approved. Implemented in the 2.0 groundwork, and carried through to the release: release
+  preparation removed the suffix, so the repository now builds `2.0.0`
+  ([D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)). Supersedes
   [D-09](#d-09-development-builds-are-versioned-110-dev) and carries out
   [D-05](#d-05-assembly-version-is-the-major-version-only).
 - **Decision:** Packages built from the repository are versioned `2.0.0-dev`. `AssemblyVersion` and
@@ -1002,7 +1004,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-68: The published README of 2.0 links to the tag v2.0.0
 
-- **Status:** Approved. **Not implemented:** the tag does not exist. Resolves the former open question Q-10.
+- **Status:** Approved. **Implemented in the README** by release preparation: the three links are at
+  `v2.0.0`. The tag itself does not exist until its own approved step, and until then those three addresses
+  answer "not found". Resolves the former open question Q-10.
 - **Decision:** In the README that is packed into the 2.0 package, the links whose target must not change
   after the release, the image and the links to files of the repository, use the immutable tag `v2.0.0`
   instead of the `master` branch.
@@ -1090,9 +1094,10 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
 
 ### D-72: The release is 2.0.0, built once, and published as the files that were validated
 
-- **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. **Nothing is authorized.** The
-  machinery for it exists ([D-76](#d-76-a-release-is-four-files-made-and-checked-by-scripts)); there is no
-  release commit, no candidate, no tag and no publication.
+- **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. The repository is prepared: it is
+  the source of 2.0.0. **No tag, release or publication is authorized or exists.** Which build is the
+  candidate is [D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit);
+  that it has been designated is recorded outside the repository.
 - **Decision:** The version that is released is 2.0.0. It is an immutable release:
   1. the candidate is built once, from the release commit Shaun approves;
   2. the SHA-256 of that exact `.nupkg` and `.snupkg` is recorded;
@@ -1139,11 +1144,12 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
   license, project and repository URLs and the copyright line are unchanged.
 - **Reason:** The earlier description, "draws month and year calendars", described the class of 1.0 alone,
   and nuget.org shows and searches the description.
-- **Consequences:** While the package is a development version the release notes point at the changelog on
-  `master`, which exists. The changelog is one of the documents that stay on the default branch
-  ([D-68](#d-68-the-published-readme-of-20-links-to-the-tag-v200)), so the same link is right for the released
-  package unless release preparation decides otherwise; `eng/verify-package.sh` accepts either. A description
-  that speaks of a release, a version or publication fails `PackageMetadataTests`.
+- **Consequences:** The release notes point at the changelog on `master`, for the released package as well:
+  release preparation decided that
+  ([D-78](#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false)). The changelog is
+  one of the documents that stay on the default branch
+  ([D-68](#d-68-the-published-readme-of-20-links-to-the-tag-v200)). A description that speaks of a release, a
+  version or publication fails `PackageMetadataTests`.
 
 ## Release infrastructure
 
@@ -1168,8 +1174,8 @@ Settled in the release infrastructure phase, within the scope Shaun gave it.
 
 ### D-76: A release is four files, made and checked by scripts
 
-- **Status:** Approved. Implemented for development versions. **No release, and no candidate for one, has been
-  made.**
+- **Status:** Approved. Implemented. Every build makes a bundle; only the candidate
+  ([D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)) is a release's.
 - **Decision:** A release consists of `ConsoleCalendarGenerator.<version>.nupkg`,
   `ConsoleCalendarGenerator.<version>.snupkg`, `ConsoleCalendarGenerator-<version>-binaries.zip` and
   `SHA256SUMS.txt`. `eng/release-bundle.sh` makes them from a package that was built, tested and packed, and
@@ -1202,3 +1208,77 @@ Settled in the release infrastructure phase, within the scope Shaun gave it.
   attests the bundle the build job made, without rebuilding
   ([packaging-and-releases.md](packaging-and-releases.md#artifact-attestations-not-now)). Adding it is a change
   of permissions and needs its own decision.
+
+## Release preparation and the candidate
+
+Decided by Shaun when he approved the readiness audit and scoped release preparation, and settled in that
+phase where he left the choice to it.
+
+### D-78: The documents of the release say nothing that publication would make false
+
+- **Status:** Approved. Implemented in release preparation.
+- **Decision:** The release commit is made before the tag, the GitHub release and the NuGet publication, and
+  nobody knows on that day when those will happen. So:
+  1. **The README,** which is packed into the package and can never be edited there, says which version it
+     describes and sends the reader to nuget.org for what is published. It speaks of the time before
+     publication only as a condition ("until 2.0.0 is listed there"). It never says by itself that 2.0.0 is,
+     or is not, published.
+  2. **The changelog's heading** for 2.0.0 reads "not yet published" where the date belongs. The date is put
+     in on `master` once the version is published. A date is never guessed, and the day of the release commit
+     is not passed off as the day of publication.
+  3. **The release notes of the package** are the changelog on `master`, not a copy at the tag: only the
+     changelog on `master` can ever show the date, and the changelog is one of the documents that stay on the
+     default branch ([D-68](#d-68-the-published-readme-of-20-links-to-the-tag-v200)).
+  4. `SECURITY.md` and `CONTRIBUTING.md` state what is published as a condition as well.
+- **Reason:** A package is immutable. A sentence in it that is true only until publication is false for as
+  long as the version exists. And the candidate is built from the release commit, so nothing in it can be
+  corrected afterwards without building again, which is the one thing that must not happen.
+- **Consequences:** Nothing in the candidate needs a change after publication. The one thing that does change
+  afterwards, the date in the changelog, is in a file that is in neither the package nor the archive.
+  nuget.org's editing of a published package's metadata is not used. Tests require the README's wording to be
+  conditional and the changelog's heading to hold either "not yet published" or a date, with the explaining
+  sentence present exactly as long as the date is missing.
+
+### D-79: The candidate is the Linux bundle of the first push run for the release commit
+
+- **Status:** Approved by Shaun. Resolves the former open question Q-16. Enforced by
+  `eng/designate-candidate.sh`. Whether a candidate has been designated is not recorded in the repository.
+- **Decision:** The immutable candidate of 2.0.0 is the `release-bundle` artifact of the Linux job, of the
+  first successful workflow run that a push to `master` started for the final release-preparation merge
+  commit. It is never rebuilt. It is never replaced by the artifact of a rerun, nor by a local, a
+  pull-request, a Windows or a macOS build. If that push run fails or its artifact is not valid, no candidate
+  exists: the problem is corrected through a new reviewed commit, and the first successful push run for the
+  newer merge commit is used.
+- **Reason:** Every build of the release commit calls itself 2.0.0, and CI makes one on each of three systems
+  for every run. "Built once" therefore has to name one of them, by something that cannot be argued about
+  later. That run is the build every check ran against, on a machine nobody configured by hand, with a public
+  log; and `dotnet pack` never writes the same package twice, so a second build could not be told from the
+  first by comparing them.
+- **Consequences:** The workflow run of the candidate is never run again; the designation refuses a run that
+  is not in its first attempt, is not the first push run for the commit, or has a job that failed. The
+  candidate's record (run, job, artifact, checksums, checks) is kept outside the repository and is not
+  committed: the release commit is the commit the candidate was built from, and the tag belongs on it. See
+  [packaging-and-releases.md](packaging-and-releases.md#the-candidate).
+
+### D-80: After publication, the served package is compared by its entries, and the symbols through the symbol server
+
+- **Status:** Approved by Shaun. The tooling is implemented and tested as far as it can be before a
+  publication; it has not been run on a published 2.0.0, which does not exist.
+- **Decision:** nuget.org signs every package it serves by adding the entry `.signature.p7s`. The package
+  downloaded after publication is therefore not expected to have the candidate's SHA-256, and nothing claims
+  it does. Verification compares the entries: the served package must have that one added entry, every entry
+  of the candidate byte for byte, and no other. It also checks nuget.org's own record of the file, the served
+  package as a package, and the version installed from nuget.org. The symbol package cannot be downloaded
+  back at all; its exact bytes stay protected by `SHA256SUMS.txt` and by the release it is attached to, the
+  push output is recorded, and after publication each of its symbol files is fetched from nuget.org's symbol
+  server and must be the candidate's, byte for byte.
+- **Reason:** A check that expected the outer checksum to match would fail on every correct publication, and
+  one that ignored the difference would prove nothing. Naming the one permitted difference, and refusing
+  every other, is the strongest statement that is true.
+- **Consequences:** `eng/verify-published-package.sh` is the check; `eng/verify-published-package-selftest.sh`
+  shows on every build that the comparison accepts a package plus nuget.org's signature, using the signed
+  1.0.0 that nuget.org serves, and refuses twelve kinds of difference. Before publication every bundle check
+  requires each symbol file to be the one its assembly was built with, which is what nuget.org validates
+  after the package is already public. What stays unverifiable is said plainly: the bytes of the symbol
+  package as nuget.org stores it. See
+  [packaging-and-releases.md](packaging-and-releases.md#after-publication-what-is-checked-and-what-cannot-be).

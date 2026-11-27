@@ -89,101 +89,104 @@ public class PublicDocumentationTests
 
     // ---- versions ----
 
+    /// <summary>The version the project file gives every build of this source. It has no suffix: it is a release.</summary>
+    private static string ReleaseVersion()
+    {
+        string project = Repository.Read(ProjectFiles[0]);
+        Assert.That(project, Does.Not.Contain("<VersionSuffix>"), "the repository holds a release, not a development version");
+        return Regex.Match(project, "<VersionPrefix>([^<]+)</VersionPrefix>").Groups[1].Value;
+    }
+
     /// <summary>
-    /// 1.0.0 is the only version that exists, so it is the only complete version number a document for users
-    /// names. The version being developed is called 2.0 and nothing more exact, and no other version is named.
-    /// The one exception is the number of the development package, which the document for contributors gives,
-    /// because contributors build it. It is the number the project file has.
+    /// Two versions exist as far as a user is concerned: 1.0.0, which is published, and the release this
+    /// source is. Those are the only complete version numbers a document for users names, and no document
+    /// names a development or a prerelease version.
     /// </summary>
     [TestCase("README.md")]
-    [TestCase("CONTRIBUTING.md", "2.0.0-dev")]
+    [TestCase("CONTRIBUTING.md")]
     [TestCase("SECURITY.md")]
-    public void TheOnlyVersionsNamed_AreThePublishedOne_AndTheOneInDevelopment(string document, params string[] alsoAllowed)
+    [TestCase("CHANGELOG.md")]
+    public void TheOnlyVersionsNamed_AreThePublishedOne_AndTheRelease(string document)
     {
         string prose = Markdown.WithoutLinks(Repository.Read(document));
+        // The changelog also gives the assembly version, which has four parts.
+        prose = Regex.Replace(prose, @"\b\d+\.\d+\.\d+\.\d+\b", string.Empty);
 
-        Assert.That(Regex.Matches(prose, @"\b\d+\.\d+\.\d+(-[\w.]+)?").Select(match => match.Value).Distinct(), Is.SubsetOf(new[] { "1.0.0" }.Concat(alsoAllowed)));
-        Assert.That(alsoAllowed, Is.SubsetOf(new[] { DevelopmentVersion() }), "a development version a document names is the one the repository builds");
+        Assert.That(ReleaseVersion(), Is.EqualTo("2.0.0"));
+        Assert.That(Regex.Matches(prose, @"\b\d+\.\d+\.\d+(-[\w.]+)?").Select(match => match.Value).Distinct(), Is.SubsetOf(new[] { "1.0.0", ReleaseVersion() }));
         Assert.That(Regex.Matches(prose, @"\b(version|v),?\s?(\d+\.\d+)(?![.\d])", RegexOptions.IgnoreCase).Select(match => match.Groups[2].Value).Distinct(),
             Is.SubsetOf(new[] { "2.0" }));
     }
 
-    /// <summary>Wherever the README names the version in development, it has said that it is not published.</summary>
-    [Test]
-    public void TheReadme_SaysTheVersionInDevelopmentIsNotPublished_BeforeItSaysAnythingElseAboutIt()
-    {
-        string readme = Repository.Read("README.md");
-        int firstMention = readme.IndexOf("2.0", StringComparison.Ordinal);
-
-        Assert.That(firstMention, Is.GreaterThan(0));
-        Assert.That(readme.Substring(firstMention, 80), Ordinal.Contains("not published yet"));
-        Assert.That(readme, Does.Not.Match(@"(?i)2\.0 (is|was|has been) (published|released|available)|install[^\n]*2\.0"));
-    }
-
     // ---- the state of the project ----
 
-    /// <summary>The version the project file gives the packages built here, such as <c>2.0.0-dev</c>.</summary>
-    private static string DevelopmentVersion()
-    {
-        string project = Repository.Read(ProjectFiles[0]);
-        return Regex.Match(project, "<VersionPrefix>([^<]+)</VersionPrefix>").Groups[1].Value + "-"
-            + Regex.Match(project, "<VersionSuffix>([^<]+)</VersionSuffix>").Groups[1].Value;
-    }
-
     /// <summary>
-    /// What the README says about where things stand, each a fact that is true today: one published version,
-    /// the next one in development and not published, and the modern API not in the published package.
+    /// The README is packed into the package, where it can never be edited, and it is read before the version
+    /// is published as well as long after. So it says which version it describes and where to see what is
+    /// published, and it never says by itself that 2.0.0 is or is not published. Each statement here is true
+    /// on the day of the merge, on the day of publication and afterwards.
     /// </summary>
     [Test]
-    public void TheReadme_SaysWhatIsPublished_AndWhatIsNot()
+    public void TheReadme_SaysWhichVersionItDescribes_AndWhereToSeeWhatIsPublished()
     {
-        string status = SectionOf(Repository.Read("README.md"), "## Status");
+        string status = Regex.Replace(SectionOf(Repository.Read("README.md"), "## Status"), @"[ \n]+", " ");
         string installation = SectionOf(Repository.Read("README.md"), "## Installation");
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(status, Ordinal.Contains("https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0"), "the published version, with its page");
-            Assert.That(status, Ordinal.Contains("only published version"));
-            Assert.That(status, Ordinal.Contains("not published yet"));
-            Assert.That(status, Ordinal.Contains("not in the published package"), "the modern API");
+            Assert.That(status, Ordinal.Contains("**version " + ReleaseVersion() + "**"), "the version this page describes");
+            Assert.That(status, Ordinal.Contains("](https://www.nuget.org/packages/ConsoleCalendarGenerator)"), "the page that shows which versions are published");
+            Assert.That(status, Ordinal.Contains("Until " + ReleaseVersion() + " is listed"), "what holds until then, said as a condition");
+            Assert.That(status, Ordinal.Contains("1.0.0"), "the version that is published in any case");
             Assert.That(status, Ordinal.Contains("](#migrating-from-100-to-20)"), "the way to the migration section");
-            Assert.That(installation, Ordinal.Contains("1.0.0"), "what the command installs today");
+            Assert.That(installation, Ordinal.Contains("newest published version"), "what the command installs, whatever that is");
             Assert.That(installation, Ordinal.Contains("legacy API"));
             Assert.That(Markdown.FencedBlocks(installation).Select(block => block.Text.Trim()), Is.EqualTo(new[] { "dotnet add package ConsoleCalendarGenerator" }),
-                "one command, with no version: it installs what is published");
+                "one command, with no version: a command that names 2.0.0 fails until it is published");
         }
     }
 
     /// <summary>
-    /// Nothing a user reads says more than is true: that the next version is out, can be installed, is stable
-    /// or is ready for release, or that the development package can be had from anywhere.
+    /// No document says that the release has happened: that 2.0.0 is published, released or available, that
+    /// its tag or its GitHub release exists, or that a build has been made the candidate. Whether any of that
+    /// is so cannot be read from the source, and is not written into it.
     /// </summary>
     [TestCaseSource(nameof(Documents))]
-    public void NoDocumentClaimsARelease_OrThatOneIsReady(string document)
+    public void NoDocumentClaimsThatTheReleaseHasHappened(string document)
     {
         string text = Repository.Read(document);
 
-        Assert.That(Regex.Matches(text, @"(?i)\b2\.0(\.0)? (is|was|has been) (now )?(published|released|available|stable|out)\b|release[- ]ready|ready (for|to) release|--version 2\.|--prerelease|is now available")
+        Assert.That(Regex.Matches(text,
+                @"(?i)\b2\.0(\.0)? (is|was|has been) (now )?(published|released|available|out|on nuget)\b|is now available|now on nuget|--version 2\.|--prerelease"
+                + @"|\b(tag|release) `?v2\.0\.0`? (exists|was created|has been created|is published)|\bcandidate (is|was|has been) (designated|built|chosen)|not published yet|-dev\b")
             .Select(match => match.Value), Is.Empty);
-        if (text.Contains(DevelopmentVersion(), StringComparison.Ordinal))
-        {
-            Assert.That(text, Does.Match(Regex.Escape(DevelopmentVersion()) + @"[^\n]*(\n[^\n]*)?not published"),
-                document + ": where the development package is named, it is said to be unpublished");
-        }
     }
 
+    /// <summary>
+    /// The changelog's first section is the release. Its heading carries a date only once the version is
+    /// published: until then it says "not yet published", and the entry says why it has no date. A date is put
+    /// in after publication, on the default branch, which is where every link to the changelog points; no
+    /// packed file changes. A guessed date is the one thing the heading must never hold.
+    /// </summary>
     [Test]
-    public void TheChangelog_KeepsTheNextVersionUnreleased_AndUndated()
+    public void TheChangelog_HasTheReleaseAsItsFirstSection_DatedOnlyOncePublished()
     {
-        string unreleased = SectionOf(Repository.Read("CHANGELOG.md"), "## [Unreleased]");
+        string changelog = Repository.Read("CHANGELOG.md");
+        string[] sections = changelog.Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)).ToArray();
+        string release = SectionOf(changelog, sections[0]);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(unreleased, Ordinal.Contains("not released"));
-            Assert.That(unreleased, Ordinal.Contains("`" + DevelopmentVersion() + "`"), "the number of what the repository builds");
-            Assert.That(Regex.Matches(unreleased, @"\b20\d\d-\d\d-\d\d\b").Select(match => match.Value), Is.Empty, "no release date");
-            Assert.That(Repository.Read("CHANGELOG.md").Split('\n').Where(line => line.StartsWith("### ", StringComparison.Ordinal)).Take(4),
+            Assert.That(sections, Has.Length.EqualTo(2));
+            Assert.That(sections[0], Does.Match(@"^## \[" + Regex.Escape(ReleaseVersion()) + @"\] - (not yet published|\d{4}-\d{2}-\d{2})$"));
+            Assert.That(sections[1], Is.EqualTo("## [1.0.0] - 2023-06-25"));
+            Assert.That(release.Contains("It is not on NuGet yet", StringComparison.Ordinal), Is.EqualTo(sections[0].EndsWith("not yet published", StringComparison.Ordinal)),
+                "the sentence that explains the missing date is there exactly as long as the date is missing");
+            Assert.That(changelog.Split('\n').Where(line => line.StartsWith("### ", StringComparison.Ordinal)).Take(4),
                 Is.EqualTo(new[] { "### Added", "### Changed", "### Breaking changes", "### Compatibility" }));
+            Assert.That(changelog, Ordinal.Contains("\n[" + ReleaseVersion() + "]: https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/releases/tag/v" + ReleaseVersion() + "\n"),
+                "the version links to its release on GitHub, which exists once the release is published");
+            Assert.That(changelog, Ordinal.DoesNotContain("[Unreleased]"));
         }
     }
 
@@ -191,11 +194,14 @@ public class PublicDocumentationTests
     public void TheSecurityDocument_SaysWhichVersionIsSupported_AndThatThereIsNoPrivateChannelYet()
     {
         string security = Repository.Read("SECURITY.md");
+        string supported = Regex.Replace(SectionOf(security, "## Supported versions"), @"\s+", " ");
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(SectionOf(security, "## Supported versions"), Ordinal.Contains("1.0.0"));
-            Assert.That(SectionOf(security, "## Supported versions"), Ordinal.Contains("not published"), "the version in development");
+            Assert.That(supported, Ordinal.Contains("latest version published on NuGet"));
+            Assert.That(supported, Ordinal.Contains(ReleaseVersion()), "the version of this repository");
+            Assert.That(supported, Ordinal.Contains("Until it is published on NuGet, the latest published version is 1.0.0"),
+                "said as a condition, so that it is true before and after publication");
             Assert.That(SectionOf(security, "## Reporting a problem"), Ordinal.Contains("does not have a private channel"),
                 "true while private vulnerability reporting is off; this sentence changes in the change that turns it on");
             Assert.That(security, Does.Not.Match(@"[\w.+-]+@[\w-]+\.[\w.]+"), "no e-mail address");
@@ -321,33 +327,29 @@ public class PublicDocumentationTests
     }
 
     [Test]
-    public void TheChangelog_ListsBreakingChanges_UnderTheUnreleasedVersionOnly()
+    public void TheChangelog_ListsBreakingChanges_UnderTheReleaseOnly()
     {
         string changelog = Repository.Read("CHANGELOG.md");
-        int unreleased = changelog.IndexOf("\n## [Unreleased]", StringComparison.Ordinal);
+        int release = changelog.IndexOf("\n## [" + ReleaseVersion() + "]", StringComparison.Ordinal);
         int published = changelog.IndexOf("\n## [1.0.0]", StringComparison.Ordinal);
         int breaking = changelog.IndexOf("\n### Breaking changes\n", StringComparison.Ordinal);
 
-        Assert.That(breaking, Is.GreaterThan(unreleased).And.LessThan(published));
+        Assert.That(breaking, Is.GreaterThan(release).And.LessThan(published));
         Assert.That(changelog.IndexOf("\n### Breaking changes\n", breaking + 1, StringComparison.Ordinal), Is.EqualTo(-1));
     }
 
+    /// <summary>The repository holds a release: the project has no version suffix, and nothing a user reads names one.</summary>
     [Test]
-    public void TheChangelog_HasOnePublishedVersion_AndAnUnreleasedSection()
-    {
-        string[] sections = Repository.Read("CHANGELOG.md").Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)).ToArray();
-
-        Assert.That(sections, Is.EqualTo(new[] { "## [Unreleased]", "## [1.0.0] - 2023-06-25" }));
-    }
-
-    /// <summary>What the repository builds is a development version, which is why the documents call it unpublished.</summary>
-    [Test]
-    public void TheRepositoryBuildsADevelopmentVersion_NotThePublishedOne()
+    public void TheRepositoryHoldsARelease_NotADevelopmentVersion()
     {
         string project = Repository.Read(ProjectFiles[0]);
 
-        Assert.That(project, Does.Match(@"<VersionSuffix>dev</VersionSuffix>|<Version>\d+\.\d+\.\d+-dev</Version>"));
-        Assert.That(Repository.Read("README.md"), Ordinal.Contains("not published yet"));
+        Assert.That(project, Does.Not.Match(@"<VersionSuffix>|<Version>\d"));
+        Assert.That(project, Ordinal.Contains("<VersionPrefix>2.0.0</VersionPrefix>"));
+        foreach (string document in Documents)
+        {
+            Assert.That(Repository.Read(document), Does.Not.Match(@"\d+\.\d+\.\d+-[A-Za-z]"), document);
+        }
     }
 
     // ---- commands ----

@@ -5,6 +5,7 @@
 #
 #   eng/release-links.sh v2.0.0            shows what would change, checks the result, and changes nothing
 #   eng/release-links.sh v2.0.0 --apply    makes the change in README.md
+#   eng/release-links.sh v2.0.0 --check    checks that the change has been made, exactly
 #
 # Without --apply this is a rehearsal. It works on a copy, needs no tag to exist and leaves the repository as
 # it is, so it can run on every build. It checks that:
@@ -18,18 +19,27 @@
 # With --apply it writes README.md, and that is all it does: it creates no tag, commits nothing and publishes
 # nothing. The links it writes lead nowhere until the tag exists, which is why this is done in the change that
 # prepares a release and never before.
+#
+# With --check it changes nothing. It is for a repository that holds a release: every link that is part of the
+# version must be at the tag, every other link on the default branch, and the README must have no link into
+# the repository that is not listed. That the tag itself exists is not checked here. Until it does, the three
+# addresses answer "not found", which is expected; an address of another shape is what fails.
 
 set -euo pipefail
 # shellcheck source=eng/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-usage="usage: eng/release-links.sh <tag, such as v2.0.0> [--apply]"
+usage="usage: eng/release-links.sh <tag, such as v2.0.0> [--apply | --check]"
 tag="${1:-}"
 apply=false
+check=false
 case "$#" in
   1) ;;
-  2) [ "$2" = "--apply" ] || fail "$usage"
-     apply=true ;;
+  2) case "$2" in
+       --apply) apply=true ;;
+       --check) check=true ;;
+       *) fail "$usage" ;;
+     esac ;;
   *) fail "$usage" ;;
 esac
 if ! grep -q -E '^v[0-9]+\.[0-9]+\.[0-9]+$' <<< "$tag"; then
@@ -47,6 +57,34 @@ unknown="$(tr -d '\r' < "$list" | grep -v -E '^(#.*|[[:space:]]*|(tag|master) +h
 
 # Every link of the README into this repository, as it is written there.
 in_readme="$(tr -d '\r' < "$readme" | grep -o -E "\]\(($repository_url|$raw_url)[^) ]*\)" | sed -E 's/^\]\(//; s/\)$//' | LC_ALL=C sort -u)"
+
+if [ "$check" = true ]; then
+  # What the README of a release must have: the links that are part of the version at the tag, the others as listed.
+  # Built line by line, outside a command substitution: the bash that macOS ships cannot read a "case" inside one.
+  at_the_tag=""
+  while IFS= read -r link; do
+    if [ "${link/\/master\//}" = "$link" ]; then
+      fail "the link $link moves to the tag, but does not name the default branch"
+    fi
+    at_the_tag="$at_the_tag${link/\/master\///$tag/}"$'\n'
+  done <<< "$moving"
+  expected="$(printf '%s%s\n' "$at_the_tag" "$staying" | LC_ALL=C sort -u)"
+  if [ "$in_readme" != "$expected" ]; then
+    echo "In the README:" >&2
+    echo "$in_readme" >&2
+    echo "Expected for a release tagged $tag:" >&2
+    echo "$expected" >&2
+    fail "the links of the README into this repository are not the ones of a release tagged $tag"
+  fi
+  while IFS= read -r link; do
+    path="${link#*/master/}"
+    [ -e "$repository/$path" ] || fail "$link names $path, which is not in this checkout, so it will not be at the tag"
+  done <<< "$moving"
+  bash "$repository/eng/verify-package.sh" --check-readme "$readme" "${tag#v}" \
+    || fail "the README is not one the package check accepts for version ${tag#v}"
+  echo "README.md has the $(printf '%s\n' "$moving" | wc -l | tr -d ' ') links that are part of the version at $tag, and the $(printf '%s\n' "$staying" | wc -l | tr -d ' ') links of current policy on the default branch."
+  exit 0
+fi
 listed="$(printf '%s\n%s\n' "$moving" "$staying" | LC_ALL=C sort -u)"
 if [ "$in_readme" != "$listed" ]; then
   echo "In the README:" >&2

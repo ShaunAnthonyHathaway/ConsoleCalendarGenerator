@@ -22,7 +22,8 @@ public class ReleaseToolingTests
         Assert.That(ScriptsAndWorkflows, Is.SupersetOf(new[]
         {
             "eng/common.sh", "eng/release-bundle.sh", "eng/verify-release-bundle.sh", "eng/release-bundle-tamper-test.sh", "eng/direct-reference-smoke.sh",
-            "eng/upgrade-smoke.sh", "eng/release-links.sh", "eng/release-rehearsal.sh", "eng/verify-package.sh", "eng/consumer-smoke.sh",
+            "eng/upgrade-smoke.sh", "eng/release-links.sh", "eng/release-state.sh", "eng/verify-package.sh", "eng/consumer-smoke.sh",
+            "eng/verify-published-package.sh", "eng/verify-published-package-selftest.sh", "eng/designate-candidate.sh", "eng/release-notes.sh",
         }));
     }
 

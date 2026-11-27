@@ -2,11 +2,10 @@
 
 ## Supported versions
 
-Security fixes are made for the latest published version of the package. At present that is 1.0.0, the only
-version on NuGet.
+Security fixes are made for the latest version published on NuGet.
 
-Version 2.0 is being developed in this repository and is not published. Once it is, it becomes the supported
-version. A problem found in the code of this repository is worth reporting now, whether or not it is in 1.0.0.
+Version 2.0.0 is the current version of this repository. Until it is published on NuGet, the latest published
+version is 1.0.0. A problem found in the code of this repository is worth reporting either way.
 
 A fix is released as a new version. Published versions are never changed.
 

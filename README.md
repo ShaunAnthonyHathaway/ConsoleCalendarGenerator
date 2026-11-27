@@ -5,15 +5,17 @@ structured segments you can style yourself, or straight to the console in color.
 
 ## Status
 
-- **Published on NuGet:** [ConsoleCalendarGenerator 1.0.0](https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0),
-  the only published version. It contains the legacy API only (`CalendarGenerator.ConsoleCalendar`).
-- **In this repository:** the next version, 2.0, which is **not published yet**. It adds the modern API that
-  most of this page describes. It keeps the legacy API, with every signature unchanged, and corrects five
-  things that API got wrong; see [Migrating from 1.0.0 to 2.0](#migrating-from-100-to-20).
+This page describes **version 2.0.0**.
 
-The modern API is complete in this repository, but it is not in the published package. Until the next version
-is published, the way to use it is to build this repository; see
-[Building and testing](#building-and-testing). No release date has been set.
+- **Version 2.0.0** adds the modern API that most of this page describes. It keeps the legacy API
+  (`CalendarGenerator.ConsoleCalendar`), with every signature unchanged, and corrects five things that API got
+  wrong; see [Migrating from 1.0.0 to 2.0](#migrating-from-100-to-20).
+- **Version 1.0.0** has the legacy API only.
+
+Which versions are published is shown on the
+[package's page on nuget.org](https://www.nuget.org/packages/ConsoleCalendarGenerator). Until 2.0.0 is listed
+there, the newest published version is 1.0.0, and the modern API is used by building this repository; see
+[Building and testing](#building-and-testing).
 
 ## Features
 
@@ -35,8 +37,8 @@ is published, the way to use it is to build this repository; see
 dotnet add package ConsoleCalendarGenerator
 ```
 
-Today this installs the published version, 1.0.0, which has the [legacy API](#legacy-api) only. The modern API
-on this page is not in that package; it comes with the next version.
+This installs the newest published version. Everything on this page is in version 2.0.0; version 1.0.0 has the
+[legacy API](#legacy-api) only. If the command gives you 1.0.0, then 2.0.0 is not on nuget.org yet.
 
 ## Quick start
 
@@ -191,7 +193,7 @@ CalendarTheme theme = CalendarTheme.None
 ConsoleMonthWriter.Write(month, theme);
 ```
 
-![March 2027 as the example draws it on a terminal: a yellow title, cyan weekday labels, and the 5th, 17th and 26th in green, each with a star before the number](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/docs/images/month-with-theme.png)
+![March 2027 as the example draws it on a terminal: a yellow title, cyan weekday labels, and the 5th, 17th and 26th in green, each with a star before the number](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/v2.0.0/docs/images/month-with-theme.png)
 
 - A theme has an optional color for the title, the title suffix, the weekday labels, the days, and each state
   by name. Anything without a color is written in the color the console already has.
@@ -297,7 +299,7 @@ the library can know.
 
 ## Legacy API
 
-`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. The next version keeps it and supports it. It
+`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. Version 2.0.0 keeps it and supports it. It
 is not obsolete: every constructor, method and parameter name is unchanged, and a program compiled against
 1.0.0 loads the new assembly without being rebuilt. For new code, use the modern API above.
 
@@ -416,7 +418,7 @@ tested on Linux, Windows and macOS.
 ## Building and testing
 
 You need the .NET SDK named in
-[global.json](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/global.json).
+[global.json](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/v2.0.0/global.json).
 
 ```text
 dotnet build ConsoleCalendarGenerator.sln --configuration Release
@@ -425,7 +427,7 @@ dotnet run --project ConsoleCalendarGeneratorExample
 ```
 
 The last command runs the
-[example program](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/master/ConsoleCalendarGeneratorExample),
+[example program](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/v2.0.0/ConsoleCalendarGeneratorExample),
 which is where every example on this page comes from. More, including how to pack and check the package, is in
 [CONTRIBUTING.md](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md).
 

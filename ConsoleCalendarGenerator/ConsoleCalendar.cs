@@ -5,26 +5,35 @@ using ConsoleCalendarGenerator;
 
 namespace CalendarGenerator
 {
-    // The API published in ConsoleCalendarGenerator 1.0.0, kept for existing callers. Its public surface, its
-    // output, every single call it makes on the console and its exceptions are a compatibility contract,
-    // including what is plainly wrong; see docs/ai-context/compatibility.md. Version 2.0 corrects five listed
-    // behaviors, all of which are made; that file lists them. Nothing else may be "corrected".
+    // The API published in ConsoleCalendarGenerator 1.0.0, kept and supported in 2.0 for existing callers. Its
+    // public surface, its output, every single call it makes on the console and its exceptions are a
+    // compatibility contract, including what a new design would not choose; see
+    // docs/ai-context/compatibility.md. Version 2.0 corrects five listed behaviors, all of which are made; that
+    // file lists them. Nothing else may be "corrected".
     //
     // Where each day goes comes from MonthLayout, the modern layout model. Everything else about how 1.0.0 draws
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave
     // differently: they format the title, restore the caller's colors, write whole lines, and reject invalid
     // colors early.
     /// <summary>
-    /// The calendar of version 1.0.0. It draws a month, or the twelve months of a year, directly on the console,
-    /// in four colors.
+    /// The calendar API of version 1.0.0, kept and supported in version 2.0. It draws a month, or the twelve
+    /// months of a year, directly on the console, in four colors.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This class is kept so that programs written for version 1.0.0 keep working. What it writes, how it uses the
-    /// console and which exceptions it throws are the same in every 1.x version, including the behavior described
-    /// here that a new design would not choose. For new code, use the types of the <c>ConsoleCalendarGenerator</c>
-    /// namespace instead: <see cref="MonthRenderer"/> renders a month as text without using the console, and
+    /// This class is kept so that programs written for version 1.0.0 keep working. Every constructor, method and
+    /// parameter name is the one 1.0.0 had, so such a program compiles against version 2.0, and runs with it,
+    /// without being changed. For new code, use the types of the <c>ConsoleCalendarGenerator</c> namespace
+    /// instead: <see cref="MonthRenderer"/> renders a month as text without using the console, and
     /// <see cref="ConsoleMonthWriter"/> writes it in color.
+    /// </para>
+    /// <para>
+    /// Version 2.0 corrects five things this class did in 1.0.0, each described on the member it concerns: which
+    /// element an argument of a constructor colors; the exception for a list of dates that is
+    /// <see langword="null"/>; the line end of the last row of a month; the empty line after a month; and the
+    /// month the title names under a culture whose own calendar is not the Gregorian one. Everything else it
+    /// writes, how it uses the console and which exceptions it throws are as in 1.0.0, including the behavior
+    /// described here that a new design would not choose.
     /// </para>
     /// <para>
     /// A month is drawn as a title with the name of the month and the year, the weekday row
@@ -33,8 +42,8 @@ namespace CalendarGenerator
     /// only; the text is the same.
     /// </para>
     /// <para>
-    /// Only the name of the month follows a culture: it is read from <see cref="CultureInfo.CurrentCulture"/> each
-    /// time a month is drawn. The weekday row is always in English.
+    /// Only the name of the month follows a culture: it is the name <see cref="CultureInfo.CurrentCulture"/> has for
+    /// the month of the Gregorian calendar, read each time a month is drawn. The weekday row is always in English.
     /// </para>
     /// <para>
     /// A color can be any <see cref="ConsoleColor"/> value, also one that is not defined. Such a value is accepted

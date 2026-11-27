@@ -87,6 +87,9 @@ require "the repository URL and commit" "<repository type=\"git\" url=\"$reposit
 require "a description" '<description>.+</description>'
 require "a copyright" '<copyright>.+</copyright>'
 require "tags" '<tags>.+</tags>'
+# The release notes are the changelog of this repository, on the default branch or, in a released package, at
+# the tag of its release.
+require "release notes that are this repository's changelog" "<releaseNotes>$repository_url/blob/[^/<]+/CHANGELOG\\.md</releaseNotes>"
 require "the net10.0 dependency group" '<group targetFramework="net10\.0" />'
 require "the netstandard2.1 dependency group" '<group targetFramework="\.NETStandard2\.1" />'
 if grep -q '<dependency ' <<< "$nuspec"; then

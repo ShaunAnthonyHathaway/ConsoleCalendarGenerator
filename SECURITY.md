@@ -3,7 +3,12 @@
 ## Supported versions
 
 Security fixes are made for the latest published version of the package. At present that is 1.0.0, the only
-version on NuGet. A fix is released as a new version; published versions are not changed.
+version on NuGet.
+
+Version 2.0 is being developed in this repository and is not published. Once it is, it becomes the supported
+version. A problem found in the code of this repository is worth reporting now, whether or not it is in 1.0.0.
+
+A fix is released as a new version. Published versions are never changed.
 
 ## What the library does
 
@@ -11,6 +16,11 @@ ConsoleCalendarGenerator formats calendars as text and writes to the console or 
 caller supplies. It does not use the network, the file system or other processes, and it has no package
 dependencies. A security problem is most likely to be a way to make the library fail, hang or use excessive
 memory with input an application could receive from outside.
+
+Text that an application passes in, such as weekday labels, an indent, a title suffix or a marker, is written
+as it is. The library refuses a line break in it and does not remove or escape anything else, control
+characters included. An application that takes such text from outside should check it before it reaches a
+terminal.
 
 ## Reporting a problem
 

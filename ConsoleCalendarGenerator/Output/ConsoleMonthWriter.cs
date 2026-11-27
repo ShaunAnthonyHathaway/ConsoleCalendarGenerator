@@ -12,6 +12,10 @@ namespace ConsoleCalendarGenerator;
 /// redirected, for example, the runtime does not turn colors into escape sequences, and the text arrives plain.
 /// </para>
 /// <para>
+/// The text of every segment is written exactly as it was rendered, which includes any text the caller supplied
+/// to the options or as a marker.
+/// </para>
+/// <para>
 /// To write without the console, or to any other <see cref="TextWriter"/>, use <see cref="MonthWriter"/>.
 /// </para>
 /// </remarks>

@@ -8,8 +8,8 @@ from 1.0.0 and how everything else is kept.
 ## Policy
 
 This is the 2.0 migration policy ([D-56](decisions.md#d-56-20-corrects-exactly-five-legacy-behaviors-and-protects-everything-else)).
-It replaces the earlier rule that defects stay for the whole 1.x line: no 1.x version is published, so that
-rule protected nothing any more and only stood in the way of the corrections.
+It replaced an earlier rule under which the faults of 1.0.0 were to stay through a line of 1.x versions. No
+such version was ever published, so that rule protected nothing and is gone.
 
 - **What 1.0.0 does stays on record and stays testable.** The source of 1.0.0 is frozen in the tests, and tests
   say what it did, the defects included. See [The 1.0.0 reference](#the-100-reference).
@@ -49,10 +49,37 @@ rule protected nothing any more and only stood in the way of the corrections.
 the title.** In everything else `master` behaves exactly as 1.0.0 does, and the tests require that. There is no
 sixth correction, and none may be added without a decision by Shaun.
 
+### What did not change
+
+For a caller of the legacy class, everything outside the five rows above is as in 1.0.0. The list a migration
+has to be able to rely on:
+
+- every public signature and parameter name, the namespace `CalendarGenerator` and the type name
+  `ConsoleCalendar`; nothing removed, nothing obsolete;
+- `GenerateYear`, and the four getters and four setters;
+- which dates are selected: by year, month and day;
+- the fixed English weekday row and weeks from Monday;
+- writing directly to the console, piece by piece, with the same calls;
+- resetting the console's colors, not restoring the caller's;
+- no lock;
+- the modern API, which is new in 2.0 and whose behavior no correction touched;
+- the Campertron parity fixtures and what the modern API renders for them.
+
+The README tells users the same in its section "Migrating from 1.0.0 to 2.0", without the last item: the
+public documents name no consumer of the package
+([D-73](decisions.md#d-73-the-migration-guidance-is-one-section-of-the-readme-and-the-changelog)).
+
+**Why package validation passes although behavior changed.** Package validation compares the shape of the
+public API with published 1.0.0: types, members, signatures, parameter names. All five corrections change
+what a member does and none changes its shape, so the strict comparison has nothing to report and needs no
+suppression ([D-66](decisions.md#d-66-package-validation-stays-against-100-with-no-suppression)). Behavior
+is what the migration tests compare.
+
 ### How a correction is made
 
-One correction per pull request, scoped by Shaun; the line terminator and the blank line are made together, as
-he approved. The pull request for the constructor colors is the worked example. In that pull request:
+All five were made this way, and a sixth, should Shaun ever decide one, would be made the same way: one
+correction per pull request, scoped by Shaun (the line terminator and the blank line were made together, as he
+approved). The pull request for the constructor colors is the worked example. In that pull request:
 
 1. Change the legacy class for that one behavior.
 2. In `ConsoleCalendarGenerator.Tests/Migration/ApprovedCorrection.cs`, say what the correction changes, in the
@@ -107,11 +134,10 @@ This is the API of 1.0.0 and of 2.0. Details that are part of the contract:
 
 ## Behavior of the legacy class
 
-What the class does on `master` today. Each line is covered by tests in
-`ConsoleCalendarGenerator.Tests/Legacy/`. A line marked **(2.0: D-nn)** is one of the corrections still to be
-made: it is true of `master` until the pull request for that decision, and it stays true of 1.0.0. A line
-marked **(corrected, D-nn)** has been corrected and says what 1.0.0 did instead. Every other line is what
-1.0.0 does, is protected and does not change.
+What the class does on `master` today, which is what 2.0 does. Each line is covered by tests in
+`ConsoleCalendarGenerator.Tests/Legacy/`. A line marked **(corrected, D-nn)** is one of the five corrections
+and says what 1.0.0 did instead. Every other line is what 1.0.0 does as well, is protected and does not
+change.
 
 The XML comments of the class describe the same behavior to users
 ([D-51](decisions.md#d-51-the-legacy-class-is-documented-as-it-behaves)); those of the constructors describe
@@ -312,8 +338,7 @@ Four independent layers. A change has to pass all of them.
 
 1. **Migration tests** (`ConsoleCalendarGenerator.Tests/Migration/`), which run the library and the frozen
    source of 1.0.0 through the same scenarios and require the library to do exactly what 1.0.0 did, apart from
-   the corrections that have been implemented. At present those are the constructor colors, the null list and
-   the two about how a month ends.
+   the five corrections, each of which is stated there as an exact change.
 2. **Characterization tests** (`ConsoleCalendarGenerator.Tests/Legacy/`), including digests recorded from the
    published 1.0.0 assembly, and `ConsoleCalendarGenerator.Tests/Facade/`, with digests of every console call
    recorded from the original implementation before it was rebuilt, and a comparison of the drawn grid with
@@ -335,7 +360,8 @@ others.
   in 1.0.0 and is `2.0.0.0` now, for 2.0 and every later 2.x version
   ([D-65](decisions.md#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)).
 - **The package version** is SemVer and is what identifies a release to consumers. The repository builds the
-  development version `2.0.0-dev`, which is never published.
+  development version `2.0.0-dev`, which is never published. The release will be 2.0.0
+  ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)).
 - **The file version** follows the version prefix: `2.0.0.0`.
 - **The informational version** carries the package version and the commit, added by the SDK's Source Link
   support. Keep it.

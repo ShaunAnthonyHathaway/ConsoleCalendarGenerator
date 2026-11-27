@@ -133,7 +133,7 @@ groundwork were merged.
 - **Decision:** The modern API separates calendar layout, deterministic text rendering, semantic styling, color
   mapping and output. Layout and rendering must not need a live console.
 - **Reason:** Testability, reuse, and Campertron's need for rendered lines it writes itself.
-- **Consequences:** See [architecture.md](architecture.md#approved-direction).
+- **Consequences:** See [architecture.md](architecture.md#the-design-and-its-constraints).
 
 ### D-13: State can be shown with markers, not only color
 
@@ -779,7 +779,7 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   ([D-64](#d-64-the-target-frameworks-stay-as-they-are-for-20)). A sixth correction needs a new decision by
   Shaun before any code. The corrections are made in the order Shaun approved when he reviewed the groundwork:
   the constructor colors; the null list; the line terminator and the blank line, together; the Gregorian title
-  ([roadmap.md](roadmap.md#remaining-sequence)).
+  ([roadmap.md](roadmap.md#completed)). All five are made.
 
 ### D-57: Constructor arguments color the element they are named for
 
@@ -877,7 +877,10 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 
 ### D-61: Legacy titles name the Gregorian month
 
-- **Status:** Approved. **Implemented** (pull request #17). The fifth and last of the corrections.
+- **Status:** Approved. **Implemented** (pull request #17). The fifth and last of the corrections. Shaun
+  reviewed the implementation and approved its choices as they are: the invariant name as the fallback, the
+  narrow handling of a refused calendar, the preference for the culture's own kind of Gregorian calendar, and
+  the culture audit in the consumer smoke tests.
 - **Decision:** The title of a month drawn by the legacy class uses the Gregorian month name that corresponds
   to the Gregorian grid, also under a culture whose default calendar is not Gregorian.
 - **Reason:** 1.0.0 looks the month number up in the current culture's own calendar, so under a culture such as
@@ -907,7 +910,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   no list is part of the contract. The rule is: a culture whose dates use a calendar that is not Gregorian and
   whose month names differ from its Gregorian ones. Cultures of the Thai Buddhist calendar, and cultures given
   the Japanese, Korean or Taiwan calendar, have the Gregorian months and draw the same title in both versions.
-  What each CI system has is in [testing.md](testing.md#cultures-and-the-title).
+  What each CI system has is in [testing.md](testing.md#cultures-and-the-title). A difference between systems,
+  such as `ar-SA` counting in the Um Al Qura calendar on Windows and macOS and in the Gregorian one on Linux,
+  is a difference in the operating systems' globalization data and not an inconsistency of the package.
 - **How it is tested:** in the migration tests it is one exact change to the calls 1.0.0 made
   (`Migration/GregorianTitle.cs`): the text of a title call that is, character for character, the title 1.0.0
   wrote for the month that is due becomes the title with the Gregorian name. Anything else where a title
@@ -956,7 +961,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   [D-05](#d-05-assembly-version-is-the-major-version-only).
 - **Decision:** Packages built from the repository are versioned `2.0.0-dev`. `AssemblyVersion` and
   `FileVersion` are `2.0.0.0`. The informational version keeps carrying the development version and the commit.
-  No prerelease is published, and the final version number is not set until the release is prepared.
+  No prerelease is published. The release will be 2.0.0
+  ([D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)); the suffix stays
+  until the release is prepared.
 - **Reason:** The next published version is 2.0, and it corrects behavior, so an assembly from this repository
   must not present itself as version 1 of anything. Making the change before the first correction means no
   build ever combines 2.0 behavior with a 1.x identity.
@@ -1006,10 +1013,19 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   tag exists they would point at nothing. `eng/verify-package.sh` and `DocumentationLinkTests`, which require
   `master` today, change with them. Creating the tag needs its own approval
   ([D-18](#d-18-publication-requires-explicit-approval-every-time)).
+- **Which links** (settled with the final documentation): the image, the link to `global.json` and the link to
+  the example program move to the tag, because each shows a part of that version. The links to the changelog,
+  to `CONTRIBUTING.md`, to `SECURITY.md`, to the license and to the issues stay on `master`: they state the
+  project's current policy, which is what a reader of any version should get. The list is data in
+  `DocumentationLinkTests`, where a new README link has to be classified before the tests pass, and it is
+  written out in the
+  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist).
 
 ### D-69: 2.0 is published by hand, from the validated artifacts
 
-- **Status:** Approved as the direction. **Nothing is authorized.**
+- **Status:** Approved as the direction. **Nothing is authorized.** Made more exact by
+  [D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated), which also says
+  who performs the push.
 - **Decision:** Publication will be a manual push of the exact artifacts that were validated, after Shaun's
   separate approval. No tag, release or NuGet publication is authorized now, and no repository setting is
   changed for it now.
@@ -1067,3 +1083,63 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
   everything the four values cover, with the two differences of `Migration/MonthEnd.cs` applied to what 1.0.0
   wrote. No recorded value is compared with the library any more; all four stay asserted against the frozen
   source.
+
+## Final documentation and the release plan
+
+Decided by Shaun when he reviewed the last correction and scoped the final 2.0 documentation.
+
+### D-72: The release is 2.0.0, built once, and published as the files that were validated
+
+- **Status:** Approved as the plan. **Nothing is authorized,** and nothing of it is implemented: there is no
+  release commit, no candidate, no tag and no publication.
+- **Decision:** The version that is released is 2.0.0. It is an immutable release:
+  1. the candidate is built once, from the release commit Shaun approves;
+  2. the SHA-256 of that exact `.nupkg` and `.snupkg` is recorded;
+  3. those exact files are what is validated;
+  4. those exact files are attached to the GitHub release and pushed to nuget.org, without being rebuilt;
+  5. a mistake found after publication is corrected in a new version, such as 2.0.1, and never by changing
+     or replacing what was published.
+  Claude is expected to perform the publication, once Shaun has explicitly approved it and a secure credential
+  is available.
+- **Reason:** nuget.org does not allow a published version to be replaced, and a file that was rebuilt is not
+  the file that was checked, however small the difference. Recording the hashes makes "the same file" a thing
+  that can be verified at every later step.
+- **Consequences:** Each step is still approved separately
+  ([D-18](#d-18-publication-requires-explicit-approval-every-time)). The candidate is not a CI artifact that
+  happens to be recent: it is built for the purpose, once. How the push is authenticated is open
+  ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)), and so is whether 1.0.0 is deprecated
+  afterwards ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). No prerelease is
+  published on the way ([D-55](#d-55-the-next-published-version-is-20)). The sequence is in
+  [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
+
+### D-73: The migration guidance is one section of the README, and the changelog
+
+- **Status:** Approved. Implemented in the final documentation.
+- **Decision:** A user migrating from 1.0.0 reads one section of the README, "Migrating from 1.0.0 to 2.0",
+  which lists the five corrections and what did not change, and the "Breaking changes" of the changelog,
+  which lists the same five with more detail. There is no separate migration document. The README describes
+  the legacy class as kept and supported, not as obsolete, and recommends the modern API for new code. What
+  1.0.0 did is told in the migration section and nowhere else in the README.
+- **Reason:** Five corrections fit on a page. A second document would repeat the first and drift from it, and
+  the README is what is shown on nuget.org beside the version a user is upgrading to.
+- **Consequences:** The public documents still name no consumer of the package, so the README's list of what
+  did not change does not mention the Campertron parity fixtures; that item is in
+  [compatibility.md](compatibility.md#what-did-not-change). The documents describe 2.0 as complete in the
+  repository and not published, and give no command that installs it. The XML comments of the legacy class
+  describe 2.0 as current and mention what 1.0.0 did only on the members a correction concerns. Tests check the
+  facts and the structure, not the wording ([testing.md](testing.md#the-documentation-tests)).
+
+### D-74: The package describes the modern API, and its release notes are the changelog
+
+- **Status:** Approved. Implemented in the final documentation.
+- **Decision:** The package's description says what the modern API does and that the `ConsoleCalendar` class
+  of version 1.0 is still included. The tags gain `month`, `text` and `layout` and keep the earlier ones. The
+  release notes of the package are a link to the changelog of this repository. Package ID, version, authors,
+  license, project and repository URLs and the copyright line are unchanged.
+- **Reason:** The earlier description, "draws month and year calendars", described the class of 1.0 alone,
+  and nuget.org shows and searches the description.
+- **Consequences:** While the package is a development version the release notes point at the changelog on
+  `master`, which exists. The changelog is one of the documents that stay on the default branch
+  ([D-68](#d-68-the-published-readme-of-20-links-to-the-tag-v200)), so the same link is right for the released
+  package unless release preparation decides otherwise; `eng/verify-package.sh` accepts either. A description
+  that speaks of a release, a version or publication fails `PackageMetadataTests`.

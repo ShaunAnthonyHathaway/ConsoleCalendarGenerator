@@ -91,6 +91,100 @@ public class DocumentationLinkTests
         }
     }
 
+    // ---- the links that change when a version is released ----
+
+    /// <summary>The tag a released 2.0 package will be built from. It does not exist yet.</summary>
+    internal const string ReleaseTag = "v2.0.0";
+
+    /// <summary>
+    /// Every link of the README that points into this repository, and what becomes of it when version 2.0 is
+    /// released (D-68). The README is packed into the package and shown on nuget.org for as long as that
+    /// version exists, so a link whose target is part of the version, the image, a file, a folder of code, must
+    /// then point at the tag of the release, where it cannot change. A link to a document that states the
+    /// project's current policy stays on the default branch, because the current policy is what a reader of
+    /// any version should get. Until the tag exists, all of them point at the default branch.
+    /// </summary>
+    internal static readonly (string Target, bool PointsAtTheTagOnceReleased)[] ReadmeLinksIntoTheRepository =
+    {
+        (RawFiles + "docs/images/month-with-theme.png", true),
+        (RepositoryPage + "/blob/master/global.json", true),
+        (RepositoryPage + "/tree/master/ConsoleCalendarGeneratorExample", true),
+        (RepositoryPage + "/blob/master/CHANGELOG.md", false),
+        (RepositoryPage + "/blob/master/CONTRIBUTING.md", false),
+        (RepositoryPage + "/blob/master/SECURITY.md", false),
+        (RepositoryPage + "/blob/master/LICENSE", false),
+        (RepositoryPage + "/issues", false),
+    };
+
+    /// <summary>What a link that is part of the version becomes in the README of the released package.</summary>
+    internal static string AtTheReleaseTag(string target) => target.Replace("/master/", "/" + ReleaseTag + "/", StringComparison.Ordinal);
+
+    /// <summary>
+    /// A link added to the README has to be put in the list above, which is where it is decided whether the
+    /// release moves it to the tag. A link that is in neither group fails here.
+    /// </summary>
+    [Test]
+    public void EveryLinkOfTheReadmeIntoTheRepository_IsClassifiedForTheRelease()
+    {
+        IEnumerable<string> intoTheRepository = LinksOf("README.md")
+            .Select(link => link.Target)
+            .Where(target => target.StartsWith(RepositoryPage, StringComparison.Ordinal) || target.StartsWith("https://raw.githubusercontent.com/", StringComparison.Ordinal))
+            .Distinct();
+
+        Assert.That(intoTheRepository, Is.EquivalentTo(ReadmeLinksIntoTheRepository.Select(link => link.Target)));
+    }
+
+    /// <summary>
+    /// The tag does not exist while the repository builds a development version, so nothing may point at it
+    /// yet: such a link would lead nowhere. When the version suffix is removed to prepare the release, this
+    /// test fails, and the links marked above are the ones to change in that same change.
+    /// </summary>
+    [Test]
+    public void WhileTheVersionIsADevelopmentVersion_NoLinkPointsAtTheReleaseTag()
+    {
+        string project = Repository.Read("ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj");
+        Assert.That(project, Ordinal.Contains("<VersionSuffix>dev</VersionSuffix>"),
+            "The version is no longer a development version. Point the links marked in ReadmeLinksIntoTheRepository at the release tag, and replace this test with one that requires it.");
+
+        foreach (string document in Documents)
+        {
+            IEnumerable<string> atTheTag = LinksOf(document)
+                .Select(link => link.Target)
+                .Where(target => target.StartsWith(RepositoryPage, StringComparison.Ordinal) || target.StartsWith("https://raw.githubusercontent.com/", StringComparison.Ordinal))
+                .Where(target => target.Contains("/" + ReleaseTag, StringComparison.Ordinal));
+            Assert.That(atTheTag, Is.Empty, document);
+        }
+        Assert.That(project, Ordinal.DoesNotContain(ReleaseTag));
+        foreach ((string target, bool _) in ReadmeLinksIntoTheRepository.Where(link => link.PointsAtTheTagOnceReleased))
+        {
+            Assert.That(target, Ordinal.Contains("/master/"), target);
+            Assert.That(AtTheReleaseTag(target), Is.Not.EqualTo(target).And.Contains("/" + ReleaseTag + "/"), "the tag form is known");
+        }
+    }
+
+    /// <summary>
+    /// The checklist for preparing the release, in the maintenance notes, names every link that has to change
+    /// and what it changes to, so that the list a person follows and the list this test knows are the same.
+    /// </summary>
+    [Test]
+    public void TheReleaseChecklist_NamesEveryLinkThatMovesToTheTag_AndWhatItBecomes()
+    {
+        string notes = Repository.Read("docs/ai-context/packaging-and-releases.md");
+
+        foreach ((string target, bool moves) in ReadmeLinksIntoTheRepository)
+        {
+            Assert.That(notes, Ordinal.Contains(target), "the checklist does not name " + target);
+            if (moves)
+            {
+                Assert.That(notes, Ordinal.Contains(AtTheReleaseTag(target)), "the checklist does not say what " + target + " becomes");
+            }
+            else if (AtTheReleaseTag(target) != target)
+            {
+                Assert.That(notes, Ordinal.DoesNotContain(AtTheReleaseTag(target)), target + " stays on the default branch");
+            }
+        }
+    }
+
     // ---- what nuget.org needs of the package readme ----
 
     [Test]

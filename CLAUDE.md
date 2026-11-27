@@ -11,7 +11,8 @@ console applications. It is .NET only.
 
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
 - **`master`:** builds an unpublished development package of 2.0, `2.0.0-dev`, with assembly and file version
-  `2.0.0.0`. The final version number is not set, and no prerelease is published.
+  `2.0.0.0`. The release will be 2.0.0; the suffix is removed only in the change that prepares an approved
+  release. No prerelease is published.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
@@ -38,7 +39,9 @@ console applications. It is .NET only.
   Campertron's live calendar renderer; no production code was needed for that. The user-facing material is
   complete as well (see the next point). The 2.0 groundwork is complete: the 2.0 policy below, the version
   identity, and the two things in the next point. All five corrections are done; no further runtime change
-  is approved. Everything about releases is **planned and not implemented**.
+  is approved. The final 2.0 documentation is done as well: the README with its migration section, the
+  changelog, the XML comments and the package's description. Everything about releases is **planned and not
+  implemented**.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
@@ -48,7 +51,11 @@ console applications. It is .NET only.
   `SECURITY.md`, all at the root, and one image in `docs/images/`. Every public type and member has XML
   documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
   `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
-  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together.
+  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together. The documents describe
+  2.0 as complete in the repository and **not published**; the README's section "Migrating from 1.0.0 to 2.0"
+  is the one place that tells what 1.0.0 did. Its links still point at `master`; which of them move to the tag
+  `v2.0.0`, and everything else release preparation has to change, is listed in
+  [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#release-preparation-checklist).
 - **Weekday labels and operating systems (decided, D-54):** labels taken from a culture are the day names .NET
   has on the machine, and they differ: for `en-US`, two letters on Linux and macOS, one letter on Windows. That
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
@@ -56,7 +63,7 @@ console applications. It is .NET only.
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
 - **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
   approval. No 1.x release, no prerelease, no tag and no release is authorized.
-- **Next phase:** the final 2.0 documentation and migration guidance. See
+- **Next phase:** release infrastructure and supply-chain hardening. See
   [roadmap.md](docs/ai-context/roadmap.md). Start a phase only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
@@ -110,7 +117,8 @@ The build must finish with 0 warnings. None of these commands publishes anything
    stays recorded: the frozen source and the tests in `Historical/` are never changed to match the library.
 5. **Publication needs Shaun's explicit approval, each time.** That covers tags, GitHub releases, NuGet
    publication, any manual workflow dispatch or rerun that could publish, publication recovery, and repository
-   settings. See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
+   settings. A published version is never changed, and what is published is the exact files that were
+   validated, never a rebuild (D-72). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
    done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
    fixtures and what the modern API renders for them do not change.

@@ -26,6 +26,12 @@ namespace ConsoleCalendarGenerator;
 /// (<see cref="StringInfo"/>). A text element is never split. How many columns a terminal uses to display a
 /// text element is outside what this library can know.
 /// </para>
+/// <para>
+/// Text that is supplied here, weekday labels, an indent, a title suffix and the literal text of a title format,
+/// is put into the rendered month as it is. A line break in it is refused. Nothing else is examined, removed
+/// or escaped, control characters included, so text from an untrusted source should be checked before it is
+/// passed in. The same holds for the marker of a <see cref="DayState"/>.
+/// </para>
 /// </remarks>
 public sealed class MonthRenderOptions
 {

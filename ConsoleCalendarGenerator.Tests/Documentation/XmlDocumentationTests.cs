@@ -296,6 +296,46 @@ public class XmlDocumentationTests
         }
     }
 
+    /// <summary>
+    /// The remarks of the legacy class describe it as it is in version 2.0: kept, supported, with the API of
+    /// 1.0.0 and five corrected behaviors. Nothing in the documentation file speaks of a 1.x line, which was
+    /// never published.
+    /// </summary>
+    [Test]
+    public void TheLegacyClass_IsDocumentedAsItIsInVersion20()
+    {
+        XElement type = Documentation.Value["T:CalendarGenerator.ConsoleCalendar"];
+        string summary = TextOf(type.Element("summary"));
+        string remarks = TextOf(type.Element("remarks"));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(summary, Ordinal.Contains("supported in version 2.0"));
+            Assert.That(remarks, Ordinal.Contains("Version 2.0 corrects five things"));
+            Assert.That(remarks, Ordinal.Contains("without being changed"), "a program written for 1.0.0 compiles and runs");
+            Assert.That(remarks, Ordinal.Contains("Gregorian"), "which month the title names");
+            Assert.That(remarks, Ordinal.Contains("The weekday row is always in English"));
+            Assert.That(remarks, Ordinal.Contains("Weeks start on Monday"));
+            Assert.That(remarks, Ordinal.Contains("Drawing is not synchronized"));
+            Assert.That(string.Concat(Documentation.Value.Values.Select(member => member.ToString())), Does.Not.Match(@"1\.x\b"));
+        }
+    }
+
+    /// <summary>
+    /// Text the caller supplies is written as it is, and the documentation says so where the text is supplied
+    /// and where it is written. Rendering/SuppliedTextTests.cs shows that it is true.
+    /// </summary>
+    [Test]
+    public void TheModernApi_DocumentsThatSuppliedTextIsWrittenAsItIs()
+    {
+        string options = TextOf(Documentation.Value["T:ConsoleCalendarGenerator.MonthRenderOptions"].Element("remarks"));
+        string consoleWriter = TextOf(Documentation.Value["T:ConsoleCalendarGenerator.ConsoleMonthWriter"].Element("remarks"));
+
+        Assert.That(options, Ordinal.Contains("is put into the rendered month as it is"));
+        Assert.That(options, Ordinal.Contains("control characters included"));
+        Assert.That(consoleWriter, Ordinal.Contains("written exactly as it was rendered"));
+    }
+
     // ---- nothing turns the check off ----
 
     [Test]

@@ -5,8 +5,8 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-Three questions are open: Q-11, Q-14 and Q-15. All three belong to the release, not to the 2.0 corrections, and
-none of them holds up a correction.
+Three questions are open: Q-11, Q-14 and Q-15. All three belong to the release. The implementation and the
+documentation of 2.0 are complete and depend on none of them.
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
 D-28, rendering in D-30 to D-37, and states, the theme and output in
@@ -52,6 +52,11 @@ immutable tag `v2.0.0`, from the change that prepares the release
 - **Decide in:** the repository-setting phase, which Shaun approves separately. It stays open until then; no
   setting is changed by any other phase.
 - **Recommendation:** Turn it on before 2.0 is published and point `SECURITY.md` at it in the same change.
+- **When it is settled:** `SECURITY.md` is changed in the same separately approved change that turns the
+  setting on, never before, so that the file is true at every commit. The sentence to replace is the one that
+  says the repository has no private channel; `PublicDocumentationTests` requires that sentence today and
+  changes with it. It is an item of the
+  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist).
 
 Q-12 (whether weekday labels should be the same on every operating system) is settled: culture-derived labels
 may differ between systems, nothing in the library changes, and supplied labels are the stable option
@@ -64,11 +69,14 @@ of Q-08.
 
 ## Q-14: How is the publication authenticated?
 
-- **Why it matters:** 2.0 is to be published by a manual push of the validated artifacts
-  ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)). The push needs a credential
-  for nuget.org, and which kind, how narrowly it is scoped and how long it lives decide what a leaked one could
-  do.
-- **Evidence needed:** What nuget.org offers at the time, and how the package's account is set up.
+- **Why it matters:** 2.0 is to be published by a push of the exact validated files
+  ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts),
+  [D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)), which
+  Claude is expected to perform once Shaun has approved it and a secure credential is available. The push needs
+  a credential for nuget.org, and which kind, how narrowly it is scoped, how long it lives and how it reaches
+  the session decide what a leaked one could do.
+- **Evidence needed:** What nuget.org offers at the time, how the package's account is set up, and that the
+  credential works, which has not been verified.
 - **Decide in:** the release phase. Nothing in the repository depends on it, and no secret is stored here.
 - **Recommendation:** None yet.
 

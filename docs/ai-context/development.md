@@ -74,7 +74,9 @@ bash eng/consumer-smoke.sh artifacts/package --native-aot --published-sample    
 ```
 
 Packing is explicit; a build never creates a package. Packing also runs package validation against published
-1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md).
+1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md). The package these
+commands make is the development version `2.0.0-dev`. None of them publishes anything, and no command that
+needs a credential belongs in this file.
 
 ## Generated output and cleaning
 
@@ -129,7 +131,15 @@ What to do when one of them changes:
   An example that should print the same text everywhere supplies its weekday labels, or builds on the
   `options` of the quick start, which do.
 - **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
-  same file is shown on nuget.org. The other three documents may use relative links.
+  same file is shown on nuget.org. The other three documents may use relative links. A new link from the
+  README into this repository also has to be added to the list in `DocumentationLinkTests`, with whether it
+  moves to the release tag when 2.0 is released, and to the table of the
+  [release preparation checklist](packaging-and-releases.md#release-preparation-checklist). Until then all of
+  them point at `master`.
+- **What a document says about the state of the project.** The repository builds `2.0.0-dev`, and 2.0 is not
+  published. The documents say exactly that, and tests hold them to it. Do not write that 2.0 is published,
+  give a command that installs it, or point a link at the tag `v2.0.0`, before release preparation does all of
+  that in one change.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a
   terminal, and only needs redoing when the "Colors" example changes what it draws. The tools are not part of
   the build: util-linux `script` and ImageMagick with Pango.

@@ -1,7 +1,8 @@
 # Architecture
 
-Two parts: what exists today, and the direction that has been approved but, apart from its first layer, not
-built. Do not treat anything in the second part as existing code unless it says so.
+What exists today, and the constraints its design keeps. Every layer of the approved design is built and is
+described here as it is. What is still planned is the release, which is not architecture: see
+[roadmap.md](roadmap.md) and [packaging-and-releases.md](packaging-and-releases.md).
 
 ## Current
 
@@ -31,9 +32,9 @@ model; the modern API uses nothing of the legacy class.
 
 `CalendarGenerator.ConsoleCalendar` is the whole of the published 1.0.0 API. The exact public surface, the
 behavior that must be preserved and the five behaviors that 2.0 corrects are in
-[compatibility.md](compatibility.md). Four of the five are implemented: the constructor colors, the exception
-for a null list, and the two about how a month ends. Apart from those, what follows describes 1.0.0 and
-`master` alike.
+[compatibility.md](compatibility.md). All five are implemented: the constructor colors, the exception for a
+null list, the two about how a month ends, and the Gregorian title. Apart from those, what follows describes
+1.0.0 and `master` alike.
 
 It is a compatibility facade. Its public members are the published ones; what is behind them was rebuilt so
 that the library has a single place that decides where a day goes.
@@ -331,10 +332,13 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
 - **`README.md`** is written for someone who has never seen the package, is the readme inside the NuGet
   package, and leads with the modern API. Its sections: status, features, installation, quick start, culture
   and first day of week, marked dates, colors, output, what each piece of text is, layout only, more options,
-  legacy API, supported frameworks, limitations, building and testing, project, license.
-- **`CHANGELOG.md`** has an "Unreleased" section for everything on `master` and one entry for 1.0.0.
-  **`CONTRIBUTING.md`** has the commands and what a change must keep. **`SECURITY.md`** says which version gets
-  fixes and how to report a problem.
+  legacy API, migrating from 1.0.0 to 2.0, supported frameworks, limitations, building and testing, project,
+  license. The migration section lists the five corrections and what did not change, and is the only place in
+  the README that tells what 1.0.0 did.
+- **`CHANGELOG.md`** has an "Unreleased" section, which is the proposed changelog of 2.0 (added, changed,
+  breaking changes, compatibility), and one entry for 1.0.0. **`CONTRIBUTING.md`** has where the project is,
+  the commands, what a change must keep and the two rules a release follows. **`SECURITY.md`** says which
+  version gets fixes, what the library does with text it is given, and how to report a problem.
 - **The example application** has two files. `Examples.cs` has one method per capability, each containing one
   marked example. `Program.cs` calls them in order under headings. It needs no input, uses fixed dates and
   explicit cultures, and prints plain text when redirected. The quick start supplies its weekday labels and
@@ -388,11 +392,11 @@ temporary package cache with nuget.org forbidden for this package, and builds an
 both writers and the legacy class. It proves which library build each kind of consumer receives. Details:
 [packaging-and-releases.md](packaging-and-releases.md#consumer-smoke-tests).
 
-## Approved direction
+## The design and its constraints
 
+The design that was approved before any of it was built, kept here as the reason the code is shaped as it is.
 Every layer in the table exists, for a single month: see the sections above. The legacy class has been rebuilt
-as a facade ([The legacy class](#the-legacy-class)). What remains is in [roadmap.md](roadmap.md) and
-[open-questions.md](open-questions.md).
+as a facade ([The legacy class](#the-legacy-class)). Nothing of the design is outstanding.
 
 New code goes in the `ConsoleCalendarGenerator` namespace, and for 2.0 there is none: the modern API is
 unchanged ([D-63](decisions.md#d-63-the-modern-api-is-unchanged-for-20-and-renders-single-months)).

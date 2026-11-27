@@ -35,7 +35,8 @@ decided for it.
 
 - `CalendarGenerator.ConsoleCalendar` is unchanged for callers: the same public API, the same output and the
   same use of the console as in 1.0.0. This includes the constructors whose `TitleColor` argument sets the
-  color of the weekday row. The package is checked against the published 1.0.0 package on every build.
+  color of the weekday row. The public API is compared with the published 1.0.0 package every time the package
+  is built, and tests recorded from 1.0.0 check the output.
 - Projects that used the `netstandard2.1` build keep getting it. Projects that target .NET 10 or later get the
   `net10.0` build.
 

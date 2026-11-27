@@ -115,8 +115,11 @@ What to do when one of them changes:
   ```
 
   Then copy the changed lines into the README's output block. Every output block must be consecutive lines of
-  that file. Record it on Linux or macOS, not on Windows, whose day names differ
-  ([D-53](decisions.md#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)).
+  that file. Record it on Linux or macOS: one line, the weekday row of the culture-derived example, is
+  different on Windows, and the file and the README show the Linux and macOS form
+  ([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).
+  An example that should print the same text everywhere supplies its weekday labels, or builds on the
+  `options` of the quick start, which do.
 - **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
   same file is shown on nuget.org. The other three documents may use relative links.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a

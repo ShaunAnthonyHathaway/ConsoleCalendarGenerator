@@ -38,12 +38,14 @@ console applications. It is .NET only.
   documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
   `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
   `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together.
-- **Known platform difference:** with a real culture, the default weekday labels are single letters on Windows
-  and two letters on Linux and macOS, because .NET's day names differ. It is documented, not changed; whether
-  to change it is open (Q-12 in [open-questions.md](docs/ai-context/open-questions.md)).
-- **Next phase:** not scoped. Recommended: first a small phase that settles Q-12, then a release-readiness
-  audit for 1.x and the decision whether a 1.1 release comes before 2.0. See
-  [roadmap.md](docs/ai-context/roadmap.md). Start nothing until Shaun has scoped it.
+- **Weekday labels and operating systems (decided, D-54):** labels taken from a culture are the day names .NET
+  has on the machine, and they differ: for `en-US`, two letters on Linux and macOS, one letter on Windows. That
+  stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
+  start and the example supply theirs, so they print the same text on all three systems. One example keeps the
+  culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
+- **Publication (decided, D-55):** nothing is published before 2.0. No 1.x release or prerelease is authorized.
+- **Next phase:** the formal roadmap and 2.0 scope and readiness audit. See
+  [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

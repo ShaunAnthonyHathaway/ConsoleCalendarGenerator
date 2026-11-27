@@ -92,7 +92,7 @@ including the Campertron parity fixtures, were merged.
   built here may be numbered 1.0.0.
 - **Reason:** 1.0.0 is published; a local or CI package must never be mistaken for it or overwrite it in a cache.
 - **Consequences:** The version suffix is removed only as part of an approved release. This does not decide
-  which version is released next; see [open-questions.md](open-questions.md#q-07-what-ships-in-1x-and-when).
+  which version is released next; that is 2.0 ([D-55](#d-55-the-next-published-version-is-20)).
 
 ### D-10: Package validation against 1.0.0 on every pack
 
@@ -143,8 +143,8 @@ including the Campertron parity fixtures, were merged.
 ### D-15: Modern titles match the Gregorian grid
 
 - **Status:** Approved. Implemented in the modern renderer ([D-33](#d-33-the-culture-supplies-language-only)).
-  How exact parity with existing output is expressed stays open in
-  [Q-06](open-questions.md#q-06-how-is-the-compatibility-profile-for-titles-expressed).
+  How exact parity with existing output is expressed was settled later: there is no compatibility profile
+  ([D-45](#d-45-no-public-compatibility-profile)).
 - **Decision:** The modern renderer should produce titles consistent with the Gregorian grid it draws, while
   allowing a compatibility profile where exact parity with existing output is required.
 - **Reason:** 1.0.0 names the wrong month under cultures with a non-Gregorian calendar.
@@ -683,8 +683,9 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
 
 ### D-53: Names a culture supplies are documented as depending on the system
 
-- **Status:** Approved as documentation of what exists. Whether the behavior should change is open
-  ([Q-12](open-questions.md#q-12-should-weekday-labels-be-the-same-on-every-operating-system)).
+- **Status:** Approved. The behavior stays as it is
+  ([D-54](#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)),
+  which also changed how the README and the example present it.
 - **Decision:** The README, the XML comments of `MonthRenderOptions` and `WeekdayLabelStyle.Shortest`, and the
   example say that month and day names come from the culture data of the runtime and the operating system and
   can differ between systems, with the observed case: single-letter shortest day names on Windows. The README
@@ -695,6 +696,38 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
   process, so the same options give the same text on the same system
   ([D-32](#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process)), and the invariant culture,
   the layout and supplied labels are the same everywhere.
-- **Consequences:** `expected-output.txt` is the output of Linux and macOS, and the complete comparison with it
-  is inconclusive on Windows; see [testing.md](testing.md#the-documentation-tests). Do not describe output
-  under a real culture as identical on every machine.
+- **Consequences:** Do not describe output under a real culture as identical on every machine. (At the time
+  the complete comparison of the example's output was inconclusive on Windows; D-54 ended that.)
+
+### D-54: Culture-derived labels may differ between systems, and supplied labels are the stable option
+
+- **Status:** Approved by Shaun after the user-facing material phase. Implemented in documentation, the example
+  and tests. Resolves the former open question Q-12.
+- **Decision:** `WeekdayLabelStyle.Shortest` keeps using the selected culture's shortest day names as the
+  runtime provides them. Labels taken from a culture are allowed to vary with the globalization data of the
+  operating system and are not guaranteed to be byte-identical across systems. No runtime behavior and no
+  public API changes for this, and no new label mode is added. A caller who needs identical labels everywhere
+  uses `MonthRenderOptions.WithWeekdayLabels`. The README's quick start and the example program's output are
+  deterministic on Linux, Windows and macOS: the quick start selects a culture for the title and supplies its
+  labels, and the later examples build on its options. One separate example keeps the culture's own labels and
+  explains that they depend on the system.
+- **Reason:** The names are the operating system's own data for the culture, and neither system's version is
+  the wrong one. Replacing them would mean the library carrying day names of its own for every culture. The
+  quick start is what a new user copies first, so it must print what the README shows on every system.
+- **Consequences:** Only one line of `expected-output.txt` depends on the system, and the tests compare it with
+  the machine's data, so the complete output is compared on all three systems with nothing inconclusive. An
+  example that is meant to print the same text everywhere must supply its labels or build on options that do;
+  two tests fail otherwise. Month names in titles also come from culture data; the two the example uses are
+  the same on all three systems, and the tests assume no more than that.
+
+### D-55: The next published version is 2.0
+
+- **Status:** Approved by Shaun. Resolves the former open question Q-07.
+- **Decision:** No intermediate NuGet publication is authorized: no 1.x release and no prerelease. The planned
+  published update of the package is `ConsoleCalendarGenerator` 2.0, after its implementation and release
+  readiness are complete. Publishing still needs Shaun's explicit approval each time (D-18 and the release
+  boundaries in [packaging-and-releases.md](packaging-and-releases.md#release-boundaries)).
+- **Reason:** Shaun's decision.
+- **Consequences:** The roadmap has no 1.x release step. `master` keeps building `1.1.0-dev` with assembly
+  version `1.0.0.0` and keeps the 1.x compatibility rules until the 2.0 work changes them deliberately; what
+  the version becomes, and when, belongs to the 2.0 scope audit.

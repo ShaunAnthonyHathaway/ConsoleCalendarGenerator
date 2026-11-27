@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **1,698 tests**: 153 characterization tests of the legacy API, 25 tests of
+`ConsoleCalendarGenerator.Tests` holds **1,701 tests**: 153 characterization tests of the legacy API, 25 tests of
 the legacy class as a facade, 184 tests of the layout model, 275 tests of text rendering, 98 tests of day states
 and markers, 52 tests of the theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test
-per recorded case), 94 tests of the documentation and the example, 2 tests of the modern public surface and 1
+per recorded case), 97 tests of the documentation and the example, 2 tests of the modern public surface and 1
 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
 
@@ -81,7 +81,7 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Parity/Campertron/ParityDeterminismTests` | 51 | The same spans every time and on every thread, whatever the order of the dates |
 | `Parity/Campertron/WidthTests` | 96 | That no line exceeds the width Campertron writes to, and that the indent is part of the line |
 | `Parity/Campertron/ApiSufficiencyTests` | 6 | That the adapter can only have used public API, and that nothing is built against Campertron |
-| `Documentation/ExampleProgramTests` | 19 | The example program: it runs with redirected output and no input, prints `expected-output.txt` (on every system when the weekday rows are left out), prints the same whatever culture the process starts with, and its source follows the rules the README recommends |
+| `Documentation/ExampleProgramTests` | 20 | The example program: it runs with redirected output and no input and prints `expected-output.txt` on every system; the primary example prints the same text everywhere; the one culture-derived weekday row is what the machine's culture data gives; the output does not depend on the culture the process starts with; its source follows the rules the README recommends |
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 9 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
 | `Documentation/DocumentationLinkTests` | 20 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows |
@@ -126,19 +126,17 @@ say what the modern API must do, and a failure there means the code is wrong.
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 1,686 pass | 3 Windows-only | 9 pass |
-| macOS | 1,686 pass | 3 Windows-only | not part of CI |
-| Windows | 1,636 pass, 1 inconclusive | 52 that need Linux or macOS | not part of CI |
+| Linux | 1,689 pass | 3 Windows-only | 9 pass |
+| macOS | 1,689 pass | 3 Windows-only | not part of CI |
+| Windows | 1,640 pass | 52 that need Linux or macOS | not part of CI |
 
 The parity tests have no platform conditions. A few of them compare titles that come from the operating
 system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
 system the fixtures were recorded on; the numbers above are for systems where it does not differ.
 
-The one inconclusive test on Windows is expected, every time:
-`ExampleProgramTests.WithItsOutputRedirected_ItPrintsTheExpectedOutput_AndExitsWithoutInput` compares the
-example's complete output with `expected-output.txt`, and Windows gives single-letter day names where the file
-has two letters. `dotnet test` lists an inconclusive test as "Skipped" above its summary and leaves it out of
-the totals, without the reason.
+No test is inconclusive on any of the three systems. `dotnet test` lists an inconclusive test as "Skipped"
+above its summary and leaves it out of the totals, without the reason, so a total lower than the one above is
+the sign to look for.
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -252,14 +250,22 @@ only run from a build inside a checkout. What they are built on:
 - **The example is run as a real process** from `ConsoleCalendarGeneratorExample/bin/<configuration>/net10.0/`
   with its standard input closed, and its output is compared with `expected-output.txt` after line ends are
   made the same.
-- **`expected-output.txt` is what Linux and macOS print.** It contains English and French month and day names,
-  which come from the operating system's culture data, and Windows gives other day names: one letter
-  (`M T W T F S S`) where the others give two (`Mo Tu We Th Fr Sa Su`). This was found by the Windows CI job of
-  this phase. So there are two comparisons. The complete one is inconclusive, not failed, where the machine's
-  names differ, which on Windows is always. The other leaves out the eight weekday rows and compares the
-  remaining lines; it only assumes the month names, which are the same on all three systems, and so it runs
-  on all three. The test that the starting culture of the process changes nothing compares two runs on the
-  same machine and needs no assumption.
+- **The complete output is compared on every system.** Every example but one supplies its weekday labels, so
+  `expected-output.txt` is the same on Linux, macOS and Windows in every line but one
+  ([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).
+  That line is the weekday row of the example that takes its labels from the culture: the file has what
+  Linux and macOS give (`lu ma me je ve sa di`), Windows gives ` L  M  M  J  V  S  D`, and the comparison puts
+  in whatever the machine's culture data gives (`ExampleProgram.ExpectedOutputOnThisMachine`). A separate test
+  builds that row from the culture's day names directly. Never write a culture-derived row into a test as the
+  one right answer.
+- **What is still assumed:** the English and the French name of March, which are in the titles and are the same
+  on all three systems. On a machine with other names those comparisons are inconclusive, not failed. The
+  test that the starting culture of the process changes nothing compares two runs on the same machine and
+  assumes nothing.
+- **Two structural tests keep the output deterministic:** exactly two examples start from
+  `MonthRenderOptions.Default` (the quick start, which supplies labels, and the culture-derived one, which
+  must not), and every weekday row of the expected output except the culture-derived one is made of labels
+  that an example supplies.
 - **Links are checked against the checkout, never the network.** A link to a file of this repository on GitHub
   or on `raw.githubusercontent.com` must name a file that exists; a `#` link must name a heading; other
   addresses must be `https`. That a file exists here says nothing about `master` until the change is merged,

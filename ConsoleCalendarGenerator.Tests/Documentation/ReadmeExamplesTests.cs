@@ -69,7 +69,7 @@ public class ReadmeExamplesTests
     {
         Assert.That(ExampleProgram.Examples().Keys, Is.EqualTo(new[]
         {
-            "QuickStart", "Culture", "FirstDayOfWeek", "OwnLabels", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "Legacy",
+            "QuickStart", "Culture", "OwnLabels", "FirstDayOfWeek", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "Legacy",
         }));
     }
 
@@ -88,10 +88,46 @@ public class ReadmeExamplesTests
         Assert.That(CodeBlocks.Skip(1).Select(block => Split(block).Usings), Is.All.Empty, "the directives are shown once");
     }
 
+    /// <summary>
+    /// The first example names its culture, so the title is not the invariant one, and supplies its weekday
+    /// labels, Sunday first, so the text is the same on every operating system.
+    /// </summary>
     [Test]
-    public void TheFirstExample_ChoosesACultureExplicitly()
+    public void TheFirstExample_ChoosesACultureAndItsWeekdayLabelsExplicitly()
     {
-        Assert.That(Split(CodeBlocks.First()).Code, Ordinal.Contains(".WithCulture(CultureInfo.GetCultureInfo(\"en-US\"))"));
+        string code = Split(CodeBlocks.First()).Code;
+
+        Assert.That(code, Ordinal.Contains(".WithCulture(CultureInfo.GetCultureInfo(\"en-US\"))"));
+        Assert.That(code, Ordinal.Contains(".WithWeekdayLabels(new[] { \"Su\", \"Mo\", \"Tu\", \"We\", \"Th\", \"Fr\", \"Sa\" })"));
+    }
+
+    /// <summary>
+    /// The output block right after the first example is the first section of the expected output: what the
+    /// quick start prints on every system.
+    /// </summary>
+    [Test]
+    public void TheFirstOutputBlock_IsWhatThePrimaryExamplePrints()
+    {
+        string firstOutput = Blocks.First(block => block.Language == "text" && !IsCommands(block)).Text;
+
+        Assert.That(ExampleProgram.ExpectedOutput, Does.StartWith("\n== A month ==\n" + firstOutput + "\n\n").Using(StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The one example that takes its labels from the culture supplies none, and the README shows it once. Its
+    /// output block is the Linux recording; the test of the program compares that row with the machine's data.
+    /// </summary>
+    [Test]
+    public void ExactlyOneExample_TakesItsWeekdayLabelsFromTheCulture()
+    {
+        IReadOnlyDictionary<string, string> examples = ExampleProgram.Examples();
+
+        string[] startFromTheDefaults = examples.Where(example => example.Value.Contains("MonthRenderOptions.Default", StringComparison.Ordinal)).Select(example => example.Key).ToArray();
+
+        Assert.That(startFromTheDefaults, Is.EqualTo(new[] { "QuickStart", "Culture" }), "the other examples build on the options of these two");
+        Assert.That(examples["QuickStart"], Ordinal.Contains(".WithWeekdayLabels("));
+        Assert.That(examples["Culture"], Ordinal.DoesNotContain("WithWeekdayLabel"));
+        Assert.That(examples["OwnLabels"], Does.StartWith("MonthRenderOptions frenchWithLabels = french\n    .WithWeekdayLabels(").Using(StringComparison.Ordinal));
     }
 
     [Test]

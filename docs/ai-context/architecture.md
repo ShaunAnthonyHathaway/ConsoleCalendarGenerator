@@ -333,7 +333,9 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
   fixes and how to report a problem.
 - **The example application** has two files. `Examples.cs` has one method per capability, each containing one
   marked example. `Program.cs` calls them in order under headings. It needs no input, uses fixed dates and
-  explicit cultures, and prints plain text when redirected.
+  explicit cultures, and prints plain text when redirected. The quick start supplies its weekday labels and
+  the later examples build on its options, so the program prints the same text on Linux, Windows and macOS,
+  except for the one weekday row of the example that shows the culture's own day names.
 - **The link between them** is one-directional: `Examples.cs` and `expected-output.txt` are the sources, and
   the README copies from them. Tests compare the copies
   ([D-49](decisions.md#d-49-the-readmes-code-and-output-are-the-example-programs)).

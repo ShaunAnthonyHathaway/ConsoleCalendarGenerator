@@ -13,8 +13,8 @@
 
     <!--
       The XML documentation file ships in the package. A public member without an XML comment is a build
-      warning (CS1591), except in the legacy ConsoleCalendar.cs, which is not documented yet: .editorconfig
-      turns the warning off for that one file.
+      warning (CS1591), which is not turned off anywhere: every public type and member is documented, the
+      legacy class included.
     -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>

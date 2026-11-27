@@ -2,10 +2,11 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **1,604 tests**: 153 characterization tests of the legacy API, 25 tests of
+`ConsoleCalendarGenerator.Tests` holds **1,698 tests**: 153 characterization tests of the legacy API, 25 tests of
 the legacy class as a facade, 184 tests of the layout model, 275 tests of text rendering, 98 tests of day states
 and markers, 52 tests of the theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test
-per recorded case), 2 tests of the modern public surface and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
+per recorded case), 94 tests of the documentation and the example, 2 tests of the modern public surface and 1
+test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
 
 ### Purpose
@@ -80,6 +81,12 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Parity/Campertron/ParityDeterminismTests` | 51 | The same spans every time and on every thread, whatever the order of the dates |
 | `Parity/Campertron/WidthTests` | 96 | That no line exceeds the width Campertron writes to, and that the indent is part of the line |
 | `Parity/Campertron/ApiSufficiencyTests` | 6 | That the adapter can only have used public API, and that nothing is built against Campertron |
+| `Documentation/ExampleProgramTests` | 19 | The example program: it runs with redirected output and no input, prints `expected-output.txt` (on every system when the weekday rows are left out), prints the same whatever culture the process starts with, and its source follows the rules the README recommends |
+| `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
+| `Documentation/ReadmeExamplesTests` | 9 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
+| `Documentation/DocumentationLinkTests` | 20 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows |
+| `Documentation/PublicDocumentationTests` | 33 | Which documents exist; the frameworks, versions and commands they name; nothing machine-specific and nothing about a consumer |
+| `Documentation/XmlDocumentationTests` | 10 | Every public type, member and parameter of the built documentation file has text; the legacy class's comments say what the constructors really color; no documentation warning is suppressed |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 
@@ -91,7 +98,11 @@ say what the modern API must do, and a failure there means the code is wrong.
   can be compared with it for every month.
 - `BehaviorDigest`: condenses a large amount of output into a hash, for the published-baseline tests.
 - `ChildProcess`, `ChildScenario` and `Program.cs`: start the test assembly as a separate process that draws one
-  calendar to its real console streams.
+  calendar to its real console streams. `ChildProcess.RunProgram` starts another program of the repository the
+  same way, which is how the example application is run.
+- `Repository`: finds the repository root above the test assembly and reads its files with `\n` line ends,
+  for the documentation tests. `Markdown`: the fenced blocks, links, images and heading anchors of a document.
+  `ExampleProgram`: the marked examples of `Examples.cs`, the expected output and the built program.
 - `GlobalStateGuardAttribute`: applied to the assembly; fails any test that leaves global state changed.
 - `Ordinal`: substring constraints that compare character by character. NUnit's `Does.Contain` compares with the
   current culture, which ignores control characters and so "finds" an escape character in any text.
@@ -115,13 +126,19 @@ say what the modern API must do, and a failure there means the code is wrong.
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 1,595 pass | 3 Windows-only | 6 pass |
-| macOS | 1,595 pass | 3 Windows-only | not part of CI |
-| Windows | 1,546 pass | 52 that need Linux or macOS | not part of CI |
+| Linux | 1,686 pass | 3 Windows-only | 9 pass |
+| macOS | 1,686 pass | 3 Windows-only | not part of CI |
+| Windows | 1,636 pass, 1 inconclusive | 52 that need Linux or macOS | not part of CI |
 
 The parity tests have no platform conditions. A few of them compare titles that come from the operating
 system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
 system the fixtures were recorded on; the numbers above are for systems where it does not differ.
+
+The one inconclusive test on Windows is expected, every time:
+`ExampleProgramTests.WithItsOutputRedirected_ItPrintsTheExpectedOutput_AndExitsWithoutInput` compares the
+example's complete output with `expected-output.txt`, and Windows gives single-letter day names where the file
+has two letters. `dotnet test` lists an inconclusive test as "Skipped" above its summary and leaves it out of
+the totals, without the reason.
 
 The same numbers apply to each of the two library builds. CI runs the normal run against both.
 
@@ -165,9 +182,9 @@ cultures built in the test.
 
 ### The Terminal category
 
-Six tests, three for the legacy class and three for the modern console writer, need a terminal database entry
-for `xterm-256color`, and four of those also need Linux and the util-linux `script` program to create a
-pseudo-terminal. They are in the `Terminal` category, are excluded from
+Nine tests, three for the legacy class, three for the modern console writer and three for the example
+program, need a terminal database entry for `xterm-256color`, and seven of those also need Linux and the
+util-linux `script` program to create a pseudo-terminal. They are in the `Terminal` category, are excluded from
 the normal run by filter, run in their own CI step on Linux, and ignore themselves where they cannot run. They
 check that color sequences are present or absent and that the text is unchanged; they do not compare escape
 sequences byte for byte, because the .NET runtime writes those, not the library. Keep anything that depends on
@@ -218,6 +235,47 @@ differs on purpose) is in `Parity/Campertron/README.md`. The rules:
   which `ApiSufficiencyTests` pins, and they must not move into the package.
 - The parity tests were checked like the others: five deliberate breaks of the package, three tampered fixtures
   and one wrong adapter in a scratch copy, each of which failed them.
+
+### The documentation tests
+
+`Documentation/` keeps the public documents, the example application and the XML documentation true. These
+tests read the repository's own files, found by walking up from the test assembly to the solution file, so they
+only run from a build inside a checkout. What they are built on:
+
+- **`Examples.cs` and `expected-output.txt` are the sources; the README copies from them**
+  ([D-49](decisions.md#d-49-the-readmes-code-and-output-are-the-example-programs)). A failing
+  `ReadmeExamplesTests` test prints the block that has no counterpart. Fix the copy, not the test.
+- **`Examples.cs` is compiled twice:** into the example program, and into the test assembly through a linked
+  file, which compiles every README example against the library build under test (`net10.0`, or
+  `netstandard2.1` in the second run). The test project also has a build-order-only reference to the example
+  project, so the program exists before a test starts it.
+- **The example is run as a real process** from `ConsoleCalendarGeneratorExample/bin/<configuration>/net10.0/`
+  with its standard input closed, and its output is compared with `expected-output.txt` after line ends are
+  made the same.
+- **`expected-output.txt` is what Linux and macOS print.** It contains English and French month and day names,
+  which come from the operating system's culture data, and Windows gives other day names: one letter
+  (`M T W T F S S`) where the others give two (`Mo Tu We Th Fr Sa Su`). This was found by the Windows CI job of
+  this phase. So there are two comparisons. The complete one is inconclusive, not failed, where the machine's
+  names differ, which on Windows is always. The other leaves out the eight weekday rows and compares the
+  remaining lines; it only assumes the month names, which are the same on all three systems, and so it runs
+  on all three. The test that the starting culture of the process changes nothing compares two runs on the
+  same machine and needs no assumption.
+- **Links are checked against the checkout, never the network.** A link to a file of this repository on GitHub
+  or on `raw.githubusercontent.com` must name a file that exists; a `#` link must name a heading; other
+  addresses must be `https`. That a file exists here says nothing about `master` until the change is merged,
+  which matters for a new image: look at the README on GitHub after merging.
+- **Facts are tested, wording is not.** The tests check which documents and images exist, which target
+  frameworks, versions and commands the documents name, and a few phrases a release would have to change
+  (`not published yet`, the changelog's section headings). Prose can be edited freely otherwise.
+- **`XmlDocumentationTests` computes the documentation ID of every public type and member by reflection** and
+  looks each one up in the XML file built beside the library. It handles the shapes the API has (generic and
+  nullable parameter types, arrays); a new shape, such as a generic method or a nested type, shows up as a
+  member "not in the documentation file" and means the test's ID code needs extending.
+
+Each kind of drift was introduced once in a scratch copy and seen to fail: a changed character in a README
+example, an output line the program does not print, a relative link and a link to a missing file in the
+README, an image nothing shows, a missing legacy comment, a restored warning suppression, an example that
+reads a key, and a parameterized legacy constructor in the example.
 
 ### Other compatibility layers
 
@@ -301,10 +359,11 @@ lock around a month; and the theme ignored.
   cultures, compare with what the culture reports at run time, and use `Assume.That` for anything that might not
   be available or might differ.
 - **Restore everything a test changes.** Prefer the existing helpers, which already do.
+- **Test what a document states, not how it says it.** A documentation test checks a fact against the
+  repository (a file exists, an example compiles, a version is published). Do not add tests that pin prose.
 - **No test may need the network** or download a package.
 - **Check that a new test can fail.** Break the code it covers once, in a scratch copy, and see it fail.
 
 ## Planned tests
 
-None at present. The next phase is user-facing material; if it adds example programs, the consumer smoke tests
-are where they should be built and run.
+None at present.

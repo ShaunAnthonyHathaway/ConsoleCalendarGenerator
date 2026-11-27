@@ -31,11 +31,19 @@ console applications. It is .NET only.
 - **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation), every layer
   of the modern API for a single month, the legacy facade and the Campertron parity fixtures are complete. The
   fixtures (in `ConsoleCalendarGenerator.Tests/Parity/Campertron/`) show that the public modern API reproduces
-  Campertron's live calendar renderer; no production code was needed for that. The user-facing material and
-  everything about releases are **planned and not implemented**.
-- **Next phase:** the user-facing material: README, example, screenshots, the duplicated docs and XML
-  documentation of the legacy class. See [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has
-  scoped it.
+  Campertron's live calendar renderer; no production code was needed for that. The user-facing material is
+  complete as well (see the next point). Everything about releases is **planned and not implemented**.
+- **Public documents:** `README.md` (also the readme of the package), `CHANGELOG.md`, `CONTRIBUTING.md` and
+  `SECURITY.md`, all at the root, and one image in `docs/images/`. Every public type and member has XML
+  documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
+  `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
+  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together.
+- **Known platform difference:** with a real culture, the default weekday labels are single letters on Windows
+  and two letters on Linux and macOS, because .NET's day names differ. It is documented, not changed; whether
+  to change it is open (Q-12 in [open-questions.md](docs/ai-context/open-questions.md)).
+- **Next phase:** not scoped. Recommended: first a small phase that settles Q-12, then a release-readiness
+  audit for 1.x and the decision whether a 1.1 release comes before 2.0. See
+  [roadmap.md](docs/ai-context/roadmap.md). Start nothing until Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -83,6 +91,8 @@ The build must finish with 0 warnings. None of these commands publishes anything
 7. **No Python.** Do not propose, build or document a Python version or interoperability layer.
 8. **One focused phase per pull request,** scoped by Shaun beforehand. Do not start the next phase unprompted.
 9. **Keep these documents true.** A change that makes any of them wrong updates them in the same pull request.
+   The same goes for the public documents: a change users can see is added to `CHANGELOG.md` under
+   "Unreleased", and the README never describes a version as published before it is.
 
 ## What to read first
 
@@ -92,5 +102,6 @@ The build must finish with 0 warnings. None of these commands publishes anything
 | The library's design, new layout or rendering code | [architecture.md](docs/ai-context/architecture.md), [open-questions.md](docs/ai-context/open-questions.md) |
 | Anything that touches `ConsoleCalendar` or its public API | [compatibility.md](docs/ai-context/compatibility.md) |
 | Tests | [testing.md](docs/ai-context/testing.md) |
+| The README, the example, the screenshot, XML comments | [development.md](docs/ai-context/development.md#the-readme-the-example-and-the-screenshot), [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#the-readme-on-nugetorg) |
 | Building, CI, SDK or framework upgrades | [development.md](docs/ai-context/development.md) |
 | The package, versions, releases | [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md) |

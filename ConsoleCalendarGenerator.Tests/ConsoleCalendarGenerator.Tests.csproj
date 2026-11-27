@@ -51,4 +51,18 @@
     <AssemblyMetadata Include="LibraryTargetFramework" Value="$(LibraryTargetFramework)" />
   </ItemGroup>
 
+  <!--
+    The example application, for the tests in Documentation. Its Examples.cs holds the code README.md shows, and
+    is compiled into the tests as well, so that every example is also compiled against whichever build of the
+    library the tests run against. The project reference only makes sure the program is built before the tests
+    start it; nothing of it is referenced or copied.
+  -->
+  <ItemGroup>
+    <Compile Include="..\ConsoleCalendarGeneratorExample\Examples.cs" Link="Documentation\Examples.cs" />
+    <ProjectReference Include="..\ConsoleCalendarGeneratorExample\ConsoleCalendarGeneratorExample.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      GlobalPropertiesToRemove="LibraryTargetFramework" />
+  </ItemGroup>
+
 </Project>

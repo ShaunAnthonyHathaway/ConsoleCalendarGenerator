@@ -10,8 +10,10 @@ built. Do not treat anything in the second part as existing code unless it says 
 | Path | What it is |
 |---|---|
 | `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs`, and the modern API in `Layout/`, `Rendering/`, `States/`, `Themes/` and `Output/`. |
-| `ConsoleCalendarGenerator/docs/` | A stale duplicate of the README and the four README screenshots. Not packed. To be replaced in the user-facing material phase. |
-| `ConsoleCalendarGeneratorExample/` | A small interactive console program that uses the library. |
+| `ConsoleCalendarGeneratorExample/` | The example application: a tour of the API that runs unattended. Its `Examples.cs` holds the code the README shows, and `expected-output.txt` what it prints. |
+| `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` | The public documents. The README is also the readme of the package. |
+| `docs/images/` | The images the README shows. One at present. |
+| `docs/ai-context/` | These maintenance notes. Not user documentation. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). |
 | `eng/` | `verify-package.sh`, `consumer-smoke.sh` and the two small projects the smoke script builds. |
 | `.github/workflows/ci.yml` | The only workflow. |
@@ -194,7 +196,10 @@ half of the spare width before them, rounded down; a title as wide as the grid o
 and is never cut. A format that produces no text, with no suffix, leaves an empty title line with no segments.
 
 **Weekday labels.** From the culture (`Shortest` or `Abbreviated` day names) or supplied by the caller. Supplied
-labels are indexed by `DayOfWeek`, Sunday first, and are shown starting from the first day of the week.
+labels are indexed by `DayOfWeek`, Sunday first, and are shown starting from the first day of the week. The
+culture's names are whatever .NET reports on the machine: for `en-US` the shortest names are two letters on
+Linux and macOS and one letter on Windows
+([D-53](decisions.md#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)).
 
 **Cells and spacing.** Every label and day cell is exactly `CellWidth` wide. Text shorter than the cell is
 right-aligned; a label longer than the cell is cut to the cell width. The shape of the grid therefore depends on
@@ -317,12 +322,28 @@ set through `Console.ForegroundColor`; the library writes no escape sequences.
 
 Reasons: [decisions.md](decisions.md#states-themes-and-output).
 
-### The example
+### Public documents and the example
 
-`ConsoleCalendarGeneratorExample/Program.cs` is the sample that accompanied 1.0.0. It waits for key presses and
-writes terminal reset sequences, so it cannot run unattended. A byte-for-byte copy is frozen at
-`eng/consumer-smoke/OriginalSample/Program.cs` and must keep compiling against every 1.x package; that copy stays
-as it is even when the example is rewritten.
+- **`README.md`** is written for someone who has never seen the package, is the readme inside the NuGet
+  package, and leads with the modern API. Its sections: status, features, installation, quick start, culture
+  and first day of week, marked dates, colors, output, what each piece of text is, layout only, more options,
+  legacy API, supported frameworks, limitations, building and testing, project, license.
+- **`CHANGELOG.md`** has an "Unreleased" section for everything on `master` and one entry for 1.0.0.
+  **`CONTRIBUTING.md`** has the commands and what a change must keep. **`SECURITY.md`** says which version gets
+  fixes and how to report a problem.
+- **The example application** has two files. `Examples.cs` has one method per capability, each containing one
+  marked example. `Program.cs` calls them in order under headings. It needs no input, uses fixed dates and
+  explicit cultures, and prints plain text when redirected.
+- **The link between them** is one-directional: `Examples.cs` and `expected-output.txt` are the sources, and
+  the README copies from them. Tests compare the copies
+  ([D-49](decisions.md#d-49-the-readmes-code-and-output-are-the-example-programs)).
+- **The sample that accompanied 1.0.0** is no longer the example. A byte-for-byte copy is frozen at
+  `eng/consumer-smoke/OriginalSample/Program.cs` and must keep compiling and running against every 1.x package.
+  It waits for key presses and writes terminal reset sequences, which is why it runs only in the smoke script.
+- **XML documentation** on every public type and member is the API reference. There is no generated site.
+
+Nothing in the public documents names a consumer of the package, and nothing in `docs/ai-context/` is written
+for users.
 
 ### Tests
 
@@ -334,8 +355,10 @@ January 0001 through December 9999. The rendering tests compare rendered months 
 segment lists, and with the layout for every month from 1900 through 2100. The state, theme and writer tests
 do the same for marked months and colors; the console writer is observed through a recording `Console.Out`,
 through a child process with redirected output, and on a pseudo-terminal. The facade tests compare every call
-the legacy class makes with a record of the original implementation, and its grid with the layout. The project
-can be built against either library build. Details: [testing.md](testing.md).
+the legacy class makes with a record of the original implementation, and its grid with the layout. The
+documentation tests read the repository's own files: they compare the README with the example program, run
+that program, check links and images against the checkout, and check the built XML documentation file against
+the public API. The project can be built against either library build. Details: [testing.md](testing.md).
 
 ### Build, package and CI
 

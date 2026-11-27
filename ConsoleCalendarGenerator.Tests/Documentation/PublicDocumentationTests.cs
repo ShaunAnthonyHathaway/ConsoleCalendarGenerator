@@ -1,0 +1,176 @@
+using System.Text.RegularExpressions;
+using ConsoleCalendarGenerator.Tests.Support;
+
+namespace ConsoleCalendarGenerator.Tests.Documentation;
+
+/// <summary>
+/// Facts the public documents state, checked against the repository: which documents exist, which frameworks
+/// and versions they name, and which commands they tell a reader to run. The wording is not tested.
+/// </summary>
+[TestFixture]
+public class PublicDocumentationTests
+{
+    private static readonly string[] Documents = Repository.PublicDocuments;
+
+    private static readonly string[] ProjectFiles =
+    {
+        "ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj",
+        "ConsoleCalendarGeneratorExample/ConsoleCalendarGeneratorExample.csproj",
+        "ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj",
+    };
+
+    private static string[] TargetFrameworksOf(string projectFile) =>
+        Regex.Match(Repository.Read(projectFile), @"<TargetFrameworks?>([^<]+)</TargetFrameworks?>").Groups[1].Value
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // ---- which documents exist ----
+
+    /// <summary>
+    /// The complete list. A document added anywhere else, such as a second copy of the readme beside the
+    /// library, fails here.
+    /// </summary>
+    [Test]
+    public void TheMarkdownFilesOfTheRepository_AreExactlyThese()
+    {
+        string[] outsideTheMaintenanceNotes = Repository.FilesWithExtension(".md")
+            .Where(file => !file.StartsWith("docs/ai-context/", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.That(outsideTheMaintenanceNotes, Is.EqualTo(new[]
+        {
+            "CHANGELOG.md",
+            "CLAUDE.md",
+            "CONTRIBUTING.md",
+            "ConsoleCalendarGenerator.Tests/Parity/Campertron/README.md",
+            "README.md",
+            "SECURITY.md",
+        }));
+    }
+
+    [Test]
+    public void TheLibraryFolder_HoldsOnlySourceAndItsProjectFile()
+    {
+        Assert.That(Repository.HasFolder("ConsoleCalendarGenerator/docs"), Is.False, "the copy of the readme and the 1.0.0 screenshots are removed");
+        Assert.That(Repository.FilesWithExtension(".md", ".png", ".txt").Where(file => file.StartsWith("ConsoleCalendarGenerator/", StringComparison.Ordinal)), Is.Empty);
+    }
+
+    [Test]
+    public void ThePackageReadme_IsTheRootReadme()
+    {
+        string project = Repository.Read(ProjectFiles[0]);
+
+        Assert.That(project, Ordinal.Contains("<PackageReadmeFile>README.md</PackageReadmeFile>"));
+        Assert.That(project, Ordinal.Contains("<None Include=\"..\\README.md\" Pack=\"true\""));
+    }
+
+    // ---- frameworks ----
+
+    [TestCaseSource(nameof(Documents))]
+    public void EveryTargetFrameworkNamed_IsOneAProjectOfTheRepositoryTargets(string document)
+    {
+        string[] targeted = ProjectFiles.SelectMany(TargetFrameworksOf).Distinct().ToArray();
+
+        IEnumerable<string> named = Regex.Matches(Repository.Read(document), @"\bnet(standard|coreapp)?\d+(\.\d+)+\b").Select(match => match.Value).Distinct();
+
+        Assert.That(named, Is.SubsetOf(targeted));
+    }
+
+    [Test]
+    public void TheReadme_NamesBothBuildsOfTheLibrary()
+    {
+        string readme = Repository.Read("README.md");
+
+        Assert.That(TargetFrameworksOf(ProjectFiles[0]), Is.EquivalentTo(new[] { "net10.0", "netstandard2.1" }));
+        foreach (string framework in TargetFrameworksOf(ProjectFiles[0]))
+        {
+            Assert.That(readme, Ordinal.Contains("`" + framework + "`"));
+        }
+    }
+
+    // ---- versions ----
+
+    /// <summary>1.0.0 is the only version that exists, so it is the only one a document for users may name.</summary>
+    [TestCase("README.md")]
+    [TestCase("CONTRIBUTING.md")]
+    [TestCase("SECURITY.md")]
+    public void TheOnlyPackageVersionNamed_IsThePublishedOne(string document)
+    {
+        string prose = Markdown.WithoutLinks(Repository.Read(document));
+
+        Assert.That(Regex.Matches(prose, @"\b\d+\.\d+\.\d+(-[\w.]+)?").Select(match => match.Value).Distinct(), Is.SubsetOf(new[] { "1.0.0" }));
+        Assert.That(Regex.Matches(prose, @"\b(version|v)\s?(1\.[1-9]|[2-9]\.\d)", RegexOptions.IgnoreCase).Select(match => match.Value), Is.Empty);
+    }
+
+    [Test]
+    public void TheChangelog_HasOnePublishedVersion_AndAnUnreleasedSection()
+    {
+        string[] sections = Repository.Read("CHANGELOG.md").Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)).ToArray();
+
+        Assert.That(sections, Is.EqualTo(new[] { "## [Unreleased]", "## [1.0.0] - 2023-06-25" }));
+    }
+
+    /// <summary>What the repository builds is a development version, which is why the documents call it unpublished.</summary>
+    [Test]
+    public void TheRepositoryBuildsADevelopmentVersion_NotThePublishedOne()
+    {
+        string project = Repository.Read(ProjectFiles[0]);
+
+        Assert.That(project, Does.Match(@"<VersionSuffix>dev</VersionSuffix>|<Version>\d+\.\d+\.\d+-dev</Version>"));
+        Assert.That(Repository.Read("README.md"), Ordinal.Contains("not published yet"));
+    }
+
+    // ---- commands ----
+
+    /// <summary>The project files, solutions, scripts and project folders named in the commands exist.</summary>
+    [TestCase("README.md")]
+    [TestCase("CONTRIBUTING.md")]
+    public void EveryFileNamedInACommand_Exists(string document)
+    {
+        string[] commands = Markdown.FencedBlocks(Repository.Read(document))
+            .Where(block => block.Language == "text")
+            .SelectMany(block => block.Text.Split('\n'))
+            .Where(line => line.StartsWith("dotnet ", StringComparison.Ordinal) || line.StartsWith("bash ", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.That(commands, Is.Not.Empty);
+        foreach (string command in commands)
+        {
+            string[] words = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < words.Length; i++)
+            {
+                if (Regex.IsMatch(words[i], @"\.(sln|csproj|sh)$"))
+                {
+                    Assert.That(Repository.HasFile(words[i]), command);
+                }
+                if (words[i] == "--project")
+                {
+                    Assert.That(Repository.HasFolder(words[i + 1]), command);
+                }
+            }
+        }
+    }
+
+    // ---- what the documents must not contain ----
+
+    private static IEnumerable<string> PublicFiles =>
+        Documents.Concat(new[] { ExampleProgram.ProgramFile, ExampleProgram.ExamplesFile, ExampleProgram.ExpectedOutputFile });
+
+    [TestCaseSource(nameof(PublicFiles))]
+    public void NoPathOfOneMachine(string file)
+    {
+        Assert.That(Regex.Matches(Repository.Read(file), @"/home/|/Users/|/tmp/|/var/|[A-Za-z]:\\|~/").Select(match => match.Value), Is.Empty);
+    }
+
+    /// <summary>The package is .NET only, and it is documented on its own terms, not through one of its consumers.</summary>
+    [TestCaseSource(nameof(PublicFiles))]
+    public void NoOtherLanguage_AndNoConsumerOfThePackage(string file)
+    {
+        Assert.That(Regex.Matches(Repository.Read(file), @"python|\bpip\b|campertron", RegexOptions.IgnoreCase).Select(match => match.Value), Is.Empty);
+    }
+
+    [TestCaseSource(nameof(Documents))]
+    public void NoHostedDocumentationSite(string document)
+    {
+        Assert.That(Repository.Read(document), Does.Not.Match(@"github\.io|GitHub Pages"));
+    }
+}

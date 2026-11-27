@@ -14,6 +14,36 @@ namespace CalendarGenerator
     // a month is kept in this class on purpose, because the modern renderer and writers deliberately behave
     // differently: they take the title from the Gregorian calendar, restore the caller's colors, write whole
     // lines with one line terminator, and reject invalid colors early.
+    /// <summary>
+    /// The calendar of version 1.0.0. It draws a month, or the twelve months of a year, directly on the console,
+    /// in four colors.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This class is kept so that programs written for version 1.0.0 keep working. What it writes, how it uses the
+    /// console and which exceptions it throws are the same in every 1.x version, including the behavior described
+    /// here that a new design would not choose. For new code, use the types of the <c>ConsoleCalendarGenerator</c>
+    /// namespace instead: <see cref="MonthRenderer"/> renders a month as text without using the console, and
+    /// <see cref="ConsoleMonthWriter"/> writes it in color.
+    /// </para>
+    /// <para>
+    /// A month is drawn as a title with the name of the month and the year, the weekday row
+    /// <c>Mo Tu We Th Fr Sa Su</c>, and one line for each week. Weeks start on Monday. The title, the weekday row,
+    /// the days and the selected days each have a color. A selected day differs from the other days by its color
+    /// only; the text is the same.
+    /// </para>
+    /// <para>
+    /// Only the name of the month follows a culture: it is read from <see cref="CultureInfo.CurrentCulture"/> each
+    /// time a month is drawn. The weekday row is always in English.
+    /// </para>
+    /// <para>
+    /// A color can be any <see cref="ConsoleColor"/> value, also one that is not defined. Such a value is accepted
+    /// and stored; drawing fails later, when the console is asked to use it.
+    /// </para>
+    /// <para>
+    /// Drawing is not synchronized. Drawing from several threads at the same time mixes their output.
+    /// </para>
+    /// </remarks>
     public class ConsoleCalendar
     {
         // Always English and always from Monday, whatever the culture.
@@ -24,10 +54,38 @@ namespace CalendarGenerator
         private ConsoleColor _selectedDateColor;
         private ConsoleColor _titleColor;
 
+        /// <summary>Draws the twelve months of a year on the console, one below the other, with no selected days.</summary>
+        /// <param name="Year">The year, from 1 to 9999.</param>
+        /// <remarks>
+        /// This is the same as calling <see cref="GenerateMonth(int, int)"/> for the months 1 to 12. There is no heading
+        /// for the year.
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
+        /// </exception>
         public void GenerateYear(int Year)
         {
             GenerateYear(Year, new List<DateTime>());
         }
+        /// <summary>
+        /// Draws the twelve months of a year on the console, one below the other, with the given dates as selected
+        /// days.
+        /// </summary>
+        /// <param name="Year">The year, from 1 to 9999.</param>
+        /// <param name="dates">
+        /// The dates to show as selected, for the whole year in one list. See
+        /// <see cref="GenerateMonth(int, int, List{DateTime})"/> for how a date selects a day. The list is not changed.
+        /// </param>
+        /// <remarks>
+        /// This is the same as calling <see cref="GenerateMonth(int, int, List{DateTime})"/> for the months 1 to 12
+        /// with the same list. There is no heading for the year.
+        /// </remarks>
+        /// <exception cref="NullReferenceException">
+        /// <paramref name="dates"/> is <see langword="null"/>. Nothing is written.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
+        /// </exception>
         public void GenerateYear(int Year, List<DateTime> dates)
         {
             // Twelve months one after the other, with no heading for the year.
@@ -36,10 +94,65 @@ namespace CalendarGenerator
                 GenerateMonth(month, Year, dates);
             }
         }
+        /// <summary>Draws one month on the console, with no selected days.</summary>
+        /// <param name="Month">The month, from 1 to 12. Note that the month comes before the year.</param>
+        /// <param name="Year">The year, from 1 to 9999.</param>
+        /// <remarks>
+        /// See <see cref="GenerateMonth(int, int, List{DateTime})"/> for what is written and how the console is used.
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="Month"/> is less than 1 or greater than 12, or <paramref name="Year"/> is less than 1 or
+        /// greater than 9999. Nothing is written.
+        /// </exception>
         public void GenerateMonth(int Month, int Year)
         {
             GenerateMonth(Month, Year, new List<DateTime>());
         }
+        /// <summary>Draws one month on the console, with the given dates as selected days.</summary>
+        /// <param name="Month">The month, from 1 to 12. Note that the month comes before the year.</param>
+        /// <param name="Year">The year, from 1 to 9999.</param>
+        /// <param name="dates">
+        /// The dates to show as selected. A date selects a day of the month when its year, month and day are the same;
+        /// its time of day and its <see cref="DateTime.Kind"/> are ignored. Dates in other months or years, repeated
+        /// dates and the order of the list make no difference. The list is not changed.
+        /// </param>
+        /// <remarks>
+        /// <para>
+        /// <b>What is written.</b> The title is the name of the month, a space and the year as given, after three to
+        /// five spaces: fewer for a longer name. The weekday row follows, then one line for each week, with the days
+        /// right-aligned in columns two characters wide and one space between columns. No line ends with spaces. The
+        /// month is followed by one empty line, or by two when its last day is a Sunday.
+        /// </para>
+        /// <para>
+        /// <b>Culture.</b> The name of the month is what the calendar of <see cref="CultureInfo.CurrentCulture"/> calls
+        /// its month number <paramref name="Month"/>. The days are always those of the Gregorian month. Under a culture
+        /// whose own calendar is not the Gregorian one, the title can therefore name a different month than the one
+        /// drawn. The year is never converted.
+        /// </para>
+        /// <para>
+        /// <b>The console.</b> Text is written to <see cref="Console.Out"/> piece by piece, and the color of each piece
+        /// is set through <see cref="Console.ForegroundColor"/>. A selected day is written in the color for selected
+        /// days, together with the space before it. <see cref="Console.ResetColor"/> is called after the title, after
+        /// the weekday row and at the end, so the colors the caller had set are reset, not put back. Colors are set
+        /// even when <see cref="Console.Out"/> has been replaced or redirected.
+        /// </para>
+        /// <para>
+        /// <b>Line ends.</b> Every line ends with the line terminator of <see cref="Console.Out"/>, except the last
+        /// line of days, which ends with a line feed. Where the terminator is a carriage return and a line feed, as
+        /// on Windows, the output contains both forms.
+        /// </para>
+        /// </remarks>
+        /// <exception cref="NullReferenceException">
+        /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, and nothing is written.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="Month"/> is less than 1 or greater than 12, or <paramref name="Year"/> is less than 1 or
+        /// greater than 9999. Nothing is written.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// One of the colors is not a defined <see cref="ConsoleColor"/> value. The exception is thrown when that color
+        /// is first used, and what was written before it stays written.
+        /// </exception>
         public void GenerateMonth(int Month, int Year, List<DateTime> dates)
         {
             // The order of these first two steps is what callers observe when arguments are invalid. The list is
@@ -57,38 +170,72 @@ namespace CalendarGenerator
             // Reset, not restored: the colors the caller had are gone.
             Console.ResetColor();
         }
+        /// <summary>Gets the color of the weekday row.</summary>
+        /// <returns>The color. For a calendar made by the parameterless constructor it is cyan.</returns>
         public ConsoleColor GetDayOfWeekColor()
         {
             return _dayOfWeekColor;
         }
+        /// <summary>Sets the color of the weekday row, for the months drawn after this call.</summary>
+        /// <param name="TitleColor">
+        /// The color of the weekday row. The parameter has this name on all four <c>Set</c> methods; here it has
+        /// nothing to do with the title.
+        /// </param>
         public void SetDayOfWeekColor(ConsoleColor TitleColor)
         {
             _dayOfWeekColor = TitleColor;
         }
+        /// <summary>Gets the color of the days that are not selected.</summary>
+        /// <returns>The color. For a calendar made by the parameterless constructor it is white.</returns>
         public ConsoleColor GetDateColor()
         {
             return _dateColor;
         }
+        /// <summary>Sets the color of the days that are not selected, for the months drawn after this call.</summary>
+        /// <param name="TitleColor">
+        /// The color of the days. The parameter has this name on all four <c>Set</c> methods; here it has nothing to
+        /// do with the title.
+        /// </param>
         public void SetDateColor(ConsoleColor TitleColor)
         {
             _dateColor = TitleColor;
         }
+        /// <summary>Gets the color of the selected days.</summary>
+        /// <returns>The color. For a calendar made by the parameterless constructor it is blue.</returns>
         public ConsoleColor GetSelectedDateColor()
         {
             return _selectedDateColor;
         }
+        /// <summary>Sets the color of the selected days, for the months drawn after this call.</summary>
+        /// <param name="TitleColor">
+        /// The color of the selected days. The parameter has this name on all four <c>Set</c> methods; here it has
+        /// nothing to do with the title.
+        /// </param>
         public void SetSelectedDateColor(ConsoleColor TitleColor)
         {
             _selectedDateColor = TitleColor;
         }
+        /// <summary>Gets the color of the title, the line with the name of the month and the year.</summary>
+        /// <returns>The color. For a calendar made by the parameterless constructor it is yellow.</returns>
         public ConsoleColor GetTitleColor()
         {
             return _titleColor;
         }
+        /// <summary>Sets the color of the title, for the months drawn after this call.</summary>
+        /// <param name="TitleColor">The color of the title.</param>
         public void SetTitleColor(ConsoleColor TitleColor)
         {
             _titleColor = TitleColor;
         }
+        /// <summary>
+        /// Creates a calendar with the default colors: a yellow title, a cyan weekday row, white days and blue
+        /// selected days.
+        /// </summary>
+        /// <remarks>
+        /// This is the constructor to prefer. Change a color afterwards with <see cref="SetTitleColor(ConsoleColor)"/>,
+        /// <see cref="SetDayOfWeekColor(ConsoleColor)"/>, <see cref="SetDateColor(ConsoleColor)"/> or
+        /// <see cref="SetSelectedDateColor(ConsoleColor)"/>, each of which sets the color it is named for.
+        /// </remarks>
         public ConsoleCalendar()
         {
             _dayOfWeekColor = ConsoleColor.Cyan;
@@ -99,6 +246,15 @@ namespace CalendarGenerator
 
         // In the constructors below the argument named TitleColor colors the weekday row, and in the last one the
         // argument named DayOfWeekColor colors the title. That is the published behavior and it stays for 1.x.
+        /// <summary>Creates a calendar with a color for the weekday row and the default colors for everything else.</summary>
+        /// <param name="TitleColor">
+        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
+        /// stays yellow.
+        /// </param>
+        /// <remarks>
+        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
+        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor)
         {
             _dayOfWeekColor = TitleColor;
@@ -106,6 +262,19 @@ namespace CalendarGenerator
             _titleColor = ConsoleColor.Yellow;
             _selectedDateColor = ConsoleColor.Blue;
         }
+        /// <summary>
+        /// Creates a calendar with colors for the weekday row and the days, and the default colors for the title and
+        /// the selected days.
+        /// </summary>
+        /// <param name="TitleColor">
+        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
+        /// stays yellow.
+        /// </param>
+        /// <param name="DateColor">The color of the days that are not selected.</param>
+        /// <remarks>
+        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
+        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor)
         {
             _dayOfWeekColor = TitleColor;
@@ -113,6 +282,20 @@ namespace CalendarGenerator
             _titleColor = ConsoleColor.Yellow;
             _selectedDateColor = ConsoleColor.Blue;
         }
+        /// <summary>
+        /// Creates a calendar with colors for the weekday row, the days and the selected days, and the default color
+        /// for the title.
+        /// </summary>
+        /// <param name="TitleColor">
+        /// The color of the weekday row. Despite its name, this argument does not set the color of the title, which
+        /// stays yellow.
+        /// </param>
+        /// <param name="DateColor">The color of the days that are not selected.</param>
+        /// <param name="SelectedDateColor">The color of the selected days.</param>
+        /// <remarks>
+        /// Version 1.0.0 behaves this way, and every 1.x version keeps it so that existing programs draw as before.
+        /// To set each color by its name, use the parameterless constructor and the <c>Set</c> methods.
+        /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor)
         {
             _dayOfWeekColor = TitleColor;
@@ -120,6 +303,20 @@ namespace CalendarGenerator
             _titleColor = ConsoleColor.Yellow;
             _selectedDateColor = SelectedDateColor;
         }
+        /// <summary>Creates a calendar with all four colors.</summary>
+        /// <param name="TitleColor">
+        /// The color of the weekday row. Despite its name, this argument does not set the color of the title.
+        /// </param>
+        /// <param name="DateColor">The color of the days that are not selected.</param>
+        /// <param name="SelectedDateColor">The color of the selected days.</param>
+        /// <param name="DayOfWeekColor">
+        /// The color of the title. Despite its name, this argument does not set the color of the weekday row.
+        /// </param>
+        /// <remarks>
+        /// The first and the last argument color each other's element. Version 1.0.0 behaves this way, and every 1.x
+        /// version keeps it so that existing programs draw as before. To set each color by its name, use the
+        /// parameterless constructor and the <c>Set</c> methods.
+        /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor, ConsoleColor DayOfWeekColor)
         {
             _dayOfWeekColor = TitleColor;

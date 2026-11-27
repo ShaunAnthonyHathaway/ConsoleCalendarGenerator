@@ -7,7 +7,9 @@ public enum WeekdayLabelStyle
 {
     /// <summary>
     /// The culture's shortest day names, as returned by <see cref="DateTimeFormatInfo.GetShortestDayName"/>. For
-    /// the invariant culture these are <c>Su Mo Tu We Th Fr Sa</c>.
+    /// the invariant culture these are <c>Su Mo Tu We Th Fr Sa</c>. For other cultures the names, and how long
+    /// they are, depend on the culture data of the system: the same culture can give two letters on one
+    /// system and one letter on another.
     /// </summary>
     Shortest = 0,
 

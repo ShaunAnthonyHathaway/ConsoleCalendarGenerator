@@ -34,8 +34,8 @@ including the Campertron parity fixtures, were merged.
 - **Decision:** The parameterized constructors keep assigning `TitleColor` to the weekday row, and
   `DayOfWeekColor` to the title in the four-argument form, throughout 1.x. Correcting or removing them is 2.0
   work.
-- **Reason:** A silent fix would recolor the output of existing programs. The README screenshots show the
-  current behavior.
+- **Reason:** A silent fix would recolor the output of existing programs. The README screenshots published
+  with 1.0.0 showed the current behavior.
 - **Consequences:** Tests named `Characterized1xBehavior` must not be "corrected".
 
 ### D-04: The legacy API stays; new API gets its own namespace
@@ -105,14 +105,13 @@ including the Campertron parity fixtures, were merged.
 
 ### D-11: Public XML documentation is deferred
 
-- **Status:** Approved. In place for the legacy class only; narrowed by
-  [D-29](#d-29-modern-public-api-is-documented-when-it-is-added).
-- **Decision:** The XML documentation file is generated and packed now. Writing the comments for the legacy
-  class is part of the user-facing material phase. Until then `CS1591` is silenced for
+- **Status:** Completed and no longer in effect. The legacy class was documented and the suppression removed
+  in the user-facing material phase ([D-51](#d-51-the-legacy-class-is-documented-as-it-behaves)).
+- **Decision:** The XML documentation file was generated and packed from the start. Writing the comments for
+  the legacy class was left to the user-facing material phase, and until then `CS1591` was silenced for
   `ConsoleCalendarGenerator/ConsoleCalendar.cs`, in `.editorconfig`.
 - **Reason:** Placeholder comments written only to silence a warning would be worse than none.
-- **Consequences:** Remove the `CS1591` entry from `.editorconfig` in the same change that documents the legacy
-  class.
+- **Consequences:** None any more. The entry is gone from `.editorconfig`.
 
 ## Architecture
 
@@ -201,12 +200,12 @@ including the Campertron parity fixtures, were merged.
 
 ### D-21: User-facing material is replaced later, in one phase
 
-- **Status:** Approved. Not started.
-- **Decision:** The README, the example, the duplicated docs and the screenshots will be replaced in a later
-  documentation and polish phase, to the same general standard as Campertron's.
-- **Reason:** They describe the 1.0.0 API only and show the constructor defect; rewriting them before the new API
-  exists would mean writing them twice.
-- **Consequences:** Until then, change them only as far as a valid package requires.
+- **Status:** Approved. Done; what replaced them is in [User-facing material](#user-facing-material).
+- **Decision:** The README, the example, the duplicated docs and the screenshots are replaced in one
+  documentation and polish phase, after the new API exists.
+- **Reason:** They described the 1.0.0 API only and showed the constructor defect; rewriting them before the new
+  API existed would have meant writing them twice.
+- **Consequences:** None any more.
 
 ### D-22: Behavior is characterized before it is changed
 
@@ -296,12 +295,12 @@ the evidence, and accepted by him when he reviewed that phase. The API itself is
 
 - **Status:** Approved. Implemented.
 - **Decision:** Every public type and member in the `ConsoleCalendarGenerator` namespace has XML documentation
-  in the change that adds it. The compiler enforces it: `CS1591` is a warning, and so a build failure, for
-  everything except the legacy `ConsoleCalendar.cs`.
+  in the change that adds it. The compiler enforces it: `CS1591` is a warning, and so a build failure. (Until
+  [D-51](#d-51-the-legacy-class-is-documented-as-it-behaves) the legacy `ConsoleCalendar.cs` was excepted.)
 - **Reason:** Shaun required documented modern API with no `CS1591` suppression for it. The project-wide
   suppression from D-11 would have hidden a missing comment on a modern type.
-- **Consequences:** D-11 now covers the legacy class only. `eng/verify-package.sh` checks that the modern
-  documentation is in both builds of the package.
+- **Consequences:** `eng/verify-package.sh` checks that the documentation is in both builds of the package, and
+  `Documentation/XmlDocumentationTests` checks every public member of the built file.
 
 ## Rendering
 
@@ -339,7 +338,9 @@ listed in [architecture.md](architecture.md#text-rendering).
 - **Decision:** The default culture is the invariant culture and the default first day of the week is Monday.
   The first day of the week is never taken from a culture, including one set with `WithCulture`. Neither
   `CurrentCulture` nor `CurrentUICulture` is ever read.
-- **Reason:** The renderer's promise is the same output for the same input on every machine, which a default
+- **Reason:** The renderer's promise is the same output for the same input on every machine (for the names a
+  real culture supplies this later proved to hold per operating system only; see
+  [D-53](#d-53-names-a-culture-supplies-are-documented-as-depending-on-the-system)), which a default
   taken from the current culture would break. Monday is ISO 8601 and what both existing renderers, the legacy
   class and Campertron's, draw. Keeping the first day independent of the culture means changing the language
   never moves the days. A caller who wants the culture's own first day passes
@@ -599,3 +600,101 @@ is compared is described in `ConsoleCalendarGenerator.Tests/Parity/Campertron/RE
   renderer has changed and the new behavior is to become the target, from a copy outside this repository. Under
   cultures whose calendar is not Gregorian the titles differ on purpose
   ([D-45](#d-45-no-public-compatibility-profile)); those two fixtures compare everything except the title.
+
+## User-facing material
+
+Settled in the user-facing material phase, within the authority Shaun gave that phase.
+
+### D-48: Four public documents at the root, and one README for GitHub and NuGet
+
+- **Status:** Approved. Implemented.
+- **Decision:** The documents for users and contributors are `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md` and
+  `SECURITY.md`, at the repository root. The README is also the package readme, unchanged. Support is a line in
+  the README, not a file. There is no second guide, no generated API reference and no site. `docs/` holds
+  `ai-context/` (maintenance notes) and `images/` (the README's images) and nothing else; the copy of the README
+  and the screenshots under `ConsoleCalendarGenerator/docs/` are deleted.
+- **Reason:** The API is small enough for one page plus IntelliSense. Two readmes had already drifted apart
+  once. Policy files are kept to what is true of a one-maintainer package.
+- **Consequences:** The README has to satisfy nuget.org, which is stricter than GitHub: absolute links only
+  (links to its own headings are fine), no raw HTML, images from an allowed host. See
+  [packaging-and-releases.md](packaging-and-releases.md#the-readme-on-nugetorg). `PublicDocumentationTests`
+  lists every Markdown file outside `docs/ai-context/`, so adding one is a visible decision.
+
+### D-49: The README's code and output are the example program's
+
+- **Status:** Approved. Implemented.
+- **Decision:** `ConsoleCalendarGeneratorExample/Examples.cs` is the source of truth for every C# block in the
+  README, and `expected-output.txt` beside it for every output block. Each example is the code between a
+  `// <Name>` comment and its `// </Name>` comment; the README shows it character for character. The tests
+  compare them, run the program and compare what it prints with the file. `Examples.cs` is also compiled into
+  the test assembly, so every example compiles against both builds of the library.
+- **Reason:** A README example that does not compile, or output that the library does not produce, is the most
+  common way for documentation to go wrong. Copying with a check is simpler and more readable than generating
+  the README or parsing C# out of Markdown.
+- **Consequences:** To change an example, change `Examples.cs`, run the program, update `expected-output.txt`
+  and copy both into the README; the tests say what is still different. The example project has
+  `RollForward=LatestMajor` so that `dotnet run` works with the pinned SDK, whose runtime is newer than the
+  `net10.0` the example targets. The example replaces the sample that accompanied 1.0.0; the frozen copy of
+  that sample in `eng/consumer-smoke/OriginalSample/` is untouched and still must compile and run.
+
+### D-50: One screenshot, drawn from the example's real terminal output
+
+- **Status:** Approved. Implemented.
+- **Decision:** The README has one image, `docs/images/month-with-theme.png`: the themed month of the example.
+  Everything else is shown as text. The image is made from the bytes the example writes to a pseudo-terminal,
+  with the colors of a fixed palette; the steps are in
+  [development.md](development.md#the-readme-the-example-and-the-screenshot). It is not a photograph of a
+  terminal window.
+- **Reason:** Text blocks show plain output better than pictures do, can be tested, and can be read by a screen
+  reader. Color is the one thing text cannot show. Drawing from captured output keeps the picture honest and
+  free of window decoration, prompts, user names and paths.
+- **Consequences:** The marked days in the image also carry their markers, so the image does not teach that
+  color alone marks a day. `DocumentationLinkTests` fails if an image exists that the README does not show, or
+  the reverse.
+
+### D-51: The legacy class is documented as it behaves
+
+- **Status:** Approved. Implemented. Replaces [D-11](#d-11-public-xml-documentation-is-deferred).
+- **Decision:** `CalendarGenerator.ConsoleCalendar` and its 17 public members have XML documentation that
+  describes what 1.0.0 does, including what a new design would not do: the constructor arguments that color
+  another element than their name says, the month name from the current culture's own calendar, the colors
+  that are reset and not restored, the mixed line ends, and the exceptions. The comments recommend the
+  parameterless constructor and the setters, and point to the modern API for new code. `CS1591` is no longer
+  suppressed anywhere. No `[Obsolete]` attribute is added
+  ([Q-05](open-questions.md#q-05-when-do-legacy-members-become-obsolete)), and the comments promise nothing
+  about 2.0.
+- **Reason:** A user of the legacy class sees these comments in the editor at the moment of calling it, which
+  is where a wrongly named argument does its damage. Documenting the defect is not correcting it.
+- **Consequences:** The file changed in comments only; the test suite and the digests are the proof. The
+  comments must stay true to [compatibility.md](compatibility.md). `XmlDocumentationTests` checks that every
+  public member of both builds is documented and that the constructor comments say what the arguments color.
+
+### D-52: Security reports go through a public issue until a private channel exists
+
+- **Status:** Approved as the accurate statement of the present. To be revisited
+  ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)).
+- **Decision:** `SECURITY.md` says that the latest published version receives fixes, that there is no private
+  channel for reports, and that a reporter should open an issue that says a problem exists without the details.
+  It gives no e-mail address.
+- **Reason:** GitHub's private vulnerability reporting is off for the repository (checked through the API on
+  2026-11-27), turning it on is a repository setting that needs Shaun, and no address has been approved for
+  publication. A policy that promised confidentiality would be false.
+- **Consequences:** When private reporting is turned on, change `SECURITY.md` in the same change.
+
+### D-53: Names a culture supplies are documented as depending on the system
+
+- **Status:** Approved as documentation of what exists. Whether the behavior should change is open
+  ([Q-12](open-questions.md#q-12-should-weekday-labels-be-the-same-on-every-operating-system)).
+- **Decision:** The README, the XML comments of `MonthRenderOptions` and `WeekdayLabelStyle.Shortest`, and the
+  example say that month and day names come from the culture data of the runtime and the operating system and
+  can differ between systems, with the observed case: single-letter shortest day names on Windows. The README
+  shows how to supply labels that are the same everywhere (`WithWeekdayLabels`), as a tenth example. No
+  behavior changed.
+- **Reason:** The README promised "the same on every machine", and the Windows CI job showed its first
+  example printing a different weekday row there. The promise that holds is narrower: nothing is read from the
+  process, so the same options give the same text on the same system
+  ([D-32](#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process)), and the invariant culture,
+  the layout and supplied labels are the same everywhere.
+- **Consequences:** `expected-output.txt` is the output of Linux and macOS, and the complete comparison with it
+  is inconclusive on Windows; see [testing.md](testing.md#the-documentation-tests). Do not describe output
+  under a real culture as identical on every machine.

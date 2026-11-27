@@ -16,7 +16,10 @@ namespace ConsoleCalendarGenerator;
 /// </para>
 /// <para>
 /// Nothing here is read from the process: not the current culture, not the console. The same options always
-/// produce the same text.
+/// produce the same text on the same system. The names and patterns of a culture come from the culture data of
+/// the runtime and the operating system, which is not the same on every system: the shortest day names of a
+/// culture, for example, are two letters on some systems and one letter on others. The invariant culture, and
+/// labels set with <see cref="WithWeekdayLabels"/>, give the same text everywhere.
 /// </para>
 /// <para>
 /// Widths are counted in text elements, the runtime's unit for one user-perceived character

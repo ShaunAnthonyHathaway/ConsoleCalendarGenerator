@@ -198,8 +198,10 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 | macOS | 2,336 pass | 5 Windows-only | not part of CI |
 | Windows | 2,247 pass | 94 that need Linux or macOS | not part of CI |
 
-One more test is inconclusive in the normal run on each system: the case of `Legacy/GregorianTitleTests` that is
-for a system on which `ar-SA` counts in a calendar that is not Gregorian, which none of the three CI systems is.
+One more test is inconclusive in the normal run on each system, and which one depends on the system's culture
+data: `Legacy/GregorianTitleTests` has a case for `ar-SA` counting in the Gregorian calendar and a case for it
+counting in another one. On Linux the second is inconclusive; on macOS and Windows, where `ar-SA` counts in the
+Um Al Qura calendar, the first is.
 
 The parity tests have no platform conditions. A few of them compare titles that come from the operating
 system's culture data, and are reported as inconclusive, not failed, on a system whose data differs from the
@@ -418,7 +420,8 @@ The rules:
 - **Do not remove a scenario or narrow a comparison** to make a change pass. Add scenarios freely.
 - **Real cultures are named, never required.** A scenario that names a culture the machine lacks is
   inconclusive, not failed. Which cultures have a calendar that is not Gregorian depends on the system: on the
-  Linux system the tests were written on, `fa-IR`, `ps-AF` and `th-TH` do, and `ar-SA` does not.
+  Linux system the tests were written on, `fa-IR`, `ps-AF` and `th-TH` do, and `ar-SA` does not; on the macOS
+  and Windows CI systems `ar-SA` does too.
 - The corrected behavior itself is stated by tests of its own, added with the correction. The migration tests
   say that nothing else changed. For D-57 those are `Legacy/ConstructorColorTests`, with the literal 2.0
   expectations, and `Migration/ConstructorColorMigrationTests`, with 1.0.0 and 2.0 side by side. For D-58 they
@@ -520,13 +523,26 @@ What the scan found when the correction was made (.NET 11 runtime, the systems' 
 
 | System | Cultures | Dates in a calendar that is not Gregorian | Title differs from 1.0.0 | Offer no Gregorian calendar |
 |---|---|---|---|---|
-| Linux (local, and the CI runner) | 907 | 15: 12 Persian, 3 Thai Buddhist | 12, the Persian ones | 0 |
+| Linux (local, and the CI runner) | 907 | 15: 12 Persian, 3 Thai Buddhist | 12: the Persian ones | 0 |
+| macOS (CI runner) | 1,063 | 18: 12 Persian, 4 Thai Buddhist, 2 Um Al Qura | 14: the Persian ones, `ar-SA` and `en-SA` | 0 |
+| Windows (CI runner) | 890 | 15: 12 Persian, 2 Thai Buddhist, 1 Um Al Qura | 13: the Persian ones and `ar-SA` | 0 |
 
-On that Linux system the twelve are `ckb-IR`, `fa`, `fa-AF`, `fa-IR`, `lrc`, `lrc-IR`, `mzn`, `mzn-IR`, `ps`,
-`ps-AF`, `uz-Arab` and `uz-Arab-AF`. The three of the Thai Buddhist calendar (`shn-TH`, `th`, `th-TH`) have the
-Gregorian months, so both versions write the same title there. `ar-SA` and `he-IL` count in the Gregorian
-calendar. No culture was skipped. None of these numbers is asserted by a test: a test asserts the rule, for
-whatever cultures the machine has.
+The numbers are the same for the `net10.0` build, the `netstandard2.1` build and, on Linux, the Native AOT
+application.
+
+- **The twelve cultures of the Persian calendar are the same on all three systems:** `ckb-IR`, `fa`, `fa-AF`,
+  `fa-IR`, `lrc`, `lrc-IR`, `mzn`, `mzn-IR`, `ps`, `ps-AF`, `uz-Arab` and `uz-Arab-AF`.
+- **`ar-SA` is the platform difference.** On macOS and Windows it counts in the Um Al Qura calendar, so its
+  title changes there (and that of `en-SA` on macOS). On Linux it counts in the Gregorian calendar and nothing
+  changes. The same program therefore sees this correction under `ar-SA` on two of the three systems.
+- **The cultures of the Thai Buddhist calendar have the Gregorian months,** so both versions write the same
+  title under them, on every system.
+- **No culture on any system offers no Gregorian calendar,** and none was skipped.
+- A culture given another of its calendars (`ar-SA` with the Hijri or the Um Al Qura calendar, `he-IL` with the
+  Hebrew one, `fa-IR` with the Hijri one) changes its title on all three systems; `ja-JP` with the Japanese
+  calendar does not.
+
+None of these numbers is asserted by a test: a test asserts the rule, for whatever cultures the machine has.
 
 ### The Campertron parity fixtures
 
@@ -711,7 +727,8 @@ Gregorian calendar set on the culture's own writable formats instead of a copy (
 place of the argument (95); the genitive name (25); the current culture replaced while drawing (13); the
 abbreviated name (36); and the title written with `Write` and a separate line end (192). One thing no test on
 these systems can tell apart: whether the culture's own kind of Gregorian calendar is preferred to the other
-kinds, because the systems' data offers only that kind. The preference is for systems that offer more.
+kinds, because the data of the Linux system offers only that kind. The preference is for systems that offer
+more.
 
 ## Rules for adding tests
 

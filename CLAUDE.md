@@ -12,8 +12,10 @@ console applications. It is .NET only.
 - **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
 - **`master`:** builds an unpublished development package, `1.1.0-dev`.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
-  `ConsoleCalendarGenerator` namespace. The legacy class uses none of it.
-  - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. Its
+  `ConsoleCalendarGenerator` namespace.
+  - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
+    is a compatibility facade: it takes the position of every day from `MonthLayout` and keeps everything else
+    about how 1.0.0 draws a month (title, colors, the exact console calls, exceptions) in private code. Its
     behavior is identical to published 1.0.0, which the tests verify.
   - The layout model, in `ConsoleCalendarGenerator/Layout/`: `MonthLayout`, `MonthLayoutWeek` and
     `MonthLayoutCell`. It places the days of a month in weeks and weekday columns and does nothing else.
@@ -26,12 +28,11 @@ console applications. It is .NET only.
     optional console colors and does nothing else.
   - Output, in `ConsoleCalendarGenerator/Output/`: `MonthWriter` for any `TextWriter`, and `ConsoleMonthWriter`,
     the only modern type that uses the console.
-- **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation) and every
-  layer of the modern API for a single month are complete. The legacy class has **not** been rebuilt on the
-  modern API; that is planned and not implemented.
-- **Next phase:** the legacy facade: `CalendarGenerator.ConsoleCalendar` reimplemented over the modern API with
-  every characterization test passing unchanged. See [roadmap.md](docs/ai-context/roadmap.md). Start it only
-  when Shaun has scoped it.
+- **Phase:** the foundations (CI, characterization tests, build and packaging, this documentation), every layer
+  of the modern API for a single month, and the legacy facade are complete. Campertron parity fixtures, the
+  user-facing material and everything about releases are **planned and not implemented**.
+- **Next phase:** Campertron parity fixtures, inside this repository only. See
+  [roadmap.md](docs/ai-context/roadmap.md). Start it only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|

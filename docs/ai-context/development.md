@@ -92,8 +92,8 @@ tracked or new unignored files.
   `IsPackable` off (the library turns it on), and `ContinuousIntegrationBuild` on GitHub Actions. Put a setting
   here only if every project should have it; anything else belongs in a project file.
 - **`.editorconfig`** holds basic formatting rules for editors and `dotnet format`. They are not enforced in CI,
-  and the two legacy source files (`ConsoleCalendar.cs`, the example's `Program.cs`) do not fully conform. Do
-  not reformat them as a side effect of other work. The file has one entry that does affect the build: it turns
+  and the example's `Program.cs` does not fully conform. Do not reformat it as a side effect of other work.
+  `ConsoleCalendar.cs` keeps its byte order mark and its block-scoped namespace from 1.0.0. The file has one entry that does affect the build: it turns
   `CS1591` off for `ConsoleCalendarGenerator/ConsoleCalendar.cs`
   ([D-11](decisions.md#d-11-public-xml-documentation-is-deferred)).
 - **Implicit usings** are off in the library, so its dependencies stay visible across both targets, and on in the

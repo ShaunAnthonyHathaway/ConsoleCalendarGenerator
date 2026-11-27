@@ -103,13 +103,53 @@ Each line is covered by tests in `ConsoleCalendarGenerator.Tests/Legacy/`.
   foreground and background colors are reset, not restored.
 - Colors are changed even when `Console.Out` has been replaced.
 - The library writes no escape sequences of its own.
+- Which method of the console's writer is called is observable to a program that replaces `Console.Out` with
+  its own writer. The title and the weekday row are one `WriteLine(string)` each. Every cell is one
+  `Write(string)`, except a two-digit day in the Monday column, which is `Write(int)`. A row ends with
+  `WriteLine()`. After the last day come `Write("\n")` and `WriteLine()`.
+- The space between two columns is part of the write of the day after it. An empty cell before the 1st is
+  written three wide, so the 1st itself is written two wide.
+- Nothing is locked: the class does not keep draws from several threads apart.
+
+## How the legacy class is built
+
+Since the facade phase the class takes one thing from the modern API and keeps the rest to itself. This table is
+the map from each published behavior to where it now lives. A change to the class has to keep every row true.
+
+| Published behavior | Where it lives |
+|---|---|
+| Public members, parameter names, unsealed class | The same declarations as 1.0.0 |
+| Constructor color assignments, including the defect; getters and setters | Four private fields, assigned exactly as before |
+| A null list fails first, with `NullReferenceException` | The list is enumerated before anything else, with no null check |
+| An invalid month or year fails with the runtime's own `ArgumentOutOfRangeException` | The same `DateTime.DaysInMonth(Year, Month)` call, in the same position |
+| Which column and which row each day is in; four, five or six rows; Monday first | `MonthLayout.Create(Year, Month, DayOfWeek.Monday)` |
+| A date selects a day by year, month and day; the list is not changed | A private lookup by day of the month |
+| Title: month name from the current culture's own calendar, three-step indent, the year appended | Private |
+| The fixed English weekday row | Private constant |
+| One console call per cell, the method and text of each, empty cells in the color of the 1st | Private, walking the cells of the layout in order |
+| Row end after Sunday; bare `\n` and a line end after the last day | Private |
+| Color set before every call; three `ResetColor` calls; caller's colors not restored; an undefined color fails when it is first used | Private |
+| No lock, no restoration, no early validation | By not using `ConsoleMonthWriter`, `CalendarTheme` or `MonthRenderer` |
+
+What the class does not use, and why:
+
+- **`MonthRenderer`.** Its title is Gregorian and formatted from a pattern; its cells and gaps are separate
+  segments. The legacy title and the legacy write boundaries would have to be reassembled from them.
+- **`DayState`.** A state must have a visible marker, and a selected date in 1.0.0 changes color only.
+- **`CalendarTheme` and `ConsoleMonthWriter`.** They refuse undefined colors early, restore the caller's colors,
+  write whole segments, end every line the same way and take a lock. 1.0.0 does none of those.
+
+No option, overload or type was added to the modern API for the facade, and none is needed
+([D-45](decisions.md#d-45-no-public-compatibility-profile)).
 
 ## What protects it
 
 Three independent layers. A change has to pass all of them.
 
 1. **Characterization tests** (`ConsoleCalendarGenerator.Tests/Legacy/`), including digests recorded from the
-   published 1.0.0 assembly. They run against both library builds. See [testing.md](testing.md).
+   published 1.0.0 assembly, and `ConsoleCalendarGenerator.Tests/Facade/`, with digests of every console call
+   recorded from the original implementation before it was rebuilt, and a comparison of the drawn grid with
+   `MonthLayout`. They run against both library builds. See [testing.md](testing.md).
 2. **`PublicApiTests`,** which compares the public surface of the `CalendarGenerator` namespace, by reflection,
    with the list above. The modern API is listed the same way in `ModernApiTests`, which also fails if the
    assembly exports a type outside the two namespaces.

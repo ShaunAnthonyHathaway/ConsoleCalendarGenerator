@@ -40,8 +40,11 @@ console applications. It is .NET only.
   complete as well (see the next point). The 2.0 groundwork is complete: the 2.0 policy below, the version
   identity, and the two things in the next point. All five corrections are done; no further runtime change
   is approved. The final 2.0 documentation is done as well: the README with its migration section, the
-  changelog, the XML comments and the package's description. Everything about releases is **planned and not
-  implemented**.
+  changelog, the XML comments and the package's description. The release infrastructure is done too: CI's
+  actions are pinned to commits, and every build makes and checks the four files of a release for the
+  development version, uses the assemblies directly, upgrades a program from the published 1.0.0 and rehearses
+  release preparation. **No release, no candidate, no tag and no publication exists,** and nothing in the
+  repository can publish.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
@@ -63,8 +66,8 @@ console applications. It is .NET only.
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
 - **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
   approval. No 1.x release, no prerelease, no tag and no release is authorized.
-- **Next phase:** release infrastructure and supply-chain hardening. See
-  [roadmap.md](docs/ai-context/roadmap.md). Start a phase only when Shaun has scoped it.
+- **Next phase:** final release preparation, which sets the version 2.0.0 and is followed by the one build of
+  the candidate. See [roadmap.md](docs/ai-context/roadmap.md). Start a phase only when Shaun has scoped it.
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -89,6 +92,14 @@ dotnet test ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj
 dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configuration Release --no-build --output artifacts/package -warnaserror
 bash eng/verify-package.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package            # add --native-aot where a native toolchain is installed
+bash eng/upgrade-smoke.sh artifacts/package             # a program upgraded from the published 1.0.0
+bash eng/release-rehearsal.sh                           # what release preparation would do; changes nothing
+
+# The four files of a release, for the development version. Needs a build made with
+# -p:ContinuousIntegrationBuild=true and a checkout with nothing uncommitted.
+bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
+bash eng/release-bundle-tamper-test.sh artifacts/release-bundle
+bash eng/direct-reference-smoke.sh artifacts/release-bundle
 ```
 
 The build must finish with 0 warnings. None of these commands publishes anything.
@@ -118,7 +129,10 @@ The build must finish with 0 warnings. None of these commands publishes anything
 5. **Publication needs Shaun's explicit approval, each time.** That covers tags, GitHub releases, NuGet
    publication, any manual workflow dispatch or rerun that could publish, publication recovery, and repository
    settings. A published version is never changed, and what is published is the exact files that were
-   validated, never a rebuild (D-72). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
+   validated, never a rebuild (D-72). The bundle CI makes is a development bundle: do not call one a candidate,
+   and do not treat its checksums as those of a release. The workflow keeps read-only permission, no secret
+   and no manual trigger, and every action stays pinned to a full commit SHA (D-75). See
+   [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
    done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
    fixtures and what the modern API renders for them do not change.
@@ -138,4 +152,5 @@ The build must finish with 0 warnings. None of these commands publishes anything
 | Tests | [testing.md](docs/ai-context/testing.md) |
 | The README, the example, the screenshot, XML comments | [development.md](docs/ai-context/development.md#the-readme-the-example-and-the-screenshot), [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#the-readme-on-nugetorg) |
 | Building, CI, SDK or framework upgrades | [development.md](docs/ai-context/development.md) |
-| The package, versions, releases | [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md) |
+| The package, versions, releases, the release bundle | [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md) |
+| The workflow, a pinned action | [development.md](docs/ai-context/development.md#ci) |

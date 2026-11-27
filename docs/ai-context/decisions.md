@@ -1090,7 +1090,8 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
 
 ### D-72: The release is 2.0.0, built once, and published as the files that were validated
 
-- **Status:** Approved as the plan. **Nothing is authorized,** and nothing of it is implemented: there is no
+- **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. **Nothing is authorized.** The
+  machinery for it exists ([D-76](#d-76-a-release-is-four-files-made-and-checked-by-scripts)); there is no
   release commit, no candidate, no tag and no publication.
 - **Decision:** The version that is released is 2.0.0. It is an immutable release:
   1. the candidate is built once, from the release commit Shaun approves;
@@ -1143,3 +1144,61 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
   ([D-68](#d-68-the-published-readme-of-20-links-to-the-tag-v200)), so the same link is right for the released
   package unless release preparation decides otherwise; `eng/verify-package.sh` accepts either. A description
   that speaks of a release, a version or publication fails `PackageMetadataTests`.
+
+## Release infrastructure
+
+Settled in the release infrastructure phase, within the scope Shaun gave it.
+
+### D-75: Actions are pinned to the full SHA of a commit
+
+- **Status:** Approved. Implemented.
+- **Decision:** Every action a workflow uses is referenced by the 40 hexadecimal digits of a commit, with the
+  version that commit is released as in a comment on the same line. The three in use are `actions/checkout`
+  v7.0.1, `actions/setup-dotnet` v6.1.0 and `actions/upload-artifact` v7.0.2, each the latest release of its
+  major version when it was pinned and the commit CI had been running under the major tag.
+- **Reason:** A tag or a branch names whatever it points at on the day of the run, and can be moved. GitHub's
+  own guidance is that a full commit SHA is the way to use an action as something that cannot change.
+- **Consequences:** `WorkflowTests` fails on any other form of reference, on an action that is not one of the
+  three, on any permission beyond reading the contents, on any other trigger and on a secret. A pin does not
+  move by itself: updating one is a reviewed change, by the steps in
+  [development.md](development.md#updating-a-pinned-action). Dependabot was not added; three actions that
+  change a few times a year do not need a bot with write access to pull requests. GitHub's workflow lockfile
+  (`gh actions-lock`) was looked at and not adopted: pins in the workflow file are visible where the action is
+  used and need no tool. The repository setting that requires SHA pins is off and is a setting for Shaun.
+
+### D-76: A release is four files, made and checked by scripts
+
+- **Status:** Approved. Implemented for development versions. **No release, and no candidate for one, has been
+  made.**
+- **Decision:** A release consists of `ConsoleCalendarGenerator.<version>.nupkg`,
+  `ConsoleCalendarGenerator.<version>.snupkg`, `ConsoleCalendarGenerator-<version>-binaries.zip` and
+  `SHA256SUMS.txt`. `eng/release-bundle.sh` makes them from a package that was built, tested and packed, and
+  `eng/verify-release-bundle.sh` checks them. The archive holds both builds of the library with their
+  documentation and symbols, the readme and the license; its contents are taken out of the packages, never
+  built for it; and it is written so that the same files always give the same bytes. The checksums are SHA-256
+  in lower case, in the format `sha256sum` writes and checks.
+- **Reason:** [D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated) asks
+  for files that are built once, hashed, validated and published unchanged. That needs one place that makes
+  them, one check that anyone can repeat, and an archive that cannot quietly hold another build than the
+  package does.
+- **Consequences:** The bundle of a development version is made and checked on every CI run, on all three
+  systems, and its checksums are printed; they are the checksums of a development bundle and never of a
+  release. Linux is the authoritative place to make a bundle. A build for a bundle uses
+  `ContinuousIntegrationBuild`, so that nothing in it names a folder of a machine. The scripts publish
+  nothing, and `ReleaseToolingTests` fails on a script or workflow that could. Details:
+  [packaging-and-releases.md](packaging-and-releases.md#the-release-bundle).
+
+### D-77: No artifact attestations for now
+
+- **Status:** Decided for this phase, on the evidence. Shaun may decide otherwise for the release.
+- **Decision:** No GitHub artifact attestation is created for the package, the symbol package, the archive or
+  the checksums, and the workflow gets neither `id-token: write` nor `attestations: write`.
+- **Reason:** The permissions would have to be given to a job of the only workflow, which today can read and
+  nothing else, on every pull request and push. Attestations are public and permanent, and a job that makes
+  them on every push would make them for development bundles. What an attestation would add for a release is
+  largely there without it: an immutable GitHub release is attested by GitHub itself, and the checksums can be
+  compared by anyone.
+- **Consequences:** If it is wanted later, it is a job of its own that runs only for the release commit and
+  attests the bundle the build job made, without rebuilding
+  ([packaging-and-releases.md](packaging-and-releases.md#artifact-attestations-not-now)). Adding it is a change
+  of permissions and needs its own decision.

@@ -9,7 +9,7 @@ How to build, test and change this repository today. Every command here is run f
 - **A .NET 11 runtime** to run the tests, which the SDK includes.
 - **bash** for the two scripts in `eng/`. On Windows, Git Bash works; `.gitattributes` keeps `*.sh` files on LF
   line endings for that reason.
-- **unzip,** used by `eng/verify-package.sh`.
+- **unzip** and **git,** used by `eng/verify-package.sh` and the release scripts.
 - Optional: a native toolchain (for example clang on Linux) for the Native AOT part of the consumer smoke tests,
   and the util-linux `script` program for the terminal tests and for running the original sample in the
   consumer smoke tests.
@@ -71,12 +71,24 @@ bash eng/verify-package.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package
 bash eng/consumer-smoke.sh artifacts/package --native-aot     # also publishes and runs a Native AOT application
 bash eng/consumer-smoke.sh artifacts/package --native-aot --published-sample     # Linux: also the 1.0.0 sample with the published 1.0.0
+bash eng/upgrade-smoke.sh artifacts/package                    # a program upgraded from the published 1.0.0
+bash eng/release-rehearsal.sh                                  # what release preparation would do; changes nothing
+```
+
+The release bundle needs a build that names no folder of the machine, and a checkout with nothing uncommitted:
+
+```bash
+dotnet build ConsoleCalendarGenerator.sln --configuration Release --no-restore -warnaserror -p:ContinuousIntegrationBuild=true
+dotnet pack ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj --configuration Release --no-build --output artifacts/package -warnaserror
+bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
+bash eng/release-bundle-tamper-test.sh artifacts/release-bundle
+bash eng/direct-reference-smoke.sh artifacts/release-bundle
 ```
 
 Packing is explicit; a build never creates a package. Packing also runs package validation against published
-1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md). The package these
-commands make is the development version `2.0.0-dev`. None of them publishes anything, and no command that
-needs a credential belongs in this file.
+1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md). The package and the
+bundle these commands make are of the development version `2.0.0-dev`. None of them publishes anything, and no
+command that needs a credential belongs in this file.
 
 ## Generated output and cleaning
 
@@ -180,10 +192,49 @@ once per operating system:
 8. `eng/verify-package.sh`
 9. `eng/consumer-smoke.sh` (with `--native-aot --published-sample` on Linux, which also runs the sample
    program of 1.0.0 with the published 1.0.0 and checks binary compatibility)
-10. Upload the `.nupkg` and `.snupkg` as a CI artifact, kept seven days (Linux only)
+10. `eng/release-bundle.sh`: the four files of a release, for the development version, made and checked
+11. `eng/release-bundle-tamper-test.sh`: the check refuses a damaged bundle
+12. `eng/direct-reference-smoke.sh`: a program that references an assembly of the archive directly
+13. `eng/upgrade-smoke.sh`: a program upgraded from the published 1.0.0
+14. `eng/release-rehearsal.sh`: what release preparation would do, with nothing changed
+15. Upload the `.nupkg` and `.snupkg` as the artifact `nuget-packages`, kept seven days, and the bundle as the
+    artifact `release-bundle`, kept 90 days (Linux only)
 
 It has read-only repository permission, uses no secrets, has no manual trigger and publishes nothing. Keep it
-that way; see [packaging-and-releases.md](packaging-and-releases.md#release-boundaries).
+that way; see [packaging-and-releases.md](packaging-and-releases.md#release-boundaries). `WorkflowTests` and
+`ReleaseToolingTests` fail on a change that would give it more.
+
+### Updating a pinned action
+
+Every action is pinned to the full SHA of a commit, with its version in a comment on the same line
+([D-75](decisions.md#d-75-actions-are-pinned-to-the-full-sha-of-a-commit)):
+
+```yaml
+uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+```
+
+A pin never moves by itself. To move one, deliberately and as its own small change:
+
+1. **Decide why.** A fixed vulnerability, a deprecation notice in a CI log, or a runner that the pinned
+   version no longer supports. A newer release existing is not a reason by itself, and a new major version is
+   a change of behavior to be read about first.
+2. **Find the commit in the action's own repository,** never in a fork, and never from a search result:
+
+   ```bash
+   gh api repos/actions/checkout/git/ref/tags/v7.0.1 --jq '.object.type + " " + .object.sha'
+   ```
+
+   If the type is `commit`, that is the SHA. If it is `tag`, the tag is annotated and the SHA shown is the
+   tag object, not the commit: ask for the commit behind it with
+   `gh api repos/actions/checkout/git/tags/<that sha> --jq .object.sha`. `git ls-remote
+   https://github.com/actions/checkout 'refs/tags/v7.0.1^{}'` gives the commit of an annotated tag directly.
+3. **Read what changed** between the two releases: the release notes, and the comparison of the two commits.
+4. **Change the SHA and the comment together,** in every place the action is used.
+5. **Let CI run on all three systems,** and check in the log's "Download action repository" line that the SHA
+   it fetched is the one written.
+
+The three pins were made this way. Each is the latest release of its major version at the time, and the
+commit that CI was already running under the major tag, so pinning changed nothing about what runs.
 
 ## Working practice
 

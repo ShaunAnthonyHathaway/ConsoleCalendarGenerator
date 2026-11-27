@@ -1,0 +1,21 @@
+# The links of README.md that point into this repository, and what happens to each when a version is released.
+#
+# The README is packed into the package and shown on nuget.org for as long as that version exists.
+#
+#   tag     The target is part of the version: the image, a file, a folder of code. In the README of a released
+#           package it points at the tag of that release, where it can never change.
+#   master  The target states the project's current policy. It stays on the default branch, so that a reader of
+#           any version gets the current text.
+#
+# Until a release is prepared, every link is written with "master", here and in the README. A link added to
+# the README has to be added here: the tests and eng/release-links.sh fail on a link that is not listed.
+# eng/release-links.sh <tag> shows the one substitution that release preparation makes, and with --apply makes it.
+
+tag     https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/docs/images/month-with-theme.png
+tag     https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/global.json
+tag     https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/master/ConsoleCalendarGeneratorExample
+master  https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md
+master  https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md
+master  https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/SECURITY.md
+master  https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/LICENSE
+master  https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/issues

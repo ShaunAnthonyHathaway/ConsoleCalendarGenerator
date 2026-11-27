@@ -58,6 +58,10 @@ bash eng/consumer-smoke.sh artifacts/package
 - `consumer-smoke.sh` installs the package into small separate applications and runs them. Add `--native-aot`
   where a native toolchain is installed.
 
+CI also puts together the files a release would consist of and checks them, uses the assemblies without NuGet,
+and upgrades a program from the published 1.0.0. The scripts for that are in [eng](eng) as well, and
+[docs/ai-context/packaging-and-releases.md](docs/ai-context/packaging-and-releases.md) says how to run them.
+
 None of these commands publishes anything.
 
 ## What a change must keep
@@ -96,7 +100,8 @@ None of these commands publishes anything.
 ## Releases
 
 Only the maintainer publishes packages, creates tags and makes releases, and each of those steps is decided
-separately. Pull requests must not add workflows or scripts that publish.
+separately. Pull requests must not add workflows or scripts that publish, give the workflow more than read
+access, or reference an action by anything but the full SHA of a commit. Tests fail on each of those.
 
 Two rules a release follows, so that a change is not designed against them:
 

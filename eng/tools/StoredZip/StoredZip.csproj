@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A small tool for eng/release-bundle.sh: it writes a ZIP archive whose bytes depend on nothing but the names
+    and the contents of the files in it. It is not part of the solution, not packed and not shipped. The scripts
+    build it in a temporary folder.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseAppHost>false</UseAppHost>
+    <!-- Run on whatever newer runtime the machine has, like the applications of the smoke tests. -->
+    <RollForward>LatestMajor</RollForward>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

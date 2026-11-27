@@ -4,7 +4,8 @@ using ConsoleCalendarGenerator.Tests.Support;
 namespace ConsoleCalendarGenerator.Tests;
 
 /// <summary>
-/// The public API of the modern namespace, ConsoleCalendarGenerator: the layout model and the rendering types.
+/// The public API of the modern namespace, ConsoleCalendarGenerator: the layout model, rendering, day states,
+/// the theme and the writers.
 /// These names are a commitment once a package containing them is published, so a change here is a change
 /// consumers can see, and anything that appears here unplanned is a mistake. The legacy API is listed
 /// separately, in Legacy/PublicApiTests.cs.
@@ -13,11 +14,39 @@ namespace ConsoleCalendarGenerator.Tests;
 public class ModernApiTests
 {
     [Test]
-    public void TheModernNamespace_ExposesExactlyTheLayoutAndRenderingTypes()
+    public void TheModernNamespace_ExposesExactlyTheIntendedTypesAndMembers()
     {
         string[] expected =
         {
             "assembly ConsoleCalendarGenerator",
+            "public sealed class ConsoleCalendarGenerator.CalendarTheme : System.Object",
+            "  ConsoleCalendarGenerator.CalendarTheme WithDayColor(System.Nullable<System.ConsoleColor> color)",
+            "  ConsoleCalendarGenerator.CalendarTheme WithStateColor(System.String stateName, System.Nullable<System.ConsoleColor> color)",
+            "  ConsoleCalendarGenerator.CalendarTheme WithTitleColor(System.Nullable<System.ConsoleColor> color)",
+            "  ConsoleCalendarGenerator.CalendarTheme WithTitleSuffixColor(System.Nullable<System.ConsoleColor> color)",
+            "  ConsoleCalendarGenerator.CalendarTheme WithWeekdayLabelColor(System.Nullable<System.ConsoleColor> color)",
+            "  System.Collections.Generic.IReadOnlyDictionary<System.String, System.ConsoleColor> get_StateColors()",
+            "  System.Nullable<System.ConsoleColor> GetColor(ConsoleCalendarGenerator.RenderedSegment segment)",
+            "  System.Nullable<System.ConsoleColor> get_DayColor()",
+            "  System.Nullable<System.ConsoleColor> get_TitleColor()",
+            "  System.Nullable<System.ConsoleColor> get_TitleSuffixColor()",
+            "  System.Nullable<System.ConsoleColor> get_WeekdayLabelColor()",
+            "  property DayColor",
+            "  property None",
+            "  property StateColors",
+            "  property TitleColor",
+            "  property TitleSuffixColor",
+            "  property WeekdayLabelColor",
+            "  static ConsoleCalendarGenerator.CalendarTheme get_None()",
+            "public static class ConsoleCalendarGenerator.ConsoleMonthWriter : System.Object",
+            "  static System.Void Write(ConsoleCalendarGenerator.RenderedMonth month, ConsoleCalendarGenerator.CalendarTheme theme)",
+            "public sealed class ConsoleCalendarGenerator.DayState : System.Object",
+            "  .ctor(System.String name, System.String marker)",
+            "  System.String get_Marker()",
+            "  System.String get_Name()",
+            "  property Marker",
+            "  property Name",
+            "  virtual System.String ToString()",
             "public sealed class ConsoleCalendarGenerator.MonthLayout : System.Object",
             "  System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.MonthLayoutWeek> get_Weeks()",
             "  System.Collections.Generic.IReadOnlyList<System.DayOfWeek> get_DaysOfWeek()",
@@ -77,6 +106,10 @@ public class ModernApiTests
             "  static ConsoleCalendarGenerator.MonthRenderOptions get_Default()",
             "public static class ConsoleCalendarGenerator.MonthRenderer : System.Object",
             "  static ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options)",
+            "  static ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.DateTime, ConsoleCalendarGenerator.DayState>> dayStates)",
+            "  static ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options, System.Collections.Generic.IEnumerable<System.DateTime> dates, ConsoleCalendarGenerator.DayState state)",
+            "public static class ConsoleCalendarGenerator.MonthWriter : System.Object",
+            "  static System.Void Write(ConsoleCalendarGenerator.RenderedMonth month, System.IO.TextWriter writer)",
             "public sealed class ConsoleCalendarGenerator.RenderedLine : System.Object",
             "  ConsoleCalendarGenerator.RenderedLineKind get_Kind()",
             "  System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.RenderedSegment> get_Segments()",
@@ -98,6 +131,7 @@ public class ModernApiTests
             "  property Lines",
             "  virtual System.String ToString()",
             "public sealed class ConsoleCalendarGenerator.RenderedSegment : System.Object",
+            "  ConsoleCalendarGenerator.DayState get_State()",
             "  ConsoleCalendarGenerator.RenderedSegmentKind get_Kind()",
             "  System.Nullable<System.DateTime> get_Date()",
             "  System.Nullable<System.DayOfWeek> get_DayOfWeek()",
@@ -105,6 +139,7 @@ public class ModernApiTests
             "  property Date",
             "  property DayOfWeek",
             "  property Kind",
+            "  property State",
             "  property Text",
             "  virtual System.String ToString()",
             "public enum ConsoleCalendarGenerator.RenderedSegmentKind : System.Int32",

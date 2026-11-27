@@ -104,7 +104,7 @@ other_images="$(grep -E '!\[[^]]*\]\(' <<< "$readme" | grep -v -E '!\[[^]]*\]\(h
 [ -z "$other_images" ] || fail "the packaged readme has an image that is not an absolute https URL: $other_images"
 
 # Every public type of the modern namespace. A new public type is added to this list in the change that adds it.
-modern_types="MonthLayout MonthLayoutCell MonthLayoutWeek MonthRenderOptions MonthRenderer RenderedLine RenderedLineKind RenderedMonth RenderedSegment RenderedSegmentKind TitleAlignment WeekdayLabelStyle"
+modern_types="CalendarTheme ConsoleMonthWriter DayState MonthLayout MonthLayoutCell MonthLayoutWeek MonthRenderOptions MonthRenderer MonthWriter RenderedLine RenderedLineKind RenderedMonth RenderedSegment RenderedSegmentKind TitleAlignment WeekdayLabelStyle"
 
 for framework in net10.0 netstandard2.1; do
   # grep -c reads its whole input, so unzip is never cut off mid-write (which "set -o pipefail" would report).
@@ -118,7 +118,10 @@ for framework in net10.0 netstandard2.1; do
       || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document ConsoleCalendarGenerator.$type"
   done
   for member in 'M:ConsoleCalendarGenerator.MonthLayout.Create(' 'M:ConsoleCalendarGenerator.MonthRenderer.Render(' \
-      'P:ConsoleCalendarGenerator.MonthRenderOptions.Default"' 'F:ConsoleCalendarGenerator.RenderedSegmentKind.Day"'; do
+      'P:ConsoleCalendarGenerator.MonthRenderOptions.Default"' 'F:ConsoleCalendarGenerator.RenderedSegmentKind.Day"' \
+      'M:ConsoleCalendarGenerator.DayState.#ctor(' 'P:ConsoleCalendarGenerator.RenderedSegment.State"' \
+      'M:ConsoleCalendarGenerator.CalendarTheme.GetColor(' 'M:ConsoleCalendarGenerator.MonthWriter.Write(' \
+      'M:ConsoleCalendarGenerator.ConsoleMonthWriter.Write('; do
     grep -q -F "<member name=\"$member" <<< "$documentation" \
       || fail "lib/$framework/ConsoleCalendarGenerator.xml does not document $member"
   done

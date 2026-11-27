@@ -7,7 +7,7 @@ point to its replacement rather than deleting it.
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
 All decisions below date from 2026-11-27, the day the modernization was planned and its first phases, up to and
-including text rendering, were merged.
+including day states, the theme and output, were merged.
 
 ## Scope and compatibility
 
@@ -117,8 +117,8 @@ including text rendering, were merged.
 
 ### D-12: Layout and rendering are separated from console output
 
-- **Status:** Approved direction. Layout (D-25 to D-28) and text rendering with segments (D-30 to D-37) are
-  implemented. Day states, markers, themes and output are not.
+- **Status:** Approved. Implemented for a single month: layout (D-25 to D-28), text rendering with segments
+  (D-30 to D-37), and day states, the theme and output (D-38 to D-43).
 - **Decision:** The modern API separates calendar layout, deterministic text rendering, semantic styling, color
   mapping and output. Layout and rendering must not need a live console.
 - **Reason:** Testability, reuse, and Campertron's need for rendered lines it writes itself.
@@ -126,7 +126,8 @@ including text rendering, were merged.
 
 ### D-13: State can be shown with markers, not only color
 
-- **Status:** Approved direction. Not implemented.
+- **Status:** Approved. Implemented ([D-38](#d-38-a-day-state-is-a-name-and-a-visible-marker),
+  [D-40](#d-40-the-marker-goes-inside-the-cell-and-must-fit)). A state cannot exist without a visible marker.
 - **Decision:** The modern API can mark a day's state with text, so that state is never conveyed by color alone.
 - **Reason:** Accessibility, redirected output and terminals without color. Campertron marks open days with `*`.
 - **Consequences:** Markers are part of rendering, not of the theme.
@@ -249,8 +250,8 @@ the evidence, and accepted by him when he reviewed that phase. The API itself is
   left alone because no consumer needs it yet and a layout is fully identified by its three inputs. A default
   first day of the week is a product choice that belongs with the rendering options.
 - **Consequences:** Adding members later is compatible; renaming or removing these is not, once published. No
-  interface, base class or options type exists for the layout. Which first day of the week is the default
-  remains open in [Q-01](open-questions.md#q-01-what-are-the-modern-apis-public-types-and-signatures).
+  interface, base class or options type exists for the layout. The default first day of the week was settled
+  later, in [D-32](#d-32-rendering-defaults-are-fixed-and-read-nothing-from-the-process).
 
 ### D-26: Layout collections are read-only lists with no package dependency
 
@@ -302,9 +303,9 @@ the evidence, and accepted by him when he reviewed that phase. The API itself is
 
 ## Rendering
 
-Settled in the text-rendering phase, within the authority Shaun gave that phase. The API, the defaults and the
-contracts are listed in [architecture.md](architecture.md#text-rendering). Two of these are product choices
-rather than engineering ones, and are the first to revisit if Shaun disagrees: the defaults in D-32.
+Settled in the text-rendering phase, within the authority Shaun gave that phase, and accepted by him when he
+reviewed it, including the defaults in D-32 and the limits in D-35. The API, the defaults and the contracts are
+listed in [architecture.md](architecture.md#text-rendering).
 
 ### D-30: One rendering entry point that owns the layout
 
@@ -417,3 +418,106 @@ rather than engineering ones, and are the first to revisit if Shaun disagrees: t
 - **Consequences:** The next phase adds state to `Day` segments and maps kinds to colors; neither changes how
   lines are built. New segment or line kinds are additions, so code that switches on a kind should have a
   default case.
+
+## States, themes and output
+
+Settled in the states, themes and output phase, within the authority Shaun gave that phase. The API and the
+contracts are listed in [architecture.md](architecture.md#day-states-and-markers).
+
+### D-38: A day state is a name and a visible marker
+
+- **Status:** Approved. Implemented.
+- **Decision:** `DayState` has a name and a marker and nothing else. Both must contain a character that is not
+  white space and no line break. There is no further grammar for a name. A state has no color, no display
+  label and no metadata. Equality is reference equality; the name, compared character by character, is what
+  identifies the kind of state.
+- **Reason:** The name is what a theme and a consumer look a state up by, and an ordinal comparison never
+  depends on a culture. Requiring a visible marker is what makes state accessible without color
+  ([D-13](#d-13-state-can-be-shown-with-markers-not-only-color)). Color stays in the theme so that the same
+  rendered month can be written plain, themed or mapped by a consumer. A label is only needed by a legend, and
+  there is none.
+- **Consequences:** There is no legend subsystem. A caller explains markers in `TitleSuffix` or around the
+  calendar, as Campertron does today. Revisit only if real multi-state use shows a need.
+
+### D-39: One state per day, and the first entry wins
+
+- **Status:** Approved. Implemented. Resolves the former open question Q-04.
+- **Decision:** States are attached through two overloads of `MonthRenderer.Render`: one takes dates with their
+  states (`IEnumerable<KeyValuePair<DateTime, DayState>>`), one takes dates and a single state. A date selects a
+  day by year, month and day; time of day and `Kind` are ignored; dates outside the month are ignored. A day has
+  at most one state, and when several entries select it, the first in the order of the input decides. Every
+  entry is validated, also those that are ignored. Within one call, two states with the same name must have the
+  same marker.
+- **Reason:** One state per day keeps the cell, the theme and the meaning of a marker simple, and both existing
+  renderers have a single state. First-wins lets a caller express priority by ordering, and gives a dictionary
+  and a list the same meaning. `KeyValuePair` lets a `Dictionary<DateTime, DayState>` be passed as it is with no
+  new type; the single-state overload is the shape both the legacy class and Campertron have. Date matching is
+  the legacy class's rule for selected dates. Validating every entry means the same input is accepted or refused
+  whichever month is rendered.
+- **Consequences:** The overload without states is unchanged, and a digest recorded before day states existed
+  guards that. Several simultaneous states on one day would be new API, with new cell geometry.
+
+### D-40: The marker goes inside the cell and must fit
+
+- **Status:** Approved. Implemented.
+- **Decision:** A marked day is one `Day` segment whose text is the marker directly before the day number,
+  right-aligned together in the cell, and whose `State` is the state. The marker's width in text elements plus
+  two must not exceed `CellWidth`; otherwise `Render` throws `ArgumentException` and returns nothing. The check
+  is made for every state supplied, whatever the dates. No room is reserved for markers in unmarked output, and
+  there is no option for the marker's position or a separator.
+- **Reason:** Inside the cell, a marker never changes the width of a line or the position of a number, and the
+  segment structure of PR #7 stays as it was. Cutting or dropping a marker that does not fit would silently
+  remove the only non-color sign of a state. Checking against a two-digit day, and independently of the dates,
+  means a month never fails because of which days happen to be marked.
+- **Consequences:** The default cell, two wide, holds no marker; a one-character marker needs `CellWidth` 3.
+  Rendering with states and too narrow a cell is an error a caller sees the first time, not an occasional one.
+
+### D-41: A theme maps segments and state names to optional foreground colors
+
+- **Status:** Approved. Implemented.
+- **Decision:** `CalendarTheme` is immutable and built with `With` methods from `CalendarTheme.None`. It has an
+  optional `ConsoleColor` for the title, the title suffix, the weekday labels and the days, and one per state
+  name. Null means no color of the theme. A state without a color falls back to the day color. State names are
+  matched character by character. `WithStateColor` replaces a color set earlier for the same name, and removes
+  it when given null. An undefined `ConsoleColor` is refused when the theme is built. `GetColor(segment)` is
+  public. There are no background colors, and indents, padding, gaps and empty cells have no color.
+- **Reason:** Null-means-unchanged lets a theme color one thing and leave the rest to the terminal. Replacing
+  rather than refusing a repeated name follows from the `With` pattern
+  ([D-31](#d-31-options-are-an-immutable-class-changed-through-with-methods)) and is what makes a theme
+  derivable from another; with no collection passed in, there is no duplicate input to reject. Refusing bad
+  colors early keeps the failure away from the middle of a write, which is where the legacy class has it.
+  `GetColor` is what a consumer needs to map segments to its own styled spans without the console writer.
+- **Consequences:** No interface and no ANSI ([D-14](#d-14-no-ansi-subsystem-without-evidence)). Background
+  colors, or colors for more roles, would be additions.
+
+### D-42: Two writers, and no color mode
+
+- **Status:** Approved. Implemented.
+- **Decision:** `MonthWriter.Write(month, writer)` writes plain text to any `TextWriter`, ends every line,
+  including the last, with the writer's own `NewLine`, and never touches the console or the writer's state.
+  `ConsoleMonthWriter.Write(month, theme)` writes to `Console.Out` and sets `Console.ForegroundColor`. Writing
+  to the console without colors is `CalendarTheme.None`. There is no color-mode enum, no `Auto`, and no
+  interpretation of `NO_COLOR`, `TERM` or redirection in the package.
+- **Reason:** Two types make it a fact of the API which code can touch the console. A line-oriented writer that
+  ends the last line is what streams and consoles expect; `ToText` remains the form with no final terminator.
+  An `Auto` mode could not be defined from public runtime facts without building capability detection, and the
+  runtime already does the sensible thing: on Linux it was observed to emit no color sequences when output is
+  redirected and to honor `NO_COLOR`.
+- **Consequences:** A caller who wants colors forced into redirected output uses the runtime's own switch, not
+  the package. A theme passed with a plain `TextWriter` is not a combination the API offers.
+
+### D-43: The console writer restores the caller's colors and serializes its own writes
+
+- **Status:** Approved. Implemented.
+- **Decision:** `ConsoleMonthWriter` reads the console's colors only when it is about to change one, sets only
+  the foreground, writes every uncolored segment and every line end in the caller's foreground, and puts the
+  caller's foreground and background back in a `finally` block. A foreground that was never set cannot be
+  assigned back, so in that case it calls `Console.ResetColor()` and then sets the caller's background again if
+  there was one. A private lock makes one call write its month completely before the next begins.
+- **Reason:** The legacy class resets the caller's colors and leaves them reset; a library should hand the
+  console back as it found it. `ResetColor` followed by the background is the route that uses only documented
+  behavior. The lock stops two package writes from interleaving, which separate calls to a synchronized
+  `Console.Out` do not.
+- **Consequences:** The lock covers this writer only; it cannot coordinate with other code that writes to the
+  console. Colors cannot be read back on a Windows test host without a console, so restoration is asserted on
+  Linux and macOS only. Nothing is transactional: text written before a failure stays written.

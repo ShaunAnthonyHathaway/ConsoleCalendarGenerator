@@ -9,8 +9,8 @@ internal static class Rendered
     public static string[] Lines(RenderedMonth month) => month.Lines.Select(line => line.Text).ToArray();
 
     /// <summary>
-    /// One segment as text: its kind, its text in brackets, then its weekday and its date where it has them, for
-    /// example <c>Day[ 1] Saturday 2023-04-01</c>.
+    /// One segment as text: its kind, its text in brackets, then its weekday, its date and its state where it
+    /// has them, for example <c>Day[ 1] Saturday 2023-04-01</c> or <c>Day[*14] Tuesday 2023-02-14 state=open</c>.
     /// </summary>
     public static string Describe(RenderedSegment segment) =>
         segment.Kind + "[" + segment.Text + "]"
@@ -18,7 +18,8 @@ internal static class Rendered
         + (segment.Date is DateTime date
             ? " " + date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
                 + (date.TimeOfDay == TimeSpan.Zero && date.Kind == DateTimeKind.Unspecified ? string.Empty : " with a time or a kind")
-            : string.Empty);
+            : string.Empty)
+        + (segment.State is DayState state ? " state=" + state.Name : string.Empty);
 
     /// <summary>The segments of one line, described one by one.</summary>
     public static string[] Describe(RenderedLine line) => line.Segments.Select(Describe).ToArray();

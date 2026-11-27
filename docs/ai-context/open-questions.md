@@ -5,23 +5,11 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points from the Phase 0 audit, not decisions.
 
-## Q-01: What are the modern API's public types and signatures?
-
-- **Settled so far:** the layout layer, in [D-25](decisions.md#d-25-the-layout-model-is-three-small-sealed-classes)
-  to [D-28](decisions.md#d-28-layout-arguments-are-validated-in-order-with-argumentoutofrangeexception), and
-  text rendering, in [D-30](decisions.md#d-30-one-rendering-entry-point-that-owns-the-layout) to
-  [D-37](decisions.md#d-37-rendered-text-is-segments-with-meaning-joined-with-an-explicit-line-terminator),
-  including the defaults for culture and first weekday.
-- **Why it matters:** Public names are permanent once published. The remaining layers in
-  [architecture.md](architecture.md#approved-direction) are still unnamed: day states, markers, the theme and
-  output.
-- **Evidence needed:** A concrete design per remaining layer, reviewed against what Campertron's
-  `Calendar.Lines` needs and against what a general consumer needs. Includes how the dates that carry a state
-  are passed (`DateTime` works on both targets; `DateOnly` does not exist on `netstandard2.1`) and how a state
-  appears on a `Day` segment.
-- **Decide in:** each implementation phase, for the types that phase adds, before they are merged.
-- **Recommendation:** Decide layer by layer rather than up front, and keep each phase's public surface as small
-  as it can be.
+Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
+D-28, rendering in D-30 to D-37, and states, the theme and output in
+[D-38](decisions.md#d-38-a-day-state-is-a-name-and-a-visible-marker) to
+[D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes). What is
+left about the modern API is Q-02.
 
 ## Q-02: Does the modern API render a whole year?
 
@@ -29,19 +17,15 @@ Recommendations are starting points from the Phase 0 audit, not decisions.
   choices (stacked, or several months side by side) that add real complexity.
 - **Evidence needed:** Whether any consumer wants more than twelve stacked months. Campertron does not render
   years.
-- **Decide in:** the rendering phase, or later.
-- **Recommendation:** Start with months only. The legacy facade can produce a year from months without a public
-  year API.
+- **Decide in:** the legacy facade phase, or later. The modern API renders single months only so far.
+- **Recommendation:** Keep to months. The legacy facade can produce a year from months without a public year
+  API.
 
 Q-03 (how the title is expressed) is settled:
 [D-34](decisions.md#d-34-the-title-is-a-date-format-string-a-suffix-and-an-alignment).
 
-## Q-04: What happens when one date has more than one state?
-
-- **Why it matters:** A cell shows one marker and one color.
-- **Evidence needed:** Whether any real consumer has overlapping states. Campertron has a single state.
-- **Decide in:** the states and output phase.
-- **Recommendation:** One state per day, with a simple, documented rule for duplicates.
+Q-04 (more than one state on a date) is settled: one state per day, and the first entry wins
+([D-39](decisions.md#d-39-one-state-per-day-and-the-first-entry-wins)).
 
 ## Q-05: When do legacy members become obsolete?
 

@@ -9,7 +9,7 @@ built. Do not treat anything in the second part as existing code unless it says 
 
 | Path | What it is |
 |---|---|
-| `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs`, the layout model in `Layout/` and text rendering in `Rendering/`. |
+| `ConsoleCalendarGenerator/` | The library and the NuGet package: the legacy class in `ConsoleCalendar.cs`, and the modern API in `Layout/`, `Rendering/`, `States/`, `Themes/` and `Output/`. |
 | `ConsoleCalendarGenerator/docs/` | A stale duplicate of the README and the four README screenshots. Not packed. To be replaced in the user-facing material phase. |
 | `ConsoleCalendarGeneratorExample/` | A small interactive console program that uses the library. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). |
@@ -21,8 +21,8 @@ built. Do not treat anything in the second part as existing code unless it says 
 ### The library: a legacy class and a modern API
 
 The assembly has two public namespaces. `CalendarGenerator` holds the legacy class and nothing else.
-`ConsoleCalendarGenerator`, which matches the assembly and the package, holds the modern API; so far that is the
-layout model and text rendering. The legacy class and the modern API do not use each other.
+`ConsoleCalendarGenerator`, which matches the assembly and the package, holds the modern API: the layout model,
+text rendering, day states, the theme and output. The legacy class and the modern API do not use each other.
 
 ### The legacy class
 
@@ -106,6 +106,10 @@ Rendering performs no input or output and does not use the console.
 ```text
 public static class MonthRenderer
     static RenderedMonth Render(int year, int month, MonthRenderOptions options)
+    static RenderedMonth Render(int year, int month, MonthRenderOptions options,
+                                IEnumerable<KeyValuePair<DateTime, DayState>> dayStates)
+    static RenderedMonth Render(int year, int month, MonthRenderOptions options,
+                                IEnumerable<DateTime> dates, DayState state)
 
 public sealed class MonthRenderOptions            immutable; start from Default, change with the With methods
     static MonthRenderOptions Default
@@ -139,6 +143,7 @@ public sealed class RenderedSegment
     string Text                                   never empty, never a line break
     DayOfWeek? DayOfWeek                          set for the three kinds of cell
     DateTime? Date                                set for Day
+    DayState? State                               set for a Day that has a state
     string ToString()                             Text
 
 public enum RenderedLineKind      Title = 0, WeekdayLabels = 1, Week = 2
@@ -196,9 +201,112 @@ segment each, padding included: `Day` (with its date and weekday) or `EmptyDay` 
 segments between. A day's date is in `Date`; nothing has to be parsed from text. Lines have no terminators.
 `ToText()` joins them with `"\n"` on every platform, with nothing after the last line.
 
-Reasons: [decisions.md](decisions.md#rendering). Deliberate extension points for the next phase: a state or a
-marker belongs on the `Day` segment, whose text is the whole cell, so a marker can go inside the cell beside
-the number without changing how lines are assembled; cells three or more wide leave room for one.
+Reasons: [decisions.md](decisions.md#rendering).
+
+### Day states and markers
+
+One type in `ConsoleCalendarGenerator/States/`, and two overloads of `MonthRenderer.Render`. A state says what a
+day is; its marker makes that visible in plain text, so state never depends on color alone.
+
+```text
+public sealed class DayState
+    DayState(string name, string marker)
+    string Name          identifies the state; compared character by character
+    string Marker        placed directly before the day number
+    string ToString()    Name
+```
+
+**The state.** The name and the marker must each contain a character that is not white space and no line
+break; null throws `ArgumentNullException`, anything else invalid `ArgumentException`, the name first. Nothing
+else is required of a name. States are immutable. Equality is reference equality; two states are the same kind
+of state when their names are equal. A state has no color, no label and no other data.
+
+**Giving days a state.** `Render(year, month, options, dayStates)` takes dates with their states, for example a
+`Dictionary<DateTime, DayState>`. `Render(year, month, options, dates, state)` gives one state to many dates.
+The overload without states is unchanged and still renders an unmarked month.
+
+- A date selects the day with the same year, month and day. Its time of day and its `Kind` are ignored.
+- Dates outside the rendered month are ignored.
+- **A day has at most one state. When several entries select the same day, the first one decides** and the
+  others are ignored.
+- The collection is read once, from beginning to end, and is not changed.
+- Every entry is checked, also those for dates outside the month, so the same input is accepted or refused
+  whichever month is rendered: an entry with a null state, a marker that does not fit, or two states with the
+  same name and different markers throw `ArgumentException`. A null collection or a null state argument throws
+  `ArgumentNullException`. Arguments are checked in declaration order, after `year`, `month` and `options`.
+
+**The marker in the cell.** A day with a state is still one `Day` segment, exactly `CellWidth` wide. Its text
+is the marker directly before the day number, right-aligned together (` *5`, `*15` in a cell three wide); its
+`State` is the state, the same instance that was passed. A marker must fit beside a two-digit day: its width in
+text elements plus two must not exceed `CellWidth`, or nothing is rendered. A marker is never cut, dropped or
+given extra room, so the default cell, two wide, holds none, and a caller who wants markers sets a wider cell.
+Unmarked cells, the title, the labels, the number of segments and the width of every line are the same as
+without states.
+
+There is no legend. A caller explains markers in `TitleSuffix` or around the calendar.
+
+### The theme
+
+One type in `ConsoleCalendarGenerator/Themes/`. A theme maps what a segment is to an optional console color. It
+does not change text, writes nothing and knows nothing about the console.
+
+```text
+public sealed class CalendarTheme        immutable; start from None, change with the With methods
+    static CalendarTheme None            no colors at all
+    ConsoleColor? TitleColor             WithTitleColor(ConsoleColor?)
+    ConsoleColor? TitleSuffixColor       WithTitleSuffixColor(ConsoleColor?)
+    ConsoleColor? WeekdayLabelColor      WithWeekdayLabelColor(ConsoleColor?)
+    ConsoleColor? DayColor               WithDayColor(ConsoleColor?)
+    IReadOnlyDictionary<string, ConsoleColor> StateColors      WithStateColor(string stateName, ConsoleColor?)
+    ConsoleColor? GetColor(RenderedSegment segment)
+```
+
+- A null color means the theme has none: the text is written in whatever color the destination already has.
+- Colors are foreground colors only. Indents, padding, gaps and empty cells never have one.
+- A day with a state gets that state's color, looked up by the state's name, character by character and
+  case-sensitively. A state with no color in the theme falls back to `DayColor`. A color for a state that a
+  month does not use makes no difference.
+- `WithStateColor` sets the color for a name, replaces one set earlier, or removes it when the color is null.
+- A value that is not a defined `ConsoleColor` throws `ArgumentOutOfRangeException` when the theme is built, not
+  later when it is used. A state name is held to the same rules as in `DayState`.
+- `GetColor` is the whole of what a theme does, and is what a consumer calls to turn segments into its own
+  styled output.
+
+### Output
+
+Two static classes in `ConsoleCalendarGenerator/Output/`.
+
+```text
+public static class MonthWriter
+    static void Write(RenderedMonth month, TextWriter writer)
+
+public static class ConsoleMonthWriter
+    static void Write(RenderedMonth month, CalendarTheme theme)
+```
+
+**`MonthWriter`** writes to any `TextWriter` and never uses the console or a color. It writes each line's text
+followed by the writer's own `NewLine`, the last line included (unlike `ToText`, which puts a terminator only
+between lines). The writer is not flushed, closed, disposed or changed. If the writer throws, the exception is
+passed on and what was written stays written.
+
+**`ConsoleMonthWriter`** is the only modern type that uses the console. Text goes to `Console.Out`; colors are
+set through `Console.ForegroundColor`; the library writes no escape sequences.
+
+- Every segment the theme has a color for is written in it. Every other segment, and every line end, is
+  written in the foreground the console had when the call began. The background is never changed.
+- With `CalendarTheme.None` no color is read or changed. That is the way to write to the console without
+  colors; there is no color mode and no capability detection.
+- When the call returns or fails, the foreground and background are what they were when it began. A foreground
+  that had been set is set again. One that had never been set, as is usual on Linux and macOS, has no value to
+  set, so the colors are reset and a background the caller had set is set again.
+- Whether a color reaches the screen is the runtime's and the terminal's business; the package interprets
+  neither `NO_COLOR` nor `TERM` nor redirection. On Linux the runtime was observed not to emit color sequences
+  when output is redirected and to honor `NO_COLOR`. macOS uses the same runtime code, but the terminal tests
+  run on Linux only. On Windows colors are console attributes and were never part of the output stream.
+- Calls from several threads do not mix: a private lock makes each month arrive whole. It cannot coordinate
+  with other code writing to the console at the same time.
+
+Reasons: [decisions.md](decisions.md#states-themes-and-output).
 
 ### The example
 
@@ -214,7 +322,9 @@ colors back where the platform allows, start the test assembly as a child proces
 streams, and compare against digests recorded from the published 1.0.0 assembly. The layout tests need none of
 that: they compare layouts with hand-written grids and with an independent reference for every month from
 January 0001 through December 9999. The rendering tests compare rendered months with hand-written text and
-segment lists, and with the layout for every month from 1900 through 2100. The project can be built against
+segment lists, and with the layout for every month from 1900 through 2100. The state, theme and writer tests
+do the same for marked months and colors; the console writer is observed through a recording `Console.Out`,
+through a child process with redirected output, and on a pseudo-terminal. The project can be built against
 either library build. Details: [testing.md](testing.md).
 
 ### Build, package and CI
@@ -231,28 +341,28 @@ either library build. Details: [testing.md](testing.md).
 
 `eng/consumer-smoke.sh` copies the packed package to a local feed in a temporary folder, restores into a
 temporary package cache with nuget.org forbidden for this package, and builds and runs small applications from
-`eng/consumer-smoke/` against it. Each application uses the layout model, the renderer and the legacy class. It
-proves which library build each kind of consumer receives. Details:
+`eng/consumer-smoke/` against it. Each application uses the layout model, the renderer, a day state, a theme,
+both writers and the legacy class. It proves which library build each kind of consumer receives. Details:
 [packaging-and-releases.md](packaging-and-releases.md#consumer-smoke-tests).
 
 ## Approved direction
 
-The first three layers exist: calendar layout ([The layout model](#the-layout-model)), and text rendering with
-styled segments ([Text rendering](#text-rendering)). None of the other types exist. Their names and signatures
-are **not decided**; see [open-questions.md](open-questions.md). What is decided is the separation and the
-constraints.
+Every layer in the table exists, for a single month: see the sections above. What is still planned is the last
+step, turning the legacy class into a facade over them, and the open questions in
+[open-questions.md](open-questions.md).
 
 New code goes in the `ConsoleCalendarGenerator` namespace. `CalendarGenerator.ConsoleCalendar` stays and becomes
-a facade over the new code.
+a facade over the new code. That has **not** been done: the legacy class is still the published 1.0.0
+implementation.
 
 | Layer | Responsibility | Touches the live console | Status |
 |---|---|---|---|
 | Calendar layout | A month as weeks and days for a given first weekday. No text. | No | Implemented: `MonthLayout` |
-| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No | Implemented without day states: `MonthRenderer` |
-| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No | Implemented without day states: `RenderedSegment` |
-| State markers | A day's state can be shown with a text marker, so state is never conveyed by color alone. Optional. | No | Planned |
-| Theme | Maps segment roles and states to console colors. | No | Planned |
-| Output | Writes rendered lines to a `TextWriter`, applying colors through something the caller can replace. | Only this layer | Planned |
+| Text rendering | Layout, day states and options in; lines of text out, the same every time for the same input. | No | Implemented: `MonthRenderer` |
+| Styled segments | Each piece of rendered text carries what it is (title, weekday label, day, a day in some state), not a color. | No | Implemented: `RenderedSegment` |
+| State markers | A day's state can be shown with a text marker, so state is never conveyed by color alone. Optional. | No | Implemented: `DayState` |
+| Theme | Maps segment roles and states to console colors. | No | Implemented: `CalendarTheme` |
+| Output | Writes rendered lines to a `TextWriter`, or to the console in the theme's colors. | Only `ConsoleMonthWriter` | Implemented: `MonthWriter`, `ConsoleMonthWriter` |
 | Consumer mapping | Turning segments into a consumer's own types. Lives in the consumer, not in the package. | n/a | n/a |
 
 Constraints:

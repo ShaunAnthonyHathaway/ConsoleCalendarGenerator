@@ -7,8 +7,9 @@ namespace ConsoleCalendarGenerator.Tests.Support;
 internal sealed record ChildResult(int ExitCode, string StandardOutput, string StandardError);
 
 /// <summary>
-/// Starts this test assembly as a separate process that renders <see cref="ChildScenario"/> to its real console
-/// streams, so that the tests can look at exactly what reaches standard output.
+/// Starts this test assembly as a separate process that renders <see cref="ChildScenario"/>, or on request
+/// <see cref="ModernChildScenario"/>, to its real console streams, so that the tests can look at exactly what
+/// reaches standard output.
 /// </summary>
 internal static class ChildProcess
 {
@@ -21,11 +22,12 @@ internal static class ChildProcess
 
     /// <summary>Standard output redirected to a pipe, which is how most programs capture console output.</summary>
     /// <param name="allowAnsiWhenRedirected">Sets the runtime's opt-in for color sequences in redirected output.</param>
-    public static ChildResult RunRedirected(bool allowAnsiWhenRedirected = false)
+    /// <param name="command">Which scenario the child process draws; see Program.cs.</param>
+    public static ChildResult RunRedirected(bool allowAnsiWhenRedirected = false, string command = Program.RenderCommand)
     {
         ProcessStartInfo start = NewStartInfo(DotNetHost());
         start.ArgumentList.Add(TestAssembly());
-        start.ArgumentList.Add(Program.RenderCommand);
+        start.ArgumentList.Add(command);
         start.Environment.Remove("NO_COLOR");
         if (allowAnsiWhenRedirected)
         {
@@ -48,11 +50,11 @@ internal static class ChildProcess
     }
 
     /// <summary>Standard output connected to a pseudo-terminal created by <c>script</c> (Linux).</summary>
-    public static ChildResult RunOnPseudoTerminal(bool noColor)
+    public static ChildResult RunOnPseudoTerminal(bool noColor, string command = Program.RenderCommand)
     {
         ProcessStartInfo start = NewStartInfo(ScriptProgram ?? throw new InvalidOperationException("script is not installed."));
         start.ArgumentList.Add("-qec");
-        start.ArgumentList.Add($"'{DotNetHost()}' '{TestAssembly()}' {Program.RenderCommand}");
+        start.ArgumentList.Add($"'{DotNetHost()}' '{TestAssembly()}' {command}");
         start.ArgumentList.Add("/dev/null");
         start.Environment["TERM"] = "xterm-256color";
         start.Environment.Remove(AnsiRedirectionVariable);

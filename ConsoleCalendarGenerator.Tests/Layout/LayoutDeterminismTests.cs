@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Globalization;
 using ConsoleCalendarGenerator.Tests.Support;
@@ -52,13 +51,13 @@ public class LayoutDeterminismTests
             }
         }
 
-        string[] expected = UnderCultures(CultureInfo.InvariantCulture, CultureInfo.InvariantCulture, DescribeAll);
+        string[] expected = ProcessState.UnderCultures(CultureInfo.InvariantCulture, CultureInfo.InvariantCulture, DescribeAll);
 
         foreach (CultureInfo culture in cultures)
         {
-            Assert.That(UnderCultures(culture, culture, DescribeAll), Is.EqualTo(expected), "CurrentCulture and CurrentUICulture " + culture.Name);
-            Assert.That(UnderCultures(culture, CultureInfo.InvariantCulture, DescribeAll), Is.EqualTo(expected), "CurrentCulture " + culture.Name);
-            Assert.That(UnderCultures(CultureInfo.InvariantCulture, culture, DescribeAll), Is.EqualTo(expected), "CurrentUICulture " + culture.Name);
+            Assert.That(ProcessState.UnderCultures(culture, culture, DescribeAll), Is.EqualTo(expected), "CurrentCulture and CurrentUICulture " + culture.Name);
+            Assert.That(ProcessState.UnderCultures(culture, CultureInfo.InvariantCulture, DescribeAll), Is.EqualTo(expected), "CurrentCulture " + culture.Name);
+            Assert.That(ProcessState.UnderCultures(CultureInfo.InvariantCulture, culture, DescribeAll), Is.EqualTo(expected), "CurrentUICulture " + culture.Name);
         }
     }
 
@@ -69,27 +68,10 @@ public class LayoutDeterminismTests
         CultureInfo saturdayFirst = TestCultures.WithForeignWeek();
         Assert.That(saturdayFirst.DateTimeFormat.FirstDayOfWeek, Is.EqualTo(DayOfWeek.Saturday));
 
-        string[] picture = UnderCultures(saturdayFirst, saturdayFirst, () => LayoutPicture.Of(MonthLayout.Create(2023, 5, DayOfWeek.Monday)));
+        string[] picture = ProcessState.UnderCultures(saturdayFirst, saturdayFirst, () => LayoutPicture.Of(MonthLayout.Create(2023, 5, DayOfWeek.Monday)));
 
         Assert.That(picture[0], Is.EqualTo("Mo Tu We Th Fr Sa Su"));
         Assert.That(picture[1], Is.EqualTo(" 1  2  3  4  5  6  7"));
-    }
-
-    private static T UnderCultures<T>(CultureInfo culture, CultureInfo uiCulture, Func<T> action)
-    {
-        CultureInfo originalCulture = CultureInfo.CurrentCulture;
-        CultureInfo originalUiCulture = CultureInfo.CurrentUICulture;
-        try
-        {
-            CultureInfo.CurrentCulture = culture;
-            CultureInfo.CurrentUICulture = uiCulture;
-            return action();
-        }
-        finally
-        {
-            CultureInfo.CurrentCulture = originalCulture;
-            CultureInfo.CurrentUICulture = originalUiCulture;
-        }
     }
 
     // ---- threads ----
@@ -177,25 +159,11 @@ public class LayoutDeterminismTests
     [Test]
     public void CreatingLayouts_ChangesNoProcessWideState()
     {
-        object[] before = ProcessWideState();
+        object[] before = ProcessState.Snapshot();
 
         _ = DescribeAll();
         Assert.That(() => MonthLayout.Create(0, 0, (DayOfWeek)7), Throws.TypeOf<ArgumentOutOfRangeException>());
 
-        Assert.That(ProcessWideState(), Is.EqualTo(before));
+        Assert.That(ProcessState.Snapshot(), Is.EqualTo(before));
     }
-
-    private static object[] ProcessWideState() => new object[]
-    {
-        CultureInfo.CurrentCulture,
-        CultureInfo.CurrentUICulture,
-        CultureInfo.DefaultThreadCurrentCulture ?? (object)"none",
-        CultureInfo.DefaultThreadCurrentUICulture ?? (object)"none",
-        Console.Out,
-        Console.Error,
-        Environment.CurrentDirectory,
-        string.Join("\n", Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
-            .Select(variable => variable.Key + "=" + variable.Value)
-            .OrderBy(line => line, StringComparer.Ordinal)),
-    };
 }

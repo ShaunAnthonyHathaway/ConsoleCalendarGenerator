@@ -8,14 +8,17 @@ Recommendations are starting points from the Phase 0 audit, not decisions.
 ## Q-01: What are the modern API's public types and signatures?
 
 - **Settled so far:** the layout layer, in [D-25](decisions.md#d-25-the-layout-model-is-three-small-sealed-classes)
-  to [D-28](decisions.md#d-28-layout-arguments-are-validated-in-order-with-argumentoutofrangeexception). The
-  layout takes the first day of the week as a required argument and represents dates as `DateTime`.
-- **Why it matters:** Public names are permanent once published. Every other layer in
-  [architecture.md](architecture.md#approved-direction) is still unnamed.
+  to [D-28](decisions.md#d-28-layout-arguments-are-validated-in-order-with-argumentoutofrangeexception), and
+  text rendering, in [D-30](decisions.md#d-30-one-rendering-entry-point-that-owns-the-layout) to
+  [D-37](decisions.md#d-37-rendered-text-is-segments-with-meaning-joined-with-an-explicit-line-terminator),
+  including the defaults for culture and first weekday.
+- **Why it matters:** Public names are permanent once published. The remaining layers in
+  [architecture.md](architecture.md#approved-direction) are still unnamed: day states, markers, the theme and
+  output.
 - **Evidence needed:** A concrete design per remaining layer, reviewed against what Campertron's
-  `Calendar.Lines` needs and against what a general consumer needs. Includes the defaults for culture and first
-  weekday, which the layout deliberately does not choose, and how the dates that carry a state are passed
-  (`DateTime` works on both targets; `DateOnly` does not exist on `netstandard2.1`).
+  `Calendar.Lines` needs and against what a general consumer needs. Includes how the dates that carry a state
+  are passed (`DateTime` works on both targets; `DateOnly` does not exist on `netstandard2.1`) and how a state
+  appears on a `Day` segment.
 - **Decide in:** each implementation phase, for the types that phase adds, before they are merged.
 - **Recommendation:** Decide layer by layer rather than up front, and keep each phase's public surface as small
   as it can be.
@@ -30,14 +33,8 @@ Recommendations are starting points from the Phase 0 audit, not decisions.
 - **Recommendation:** Start with months only. The legacy facade can produce a year from months without a public
   year API.
 
-## Q-03: How is the title expressed?
-
-- **Why it matters:** Three needs meet here: the legacy title with its three-step indent, Campertron's
-  year-month pattern followed by a legend, and a sensible modern default.
-- **Evidence needed:** Whether a format string plus fixed text covers all three, or whether callers need to
-  supply the title themselves, and how alignment (left, centered, legacy) is chosen.
-- **Decide in:** the rendering phase.
-- **Recommendation:** Prefer declarative options over a callback if they are enough.
+Q-03 (how the title is expressed) is settled:
+[D-34](decisions.md#d-34-the-title-is-a-date-format-string-a-suffix-and-an-alignment).
 
 ## Q-04: What happens when one date has more than one state?
 
@@ -57,13 +54,18 @@ Recommendations are starting points from the Phase 0 audit, not decisions.
 
 ## Q-06: How is the compatibility profile for titles expressed?
 
-- **Why it matters:** The direction is decided ([D-15](decisions.md#d-15-modern-titles-match-the-gregorian-grid)):
-  modern titles match the Gregorian grid, with a compatibility profile for exact parity. The mechanism is not.
-  Campertron's current title follows the culture's own calendar.
-- **Evidence needed:** The title design from Q-03, and how parity fixtures behave under cultures with a
-  non-Gregorian calendar.
-- **Decide in:** the rendering phase, and confirmed by the parity fixtures.
-- **Recommendation:** Correct by default, exact parity as an explicit opt-in.
+- **Settled so far:** the correct default. The modern renderer always titles the Gregorian month
+  ([D-33](decisions.md#d-33-the-culture-supplies-language-only)), and no compatibility profile was added.
+- **Why it matters:** Exact parity with existing output is still wanted in two places. The legacy class names
+  the month from the culture's own calendar, and Campertron's current title follows the culture's own calendar
+  too. The mechanism for reproducing either is not decided.
+- **Evidence needed:** Whether a dedicated option is needed at all. A caller can already produce any exact
+  title, because quoted text in `TitleFormat` is copied unchanged
+  ([D-34](decisions.md#d-34-the-title-is-a-date-format-string-a-suffix-and-an-alignment)); the facade and the
+  parity fixtures will show whether computing the title outside the renderer is enough, including under cultures
+  with a non-Gregorian calendar.
+- **Decide in:** the legacy facade phase, and confirmed by the parity fixtures.
+- **Recommendation:** Add no profile unless those phases show the quoted-title route is not enough.
 
 ## Q-07: What ships in 1.x, and when?
 

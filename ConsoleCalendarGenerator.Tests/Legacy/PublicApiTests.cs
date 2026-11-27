@@ -39,7 +39,7 @@ public class PublicApiTests
         };
 
         // The assembly also holds the modern API, in the ConsoleCalendarGenerator namespace. That API is listed in
-        // Layout/LayoutApiTests.cs, which also checks that the assembly exports nothing outside the two namespaces.
+        // ModernApiTests.cs, which also checks that the assembly exports nothing outside the two namespaces.
         Assert.That(ApiSurface.Describe(typeof(ConsoleCalendar).Assembly, inNamespace: "CalendarGenerator"), Is.EqualTo(expected));
     }
 

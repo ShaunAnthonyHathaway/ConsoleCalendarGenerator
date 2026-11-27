@@ -75,14 +75,7 @@ public sealed class MonthLayout
     /// </exception>
     public static MonthLayout Create(int year, int month, DayOfWeek firstDayOfWeek)
     {
-        if (year < 1 || year > 9999)
-        {
-            throw new ArgumentOutOfRangeException(nameof(year), year, "The year must be from 1 through 9999.");
-        }
-        if (month < 1 || month > 12)
-        {
-            throw new ArgumentOutOfRangeException(nameof(month), month, "The month must be from 1 through 12.");
-        }
+        ValidateYearAndMonth(year, month);
         if (firstDayOfWeek < DayOfWeek.Sunday || firstDayOfWeek > DayOfWeek.Saturday)
         {
             throw new ArgumentOutOfRangeException(
@@ -117,5 +110,21 @@ public sealed class MonthLayout
 
         // The arrays are handed out only inside read-only wrappers, so a caller cannot get at them to change them.
         return new MonthLayout(year, month, firstDayOfWeek, Array.AsReadOnly(daysOfWeek), Array.AsReadOnly(weeks));
+    }
+
+    /// <summary>
+    /// Rejects a year or a month that <see cref="DateTime"/> cannot represent, the year first. Callers name their
+    /// own parameters <c>year</c> and <c>month</c>, so the exception names the right one.
+    /// </summary>
+    internal static void ValidateYearAndMonth(int year, int month)
+    {
+        if (year < 1 || year > 9999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(year), year, "The year must be from 1 through 9999.");
+        }
+        if (month < 1 || month > 12)
+        {
+            throw new ArgumentOutOfRangeException(nameof(month), month, "The month must be from 1 through 12.");
+        }
     }
 }

@@ -7,7 +7,7 @@ point to its replacement rather than deleting it.
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
 All decisions below date from 2026-11-27, the day the modernization was planned and its first phases, up to and
-including the layout model, were merged.
+including text rendering, were merged.
 
 ## Scope and compatibility
 
@@ -117,7 +117,8 @@ including the layout model, were merged.
 
 ### D-12: Layout and rendering are separated from console output
 
-- **Status:** Approved direction. The layout layer is implemented (D-25 to D-28); the other layers are not.
+- **Status:** Approved direction. Layout (D-25 to D-28) and text rendering with segments (D-30 to D-37) are
+  implemented. Day states, markers, themes and output are not.
 - **Decision:** The modern API separates calendar layout, deterministic text rendering, semantic styling, color
   mapping and output. Layout and rendering must not need a live console.
 - **Reason:** Testability, reuse, and Campertron's need for rendered lines it writes itself.
@@ -140,7 +141,9 @@ including the layout model, were merged.
 
 ### D-15: Modern titles match the Gregorian grid
 
-- **Status:** Approved direction. Not implemented.
+- **Status:** Approved. Implemented in the modern renderer ([D-33](#d-33-the-culture-supplies-language-only)).
+  How exact parity with existing output is expressed stays open in
+  [Q-06](open-questions.md#q-06-how-is-the-compatibility-profile-for-titles-expressed).
 - **Decision:** The modern renderer should produce titles consistent with the Gregorian grid it draws, while
   allowing a compatibility profile where exact parity with existing output is required.
 - **Reason:** 1.0.0 names the wrong month under cultures with a non-Gregorian calendar.
@@ -228,7 +231,8 @@ including the layout model, were merged.
 ## Layout model
 
 Settled in the layout-model phase, within the authority Shaun gave that phase to choose names and shapes from
-the evidence. The API itself is listed in [architecture.md](architecture.md#the-layout-model).
+the evidence, and accepted by him when he reviewed that phase. The API itself is listed in
+[architecture.md](architecture.md#the-layout-model).
 
 ### D-25: The layout model is three small sealed classes
 
@@ -295,3 +299,121 @@ the evidence. The API itself is listed in [architecture.md](architecture.md#the-
   suppression from D-11 would have hidden a missing comment on a modern type.
 - **Consequences:** D-11 now covers the legacy class only. `eng/verify-package.sh` checks that the modern
   documentation is in both builds of the package.
+
+## Rendering
+
+Settled in the text-rendering phase, within the authority Shaun gave that phase. The API, the defaults and the
+contracts are listed in [architecture.md](architecture.md#text-rendering). Two of these are product choices
+rather than engineering ones, and are the first to revisit if Shaun disagrees: the defaults in D-32.
+
+### D-30: One rendering entry point that owns the layout
+
+- **Status:** Approved. Implemented.
+- **Decision:** `MonthRenderer.Render(year, month, options)` is the only way to render. It creates the
+  `MonthLayout` itself from the options' first day of the week and returns it as `RenderedMonth.Layout`. There
+  is no overload that takes a layout, and none that takes no options.
+- **Reason:** The first day of the week is an option, so a layout passed in separately could disagree with it;
+  with one entry point that cannot happen and nothing has to be validated. Creating a layout is cheap, so an
+  overload that reuses one has no value. A caller who wants the defaults passes `MonthRenderOptions.Default`.
+- **Consequences:** Later inputs, such as day states, arrive as further overloads of `Render`. A static class
+  was chosen over a method on the result because later layers add siblings to it, not to the result.
+
+### D-31: Options are an immutable class changed through With methods
+
+- **Status:** Approved. Implemented.
+- **Decision:** `MonthRenderOptions` has no public constructor. `Default` is a shared instance; each `WithX`
+  method validates its argument and returns a new instance. Every property is read-only.
+- **Reason:** It works identically on both targets. Init-only setters need compiler support that
+  `netstandard2.1` consumers may lack, a constructor with many optional parameters cannot grow without breaking
+  callers, and a mutable builder is a second type. Validation happens where the bad value is supplied, not later
+  at render time.
+- **Consequences:** A new setting is one property and one `With` method, which is a compatible addition. The
+  options hold only what unmarked text rendering needs: nothing about colors, states, markers or output.
+
+### D-32: Rendering defaults are fixed and read nothing from the process
+
+- **Status:** Approved. Implemented.
+- **Decision:** The default culture is the invariant culture and the default first day of the week is Monday.
+  The first day of the week is never taken from a culture, including one set with `WithCulture`. Neither
+  `CurrentCulture` nor `CurrentUICulture` is ever read.
+- **Reason:** The renderer's promise is the same output for the same input on every machine, which a default
+  taken from the current culture would break. Monday is ISO 8601 and what both existing renderers, the legacy
+  class and Campertron's, draw. Keeping the first day independent of the culture means changing the language
+  never moves the days. A caller who wants the culture's own first day passes
+  `culture.DateTimeFormat.FirstDayOfWeek`.
+- **Consequences:** The default title is the invariant culture's year-and-month pattern, for example
+  `2023 May`. English month-first titles need `en-US` or the format `"MMMM yyyy"`.
+
+### D-33: The culture supplies language only
+
+- **Status:** Approved. Implemented. This implements [D-15](#d-15-modern-titles-match-the-gregorian-grid).
+- **Decision:** The culture provides month names, day names and the year-and-month pattern, always those of
+  the Gregorian calendar. For a culture whose own calendar is another one, the culture's Gregorian data is used.
+  The options store a read-only copy of the culture (`CultureInfo.ReadOnly`). Day numbers are always written
+  with the digits 0 to 9.
+- **Reason:** The grid is Gregorian, so a title in another calendar names a different month or year than the
+  one shown. On the runtime used here, 15 of 907 cultures default to another calendar (Persian and Thai
+  Buddhist) and every one of them offers a Gregorian calendar to switch to. A copy makes the options immutable
+  even when the caller's culture object is not.
+- **Consequences:** `th-TH` titles say 2023, not 2566. Should a culture ever offer no Gregorian calendar, its
+  names fall back to the invariant culture's rather than to another calendar's. A culture whose names would put
+  a line break into the output is refused by `Render` with `ArgumentException`.
+
+### D-34: The title is a date format string, a suffix and an alignment
+
+- **Status:** Approved. Implemented. Resolves the former open question Q-03.
+- **Decision:** `TitleFormat` is any standard or custom .NET date format string, `"Y"` by default, applied to
+  the first day of the month as a `DateTimeOffset` with a zero offset. `TitleSuffix` is appended as its own
+  segment with nothing in between. `TitleAlignment` is `Left` or `Center`; centering puts half the spare width,
+  rounded down, before the title and suffix together, and never cuts or moves a title wider than the grid. An
+  invalid format throws `FormatException` from `WithTitleFormat`. There is no title callback.
+- **Reason:** A format string covers the three known needs: the modern default, Campertron's pattern plus
+  legend, and, because quoted text is copied unchanged, any exact title such as the legacy one. A delegate would
+  make options impossible to compare, serialize or reason about. A zero-offset value means no format specifier
+  can read the machine's time zone, which a plain `DateTime` allows.
+- **Consequences:** The standard format `"U"` is not supported. The legacy three-step title indent is not a
+  modern alignment; the facade phase produces it itself.
+
+### D-35: Geometry depends on the options alone, and widths are text elements
+
+- **Status:** Approved. Implemented.
+- **Decision:** Every cell is exactly `CellWidth` wide (2 through 100) with `ColumnGap` spaces between columns
+  (0 through 100). Day numbers and labels are right-aligned. A label longer than the cell is cut to the cell
+  width; nothing is ever widened. Width is counted in text elements (`StringInfo`). The cells after the last day
+  are not rendered, so no line ends with padding.
+- **Reason:** Culture day names vary in length (the "shortest" German names are three characters), so letting
+  them set the width would make the grid's shape depend on operating-system data. Text elements are the unit the
+  runtime can count exactly on both targets without splitting a surrogate pair or a combining sequence; terminal
+  column width is not knowable from a string. Two is the narrowest cell that holds every day number.
+- **Consequences:** `GridWidth` is always seven cells and six gaps. The limits of 100 can be raised later
+  without breaking anyone. There is no option for alignment within a cell or for fixed-width lines; both would
+  be additions.
+
+### D-36: Weekday labels come from the culture or from the caller, Sunday first
+
+- **Status:** Approved. Implemented.
+- **Decision:** Two built-in styles, `Shortest` and `Abbreviated`, take the culture's day names. Otherwise the
+  caller supplies exactly seven labels indexed by `DayOfWeek`, Sunday first, each non-empty and without a line
+  break; they are copied. The last of `WithWeekdayLabelStyle` and `WithWeekdayLabels` to be called wins. There is
+  no built-in fixed English style.
+- **Reason:** Indexing by weekday, as `DateTimeFormatInfo.DayNames` does, ties a label to its day, so changing
+  the first day of the week cannot put a label over the wrong column. The fixed English row that the legacy
+  class and Campertron draw is what the invariant culture already gives, and seven supplied labels give it under
+  any other culture, so a third style would add an enum value without adding a capability.
+- **Consequences:** A label made only of spaces is allowed and is kept as text.
+
+### D-37: Rendered text is segments with meaning, joined with an explicit line terminator
+
+- **Status:** Approved. Implemented.
+- **Decision:** A `RenderedMonth` is lines; a line is segments; a segment has a kind, text, and, for cells, a
+  weekday and, for days, a date. A cell is one segment including its padding. No segment is empty or contains a
+  line break. There are no colors, no state and no open-ended metadata. `ToText()` joins lines with `"\n"` on
+  every platform; `ToText(newLine)` accepts only `"\n"` and `"\r\n"`; neither adds a terminator after the last
+  line.
+- **Reason:** Whole-cell segments match how both existing renderers color a day, and give the marker phase one
+  place to put a marker: inside the cell, beside the number, described by the segment instead of parsed from its
+  text. A fixed default terminator keeps the text identical across platforms, which the legacy class's mixed
+  line endings show is easy to get wrong. Anything else can be joined from `Lines`.
+- **Consequences:** The next phase adds state to `Day` segments and maps kinds to colors; neither changes how
+  lines are built. New segment or line kinds are additions, so code that switches on a kind should have a
+  default case.

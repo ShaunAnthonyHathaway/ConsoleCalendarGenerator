@@ -91,8 +91,11 @@ bash eng/verify-package.sh artifacts/package
 
 Checks the packed files without building anything: exactly one `.nupkg` and one `.snupkg` and nothing else in
 the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0 and matches the
-file names; readme images; the documentation files, including that both contain the modern API's
-documentation; and Source Link in both PDBs.
+file names; readme images; the documentation files, including that both document every public type of the
+modern namespace; and Source Link in both PDBs.
+
+The script holds the list of modern public types. A new public type is added to that list in the change that
+adds it; `ModernApiTests` is what fails first when a public type appears.
 
 The file list is exact on purpose. Adding a library target, a packed file or a dependency means updating the
 script in the same change.
@@ -120,8 +123,9 @@ repository that is deleted afterwards:
 | The sample program that accompanied 1.0.0, unchanged | | compiles |
 | Native AOT application (`--native-aot`) | the `net10.0` build | publishes without warnings, runs, expected output |
 
-Each application creates a `MonthLayout` and draws a month with the legacy class, so both APIs are exercised
-from the package in every kind of consumer, Native AOT included. The `net8.0` consumer stands for every
+Each application creates a `MonthLayout`, builds `MonthRenderOptions`, renders a month, counts its segments by
+kind, prints its text, and then draws a month with the legacy class. Both APIs are therefore exercised from the
+package in every kind of consumer, Native AOT included. The `net8.0` consumer stands for every
 existing consumer of the `netstandard2.1` build. The `net11.0` consumer
 stands for an application such as Campertron. The applications roll forward to whatever runtime is installed;
 that does not affect which library build they are given. Templates are in `eng/consumer-smoke/`; they are not in

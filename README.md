@@ -5,14 +5,15 @@ structured segments you can style yourself, or straight to the console in color.
 
 ## Status
 
-- **Published on NuGet:** [ConsoleCalendarGenerator 1.0.0](https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0).
-  It contains the legacy API only (`CalendarGenerator.ConsoleCalendar`).
-- **In this repository:** the next version, 2.0, under development and **not published yet**. It adds the modern
-  API described below. It keeps the legacy API, with every signature unchanged, and corrects a few things that
-  API got wrong; see [Changes from 1.0.0](#changes-from-100).
+- **Published on NuGet:** [ConsoleCalendarGenerator 1.0.0](https://www.nuget.org/packages/ConsoleCalendarGenerator/1.0.0),
+  the only published version. It contains the legacy API only (`CalendarGenerator.ConsoleCalendar`).
+- **In this repository:** the next version, 2.0, which is **not published yet**. It adds the modern API that
+  most of this page describes. It keeps the legacy API, with every signature unchanged, and corrects five
+  things that API got wrong; see [Migrating from 1.0.0 to 2.0](#migrating-from-100-to-20).
 
-Until a new version is published, the modern API is available by building this repository. See
-[Building and testing](#building-and-testing).
+The modern API is complete in this repository, but it is not in the published package. Until the next version
+is published, the way to use it is to build this repository; see
+[Building and testing](#building-and-testing). No release date has been set.
 
 ## Features
 
@@ -34,7 +35,8 @@ Until a new version is published, the modern API is available by building this r
 dotnet add package ConsoleCalendarGenerator
 ```
 
-This installs the published version, 1.0.0, which has the [legacy API](#legacy-api) only.
+Today this installs the published version, 1.0.0, which has the [legacy API](#legacy-api) only. The modern API
+on this page is not in that package; it comes with the next version.
 
 ## Quick start
 
@@ -295,8 +297,9 @@ the library can know.
 
 ## Legacy API
 
-`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. It is kept for existing code, with the same
-constructors and methods. For new code, use the modern API above.
+`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. The next version keeps it and supports it. It
+is not obsolete: every constructor, method and parameter name is unchanged, and a program compiled against
+1.0.0 loads the new assembly without being rebuilt. For new code, use the modern API above.
 
 ```csharp
 // The legacy class takes the month name from the current culture of the process.
@@ -328,55 +331,62 @@ What to know about it:
 - Prefer the parameterless constructor and the four `Set` methods, as in the example. They set the color they
   are named for in every version.
 
-The XML documentation of the class describes the rest.
+The XML documentation of the class describes the rest. In five places it behaves differently from 1.0.0; the
+next section lists them.
 
-### Changes from 1.0.0
+## Migrating from 1.0.0 to 2.0
 
-The next version, 2.0, corrects a few things this class got wrong in 1.0.0. No constructor, method or parameter
-name changes, so existing programs compile and load as before; what changes is how they behave in the cases
-below. There are five corrections.
+Version 2.0 is a major version because it makes five corrections to what `CalendarGenerator.ConsoleCalendar`
+did in 1.0.0. The public API of that class does not change, so a program written for 1.0.0 compiles and loads
+as before; what can change is what it draws or throws in the five cases below. A program that none of them
+touches needs no change. The modern API is new and has nothing to migrate.
 
-**Constructor colors.** In the constructors that take colors, each argument now colors what it is named for:
-`TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the
-weekday row. In 1.0.0, `TitleColor` colored the weekday row instead, the title stayed yellow, and with four
-arguments `DayOfWeekColor` colored the title.
+### What changed
 
-What that means for a program written for 1.0.0:
+1. **Constructor colors.** In the constructors that take colors, each argument now colors what it is named
+   for: `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and
+   `DayOfWeekColor` the weekday row. In 1.0.0, `TitleColor` colored the weekday row, the title stayed yellow,
+   and with four arguments `DayOfWeekColor` colored the title.
+   - **One, two or three arguments:** the title is now drawn in the first color, where it was yellow, and the
+     weekday row in cyan, where it had the first color.
+   - **Four arguments:** the first and the fourth color trade places. To keep what the program drew, pass
+     those two in each other's place.
+   - **The parameterless constructor and the `Set` methods are unchanged.** A program that uses them draws the
+     same with both versions.
+   - A value that is not a defined `ConsoleColor` is still accepted and still fails only when its element is
+     first drawn. For the first and the fourth argument that is now another element, so the failure comes at
+     another point.
+2. **A null list of dates.** `GenerateMonth` and `GenerateYear` now throw `ArgumentNullException`, naming the
+   parameter `dates`, when the list is `null`. In 1.0.0 they threw `NullReferenceException`. The list is
+   checked before the month and the year, and before anything is written. Catch the new exception, or pass an
+   empty list, which selects no dates.
+3. **Line endings.** Every line now ends with the line terminator of the console's writer, the last row of
+   days of a month included. In 1.0.0 that row ended with a bare line feed whatever the terminator was. On
+   Windows the output therefore no longer mixes LF and CRLF. Where the terminator is a line feed, as on Linux
+   and macOS, the text is the same as before.
+4. **One blank line after every month.** Every month is now followed by exactly one blank line. In 1.0.0 a
+   month whose last day is a Sunday was followed by two. Such a month is one line shorter, and so is a year
+   for each such month in it.
+5. **The title names the Gregorian month.** The title is now the current culture's name for the Gregorian
+   month that is drawn. In 1.0.0 it was the culture's name for the month of the same number in the culture's
+   own calendar. Under nearly every culture that is the same name and nothing changes. Under a culture whose
+   calendar is another one, such as `fa-IR` where the system gives it the Persian calendar, the title named a
+   different month than the days below it. The language still comes from `CultureInfo.CurrentCulture`, and the
+   year in the title is still the number you pass. The title is indented by the length of the name as before,
+   so it can start a column or two further left or right where the two names differ in length.
 
-- **One, two or three arguments:** the title is now drawn in the first color, where it was yellow, and the
-  weekday row in cyan, where it had the first color.
-- **Four arguments:** the first and the fourth color trade places. To keep what the program drew, pass those
-  two in each other's place.
-- **The parameterless constructor and the `Set` methods are unchanged.** A program that uses them draws the
-  same with both versions, which makes them the simplest way to migrate.
-- A value that is not a defined `ConsoleColor` is still accepted by every constructor and still fails only
-  when its element is drawn. For the first and the fourth argument that is now another element, so the
-  failure comes at another point.
+A program that counts lines, or compares the output with stored text, has to allow for points 3 to 5.
 
-**A null list.** `GenerateMonth` and `GenerateYear` now throw `ArgumentNullException`, naming the parameter
-`dates`, when the list of dates is `null`. In 1.0.0 they threw `NullReferenceException`. As before, the list is
-looked at first and nothing is written. A program that catches `NullReferenceException` around these calls has
-to catch the new exception instead, or better, not pass `null`: an empty list selects no dates.
+### What did not change
 
-**Line endings.** Every line now ends with the line terminator of the console's writer, the last row of days
-of a month included. In 1.0.0 that row ended with a bare line feed whatever the terminator was. On Windows the
-output therefore no longer mixes LF and CRLF: every line ends with CRLF. Where the terminator is a line feed,
-as on Linux and macOS, the text is the same as before.
-
-**One blank line after every month.** Every month is now followed by exactly one blank line. In 1.0.0 a month
-whose last day is a Sunday was followed by two. Such a month, and a year that contains one, is now one line
-shorter for each. A program that counts lines or compares the output with stored text has to allow for both
-changes.
-
-**The title names the Gregorian month.** The days are always those of a month of the Gregorian calendar, and
-the title now names that month, in the language of the current culture. In 1.0.0 the name was the current
-culture's name for the month of the same number in the culture's own calendar. Under a culture whose calendar is
-the Gregorian one, which is nearly every culture, that is the same name and nothing changes. Under a culture
-whose calendar is another one, the title named a different month than the one drawn: under `fa-IR`, where the
-system gives that culture the Persian calendar, September was titled with the ninth month of the Persian
-calendar. It is now titled with the Persian name for September. The year in the title is still the number you
-pass, the weekday row is still English, and weeks still start on Monday. The title is indented by the length of
-the name as before, so where the two names differ in length it can start a column or two further left or right.
+- Every public signature and every parameter name, the namespace `CalendarGenerator` and the type name
+  `ConsoleCalendar`. Nothing is removed, and nothing is marked obsolete.
+- `GenerateYear`, and the four `Get` and four `Set` methods.
+- Which dates are selected: a date selects the day with the same year, month and day.
+- The weekday row, `Mo Tu We Th Fr Sa Su` in English, and weeks that start on Monday.
+- Writing directly to the console, resetting its colors afterwards instead of putting the caller's colors
+  back, and taking no lock: drawing from several threads at once still mixes their output.
+- The modern API. It is new in this version, so no earlier program depends on it.
 
 ## Supported frameworks
 

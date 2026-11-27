@@ -25,8 +25,8 @@
 
     <!--
       Development version of 2.0, the next version to be published. 1.0.0 is the only published version; nothing
-      built from this repository may carry that number. The suffix is removed only as part of an approved
-      release, and no prerelease is published.
+      built from this repository may carry that number. The release will be 2.0.0: the suffix is removed only
+      in the change that prepares an approved release, and no prerelease is published.
     -->
     <VersionPrefix>2.0.0</VersionPrefix>
     <VersionSuffix>dev</VersionSuffix>
@@ -40,8 +40,18 @@
 
     <Authors>Shaun Hathaway</Authors>
     <Copyright>Copyright (c) 2023 Shaun Hathaway</Copyright>
-    <Description>Draws month and year calendars in .NET console applications, with configurable colors and highlighted dates.</Description>
-    <PackageTags>console;calendar;terminal;cli;date</PackageTags>
+    <!--
+      The description and the tags are what nuget.org shows and searches. They describe the modern API first,
+      because that is what the package is for from 2.0 on, and say that the 1.0 class is still there.
+    -->
+    <Description>Lays out and renders month calendars for .NET console applications: as plain text, as structured segments you can style yourself, or straight to the console in color. Marked dates show in the text itself, in any culture and with any first day of the week. Includes the ConsoleCalendar class of version 1.0 for existing code.</Description>
+    <PackageTags>console;calendar;month;terminal;cli;date;text;layout</PackageTags>
+    <!--
+      Where the changes of a version are listed. While the package is a development version this is the
+      changelog on the default branch. Whether a released package points at the tag of its release instead is
+      settled when the release is prepared; see docs/ai-context/packaging-and-releases.md.
+    -->
+    <PackageReleaseNotes>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator</RepositoryUrl>

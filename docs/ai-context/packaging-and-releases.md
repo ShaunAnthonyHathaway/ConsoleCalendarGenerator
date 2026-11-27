@@ -24,7 +24,7 @@ All package settings are in `ConsoleCalendarGenerator/ConsoleCalendarGenerator.c
 | Informational version | the package version and the commit, such as `2.0.0-dev+<commit>` |
 | Library builds | `lib/net10.0/` and `lib/netstandard2.1/`, each with `ConsoleCalendarGenerator.dll` and `.xml` |
 | Dependencies | none |
-| Metadata | author Shaun Hathaway, description, MIT license expression, project and repository URLs, repository commit, tags, copyright |
+| Metadata | author Shaun Hathaway, a description of the modern API that also names the class of 1.0, MIT license expression, project and repository URLs, repository commit, tags, copyright, and release notes that link to the changelog ([D-74](decisions.md#d-74-the-package-describes-the-modern-api-and-its-release-notes-are-the-changelog)) |
 | Readme | the repository's root `README.md`, packed at the package root |
 | Symbols | a separate `ConsoleCalendarGenerator.<version>.snupkg` with one portable PDB per build |
 
@@ -33,7 +33,7 @@ Points that are easy to get wrong:
 - **Never build a package numbered 1.0.0.** That version is published. `eng/verify-package.sh` and
   `eng/consumer-smoke.sh` both refuse it.
 - **The version suffix is removed only as part of an approved release.** Until then the version stays
-  `2.0.0-dev`; the final number is not set early.
+  `2.0.0-dev`. The release will be 2.0.0, and the suffix goes in the change that prepares it, not earlier.
 - **The version is stated in four places that change together:** the project file, `VersionIdentityTests`,
   `eng/verify-package.sh` and `eng/consumer-smoke/AssetProbe/expected-output.txt`. Each of the last three fails
   when the project file says something else.
@@ -42,11 +42,11 @@ Points that are easy to get wrong:
   [D-29](decisions.md#d-29-modern-public-api-is-documented-when-it-is-added) and
   [D-51](decisions.md#d-51-the-legacy-class-is-documented-as-it-behaves).
 - **The packed readme says what is published.** It is the repository's README, which states that 1.0.0 is the
-  only published version and that the modern API is not published yet. That is true of `master` and would be
-  false inside a released package: the README is updated in the change that prepares a release. See
-  [roadmap.md](roadmap.md#next-action). It does not say that 2.0 is published, and must not before it is. It may
-  name 2.0 as the version in development, and says "not published yet" where it first does; a test requires
-  that.
+  only published version and that the modern API is not in the published package. That is true of `master`
+  and would be false inside a released package: the README is updated in the change that prepares a release;
+  see the [release preparation checklist](#release-preparation-checklist). It does not say that 2.0 is
+  published, and must not before it is. It names 2.0 as the version in development, and says "not published
+  yet" where it first does; a test requires that.
 - **The readme must satisfy nuget.org,** which is stricter than GitHub; see
   [The readme on nuget.org](#the-readme-on-nugetorg).
 - **The `net10.0` build is marked trim- and AOT-compatible** (`IsAotCompatible`), which also turns on the
@@ -135,7 +135,8 @@ bash eng/verify-package.sh artifacts/package
 ```
 
 Checks the packed files without building anything: exactly one `.nupkg` and one `.snupkg` and nothing else in
-the folder; the exact list of files inside each; the nuspec metadata; a version that is not 1.0.0, is the
+the folder; the exact list of files inside each; the nuspec metadata, including release notes that are the
+changelog of this repository; a version that is not 1.0.0, is the
 development version `2.0.0-dev` and matches the file names; in both library builds, the assembly version and the
 file version `2.0.0.0` and an informational version made of the package version and the commit the nuspec
 names; that neither build, its documentation nor its symbols contains anything of the test project, the frozen
@@ -296,31 +297,110 @@ and ask. Routine work (branches, commits, pull requests, CI runs triggered by pu
 Adding a publication workflow would itself be a release-mechanism change. Do not add one unless a phase is
 explicitly scoped to do so.
 
+## Release preparation checklist
+
+What the change that prepares the release of 2.0 has to do to the repository. **Nothing here is done, and none
+of it is authorized.** It is a list of what is known to go stale at that moment, so that the change is not
+put together from memory. It starts from the release-readiness audit and is one of the steps of the
+[sequence](#planned-20-publication-sequence) below.
+
+**The version.** Remove `VersionSuffix` from the project file, so that the package is 2.0.0. The version is
+stated in four places that change together: the project file, `VersionIdentityTests`, `eng/verify-package.sh`
+and `eng/consumer-smoke/AssetProbe/expected-output.txt`.
+
+**The README's links** ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)). The README
+is packed into the package and shown on nuget.org for as long as the version exists. A link whose target is
+part of the version moves to the tag `v2.0.0`; a link to a document of current policy stays on `master`.
+
+| Link in the README today | In the README of the released package |
+|---|---|
+| `https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/master/docs/images/month-with-theme.png` | `https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/v2.0.0/docs/images/month-with-theme.png` |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/global.json` | `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/v2.0.0/global.json` |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/master/ConsoleCalendarGeneratorExample` | `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/v2.0.0/ConsoleCalendarGeneratorExample` |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md` | unchanged |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md` | unchanged |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/SECURITY.md` | unchanged |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/LICENSE` | unchanged |
+| `https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/issues` | unchanged |
+
+The same list is data in `DocumentationLinkTests`, which fails when the README has a link that is not in it,
+and which compares it with this table. The tag does not exist until it is created, which needs its own
+approval, so the links are changed in the release commit and lead nowhere until the tag is pushed: check them
+after the tag exists and before the package is published. One test,
+`WhileTheVersionIsADevelopmentVersion_NoLinkPointsAtTheReleaseTag`, fails on purpose as soon as the suffix is
+removed; it is replaced in the same change by one that requires the tag form. `eng/verify-package.sh` checks
+the image address of the packed README and changes with it.
+
+**The README's text.** The "Status" section (what is published, what is not), the "Installation" section (what
+the command installs) and the first sentences of "Legacy API" and of "Migrating from 1.0.0 to 2.0" speak of
+2.0 as the next version. `PublicDocumentationTests` requires today's statements and changes with them.
+
+**The changelog.** The "Unreleased" section becomes the section of 2.0.0 with its date, and its first
+paragraph, which says nothing is published, goes. The link definitions at the end of the file gain the
+version. `TheChangelog_HasOnePublishedVersion_AndAnUnreleasedSection` and
+`TheChangelog_KeepsTheNextVersionUnreleased_AndUndated` change with it.
+
+**`SECURITY.md`.** The supported version becomes 2.0. If private vulnerability reporting has been turned on by
+then ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)), the section on reporting
+was already changed in the change that turned it on; if not, it still says there is no private channel, which
+is then still true.
+
+**`CONTRIBUTING.md`** says where the project is, including the development version by number.
+
+**The release notes of the package** ([D-74](decisions.md#d-74-the-package-describes-the-modern-api-and-its-release-notes-are-the-changelog))
+link to the changelog on `master`. Decide then whether they stay so.
+
+**These notes.** `CLAUDE.md`, [roadmap.md](roadmap.md), this file and
+[compatibility.md](compatibility.md#versions) say that 2.0 is unpublished and that the version is `2.0.0-dev`.
+
+**After 2.0 is published,** not before: raise `PackageValidationBaselineVersion` when 2.0 is meant to become
+the baseline ([When the baseline changes](#when-the-baseline-changes)), and give `master` the next development
+version.
+
 ## Planned 2.0 publication sequence
 
-Planned, **not authorized**. See [decisions.md](decisions.md#d-20-20-is-to-be-published-and-verified-on-nuget).
+Planned, **not authorized**. See [decisions.md](decisions.md#d-20-20-is-to-be-published-and-verified-on-nuget)
+and [D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated).
+Every step is a phase or an action that Shaun scopes and approves by itself; finishing one does not start the
+next.
 
-1. Complete the implementation: the five corrections, one pull request each
-   ([roadmap.md](roadmap.md#remaining-sequence)).
-2. Complete the user documentation, the migration guidance and the examples. In the same change, point the
-   README's image and file links at the tag `v2.0.0`
-   ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)) and set the final version.
-3. Run a release-readiness audit.
-4. Validate the final `.nupkg` and `.snupkg` contents.
-5. Test clean consumers from a local feed.
-6. Verify migration from 1.0.0.
-7. Obtain separate approval for the tag.
-8. Obtain separate approval for the GitHub release.
-9. Obtain separate approval for NuGet publication, which is a manual push of the exact artifacts that were
-   validated in step 4, not of a rebuild
-   ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)).
-10. Verify the package from nuget.org in a clean consumer.
-11. Prepare a factual handoff for the separate Campertron project and chat.
+Done:
+
+- The implementation: the modern API and the five corrections.
+- The user documentation and the migration guidance, for the repository as it is while 2.0 is unpublished.
+
+To come, in this order:
+
+1. **Release infrastructure and supply-chain hardening.** How the release files are produced and protected.
+   Its content is for Shaun's brief; nothing of it is decided here.
+2. **Release-readiness audit.** A review of everything a release depends on.
+3. **Release preparation.** The [checklist](#release-preparation-checklist) above, in one change: the final
+   version, the README's links and text, the changelog. Its result is the release commit.
+4. **The candidate.** Built once, from the release commit Shaun approves. The SHA-256 of the exact `.nupkg`
+   and `.snupkg` is recorded. These files, and no later build, are what everything after this step is about.
+5. **Validation of the candidate:** the contents of both files, clean consumers from a local feed, migration
+   from 1.0.0, the readme as nuget.org will render it.
+6. **Repository settings,** as approved separately: private vulnerability reporting
+   ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)) and whatever the audit names.
+7. **The tag** `v2.0.0`, on the release commit. Separate approval.
+8. **The GitHub release,** with the candidate's two files attached, unchanged. Separate approval.
+9. **NuGet publication:** a push of the candidate's two files, the same bytes, not a rebuild
+   ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts)). Separate approval. Claude
+   is expected to perform it once that approval is given and a secure credential is available; how it is
+   authenticated is open ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)).
+10. **Verification:** the package from nuget.org in a clean consumer, its hash against the recorded one, the
+    readme and the links on its page.
+11. **Deprecation of 1.0.0,** if Shaun decides it
+    ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). Separate approval, after
+    verification.
+12. A factual handoff for the separate Campertron project and chat.
+
+**An immutable release.** A published version is never changed or replaced. If anything is wrong after step
+9, the correction is a new version, such as 2.0.1, made and approved the same way. A partial publication, for
+example the package pushed and the symbols refused, is recovered only with Shaun's approval
+([Release boundaries](#release-boundaries)).
 
 `AssemblyVersion` is already `2.0.0.0`. The package-validation baseline stays 1.0.0: 2.0 differs from 1.0.0 in
 behavior only ([D-66](decisions.md#d-66-package-validation-stays-against-100-with-no-suppression)). No 1.x
 version and no prerelease is published before 2.0
-([D-55](decisions.md#d-55-the-next-published-version-is-20)). Repository settings are a phase of their own,
-approved separately, and are not changed by any of the steps above. Still open for the release:
-how the push is authenticated ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)) and whether
-1.0.0 is deprecated afterwards ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
+([D-55](decisions.md#d-55-the-next-published-version-is-20)).

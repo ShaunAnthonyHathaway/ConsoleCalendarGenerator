@@ -6,36 +6,52 @@ Notable changes to ConsoleCalendarGenerator, newest first. The format follows
 
 ## [Unreleased]
 
-Development toward version 2.0. Nothing here is in a published package: 2.0 is not released, and no release
-date has been set. The package built from this repository is numbered `2.0.0-dev` and is not published.
+The changes that will make up version 2.0. None of this is in a published package: 2.0 is not released, and no
+release date has been set. The package built from this repository is numbered `2.0.0-dev` and is not published.
 
 ### Added
 
-- A modern API in the `ConsoleCalendarGenerator` namespace, beside the existing class:
-  - `MonthLayout` places the days of a month in weeks and weekday columns, for any first day of the week.
-  - `MonthRenderer` and `MonthRenderOptions` render a month as text that is the same on every machine, with
-    the title and the weekday labels in a chosen culture, and with configurable cell width, column gap, indent,
-    title format, title suffix and title alignment.
-  - The result, `RenderedMonth`, is made of lines and segments that say what each piece of text is, so a month
-    can be drawn elsewhere without parsing text.
-  - `DayState` marks dates with a visible marker, so that a marked date does not depend on color.
-  - `CalendarTheme` maps the title, the weekday labels, the days and each state to optional console colors.
-  - `MonthWriter` writes a rendered month to any `TextWriter`. `ConsoleMonthWriter` writes it to the console in
-    the colors of a theme, and puts the caller's colors back.
-- A `net10.0` build of the library in the package, beside the `netstandard2.1` build. It is marked compatible
-  with trimming and Native AOT.
-- XML documentation for every public type and member, included in the package.
+- **A modern API** in the `ConsoleCalendarGenerator` namespace, beside the existing class. It renders one
+  month at a time.
+  - **Layout.** `MonthLayout` places the days of a month in weeks and weekday columns, for any first day of the
+    week, with no text involved.
+  - **Deterministic rendering.** `MonthRenderer` renders a month as text that depends only on the options it
+    is given. Nothing is read from the current culture, the console or the clock.
+  - **Options.** `MonthRenderOptions` sets the culture of the title and the weekday labels, the first day of
+    the week, weekday labels of your own, the cell width, the column gap, an indent, and the format, suffix
+    and alignment of the title.
+  - **Segments that say what they are.** The result, `RenderedMonth`, is lines made of segments: title, weekday
+    label, day, marked day and the spacing between them. A month can be styled or drawn elsewhere without
+    parsing text.
+  - **Day states with visible markers.** `DayState` marks dates with a marker in the text itself, so that a
+    marked date does not depend on color.
+  - **Themes.** `CalendarTheme` maps the title, the weekday labels, the days and each state to optional
+    console colors.
+  - **Writers.** `MonthWriter` writes a rendered month to any `TextWriter`. `ConsoleMonthWriter` writes it to
+    the console in the colors of a theme and puts the caller's colors back.
+- A `net10.0` build of the library, marked compatible with trimming and Native AOT.
+- XML documentation for every public type and member, in the package.
+- A readme in the package, and complete package metadata: description, license, repository and commit, and
+  this changelog as the release notes.
 - A symbol package with Source Link.
 
 ### Changed
 
-- The README, the example program and the screenshot are new and describe the modern API.
-- The assembly version is `2.0.0.0`. It was `1.0.0.0` in 1.0.0.
+- **Supported frameworks.** The package has two builds, `net10.0` and `netstandard2.1`. Version 1.0.0 had the
+  `netstandard2.1` build only; projects that used it keep getting it.
+- **Assembly version.** It is `2.0.0.0`. It was `1.0.0.0` in 1.0.0.
+- **Documentation and example.** The README, the example program and the screenshot are new and describe the
+  modern API. The example program runs without input and prints the same text on Linux, Windows and macOS,
+  apart from one example that shows a culture's own day names on purpose.
+- **How the package is checked.** Every change is built and tested on Linux, Windows and macOS against both
+  builds. Each time the package is packed its public API is compared with 1.0.0, and it is installed into
+  separate applications, a Native AOT one among them.
 
 ### Breaking changes
 
-Version 2.0 corrects five behaviors of `CalendarGenerator.ConsoleCalendar` that were wrong in 1.0.0. Each one
-is listed here, with what to change in a program that relied on the old behavior. The public API of the class does not change, so programs compile and load as before.
+Version 2.0 corrects five behaviors of `CalendarGenerator.ConsoleCalendar` that were wrong in 1.0.0. Each is
+listed here with what to do in a program that relied on the old behavior. The public API of the class does not
+change, so programs compile and load as before.
 
 - **The constructors that take colors give each color to the element it is named for.** `TitleColor` colors
   the title, `DateColor` the days, `SelectedDateColor` the selected days and `DayOfWeekColor` the weekday row.
@@ -77,7 +93,8 @@ is listed here, with what to change in a program that relied on the old behavior
   - Under a culture whose calendar is the Gregorian one, which is nearly every culture, nothing changes.
   - Under a culture whose calendar is another one, such as `fa-IR` where the system gives it the Persian
     calendar, the title named a different month than the days below it. It now names the month that is drawn,
-    in the same language.
+    in the same language. Which cultures have such a calendar is decided by the operating system's data, so it
+    can differ from one system to another.
   - The year in the title is still the number passed in and is never converted. The weekday row, the first day
     of the week and the colors are unchanged, and the culture is only read.
   - The title is still indented by the length of the name, in the same three steps, so it can start a column
@@ -85,14 +102,14 @@ is listed here, with what to change in a program that relied on the old behavior
 
 ### Compatibility
 
-- Apart from the breaking changes above, `CalendarGenerator.ConsoleCalendar` is unchanged for callers: the same
-  public API, the same output and the same use of the console as in 1.0.0. The public API is compared with the
-  published 1.0.0 package every time the package is built, and tests compare everything else with the source
-  of 1.0.0.
-- A program compiled against 1.0.0 runs with the new library without being rebuilt. It then draws with the
+- **The legacy API is kept and supported.** No signature, parameter name, namespace or type name of
+  `CalendarGenerator.ConsoleCalendar` changes, nothing is removed, and nothing is marked obsolete.
+- **Apart from the five breaking changes above, the legacy class behaves as in 1.0.0:** the same output and
+  the same use of the console. Tests compare it with the source of 1.0.0.
+- **A program compiled against 1.0.0 runs with the new library without being rebuilt.** It then draws with the
   corrected behavior.
-- Projects that used the `netstandard2.1` build keep getting it. Projects that target .NET 10 or later get the
-  `net10.0` build.
+- **The modern API is new in 2.0,** so nothing existing depends on it. It is the API to use for new code.
+- **The package still has no dependencies.**
 
 ## [1.0.0] - 2023-06-25
 

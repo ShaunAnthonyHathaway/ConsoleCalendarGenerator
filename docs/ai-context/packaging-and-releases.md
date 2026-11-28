@@ -2,14 +2,13 @@
 
 ## Current state
 
-- **On nuget.org:** `ConsoleCalendarGenerator` 1.0.0 and 2.0.1, both listed, neither deprecated (verified
-  2026-11-28).
-  - **2.0.1,** published on 2026-11-28, is the candidate's package and symbol package
-    ([The publication of 2.0.1](#the-publication-of-201)):
+- **On nuget.org:** `ConsoleCalendarGenerator` 1.0.0 and 2.0.1, both listed (verified 2026-11-28).
+  - **2.0.1,** published on 2026-11-28, is the current version. It is the candidate's package and symbol
+    package ([The publication of 2.0.1](#the-publication-of-201)):
     <https://www.nuget.org/packages/ConsoleCalendarGenerator/2.0.1>.
   - **1.0.0,** published in 2023, contains a single `netstandard2.1` assembly, placeholder metadata, and no
-    readme, license, symbols or documentation. It stays listed and supported; deprecating it is a decision
-    that has not been made ([D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)).
+    readme, license, symbols or documentation. It is deprecated since 2026-11-28, in favor of 2.0.1, and
+    stays listed and downloadable ([The deprecation of 1.0.0](#the-deprecation-of-100)).
 - **On GitHub Releases:** 2.0.0 and 2.0.1, both published on 2026-11-27 and both immutable.
   - **2.0.1,** for the tag `v2.0.1` on commit `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`, is marked Latest and
     holds the four files of the candidate of 2.0.1. It is the version that is on NuGet.
@@ -473,6 +472,7 @@ Each of the following needs Shaun's **separate, explicit approval**, every time:
 - creating a tag
 - creating a GitHub release
 - publishing to NuGet
+- deprecating, unlisting or deleting a version on nuget.org, or undoing or editing a deprecation
 - a manual workflow dispatch or rerun that could publish or change external state
 - recovering from a failed or partial publication
 - changing a repository setting or a ruleset, or using a ruleset's bypass
@@ -546,13 +546,14 @@ the package and not in the archive, and everything links to them on `master`. Fo
   Shaun's time zone like every date of the project: `## [2.0.1] - 2026-11-28`. A test requires exactly that
   heading, and that nothing in the changelog is "Unreleased".
 - **The table in `SECURITY.md`.** It states the present, and names no patch version of 2.x, so it does not
-  change with each release: the 2.x line is on GitHub Releases and on NuGet, 1.0.0 is on NuGet, and both are
-  supported. What it says about 1.0.0 follows Shaun's decision on that version and changes only with it
-  ([D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)). A test
-  requires those two rows.
+  change with each release. After the publication it said that the 2.x line is on GitHub Releases and on
+  NuGet, that 1.0.0 is on NuGet, and that both are supported. Since the deprecation of 1.0.0 its second row
+  says "NuGet, deprecated" and "No" ([D-92](decisions.md#d-92-100-is-deprecated-on-nuget-stays-listed-and-points-to-201)).
+  A test requires those two rows.
 - **The test of what the documents say about availability**
-  (`NoDocumentPutsTheGitHubOnlyReleaseOnNuGet_CallsTheFirstVersionDeprecated_OrAnnouncesThisRelease`): no
-  document puts 2.0.0 on NuGet, none calls 1.0.0 deprecated or unsupported, and none announces the release.
+  (`NoDocumentPutsTheGitHubOnlyReleaseOnNuGet_SaysMoreOfTheFirstVersionThanThatItIsDeprecated_OrAnnouncesThisRelease`):
+  no document puts 2.0.0 on NuGet; the deprecation of 1.0.0 is stated once, in that table, and nothing says
+  more of 1.0.0 than that; and none announces the release.
   The README was not changed for the publication and did not need to be: it names its version and the command
   that installs it, which is as true after the publication as before.
 - **The maintenance notes,** which state where every version is.
@@ -855,8 +856,51 @@ What the last job found, and what was looked at again afterwards:
   code blocks, the tables and the links.
 - **Not verifiable,** as before: the bytes of the symbol package as nuget.org stores it.
 
-Nothing else changed by it: 1.0.0 is listed and not deprecated, 2.0.0 is not on NuGet, both GitHub releases
+Nothing else changed by it: 1.0.0 stayed as it was, 2.0.0 is not on NuGet, both GitHub releases
 and both tags are as they were, and the policy and the environment are as they were set up.
+
+### The deprecation of 1.0.0
+
+Done on 2026-11-28, after the publication of 2.0.1 was verified, with Shaun's explicit approval for exactly
+this ([D-92](decisions.md#d-92-100-is-deprecated-on-nuget-stays-listed-and-points-to-201)). It was made
+on nuget.org, in the management page of the package, by hand: nothing in the repository can deprecate a
+version. The full record is outside the repository, beside the candidate.
+
+| | |
+|---|---|
+| Version | 1.0.0, and no other. 2.0.1 was not selected, and "all versions" was not |
+| Listed | yes, as before. The listing was not touched |
+| Reason | Legacy, and no other reason |
+| Alternate | `ConsoleCalendarGenerator`, version 2.0.1 |
+| Message | Version 2.0.1 is the current supported release and retains the original ConsoleCalendar API. |
+
+What was read back, without saving anything a second time:
+
+- **The management page** shows 1.0.0 as "Deprecated - Legacy", with that alternate and that message, still
+  listed in search results, and 2.0.1 as the latest version with no deprecation.
+- **The public page of 1.0.0** shows the notice, "Suggested Alternatives: ConsoleCalendarGenerator 2.0.1", and
+  the message. The page of 2.0.1 shows no notice. Both versions are shown as listed.
+- **nuget.org's metadata for clients** (the registration) has, for 1.0.0, the reason `Legacy`, the alternate
+  package `ConsoleCalendarGenerator` with the range `[2.0.1, )`, which is how nuget.org writes "version 2.0.1"
+  for an alternate, and the message; `listed` is true. It appeared there about two minutes after the change.
+  The entry of 2.0.1 is the entry it had before, with no deprecation.
+- **A client.** In a new project outside the repository, with an empty package cache and nuget.org as its
+  only source, `dotnet list package --deprecated` reports 1.0.0 with the reason Legacy and the alternative
+  `ConsoleCalendarGenerator >= 2.0.1`. It does not show the message, which is how that command is. 1.0.0
+  still restores, builds without a warning and draws a month; 2.0.1 does the same and is reported as not
+  deprecated.
+- **Nothing else moved.** The package files nuget.org serves for 1.0.0 and for 2.0.1 are, byte for byte, the
+  files it served before. 2.0.0 is not on NuGet. Nothing was unlisted, deleted or pushed, the ownership of the
+  package is as it was, and no workflow ran for it.
+
+**What depends on 1.0.0 still restoring.** The repository's own checks install it: package validation compares
+every pack with it ([Package validation](#package-validation)), the upgrade check starts from it, and the
+sample of 1.0.0 is run with it. A deprecated version restores like any other, without a warning from restore,
+so nothing here changed. Unlisting would not break them either; deleting would, and neither is planned.
+
+**Afterwards.** Undoing or editing the deprecation, unlisting or deleting the version, and any other change
+to a published package on nuget.org each need Shaun's explicit approval
+([Release boundaries](#release-boundaries)).
 
 ## Planned 2.0 publication sequence
 
@@ -892,13 +936,15 @@ Done:
 - **Finalizing on `master`:** the date in the changelog, the table in `SECURITY.md` and these notes
   ([What is finalized after publication](#what-is-finalized-after-publication)).
 
-Not part of the sequence, and not done:
+After the sequence, and done as well:
 
-1. **Deprecation of 1.0.0,** if Shaun decides it
-   ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). Separate, explicit approval. Until
-   then 1.0.0 stays listed and supported. Nothing in the repository deprecates, unlists or deletes a version.
-2. Campertron's adoption of the package, which belongs to the separate Campertron project and chat and is not
-   planned from here.
+- **The deprecation of 1.0.0** on nuget.org, in favor of 2.0.1, with the version left listed
+  ([The deprecation of 1.0.0](#the-deprecation-of-100)). It was Shaun's separate decision and had its own
+  approval.
+
+**The release program of 2.0.1 is complete.** Nothing in the repository deprecates, unlists or deletes a
+version. Campertron's adoption of the package belongs to the separate Campertron project and chat and is not
+planned from here. A later version begins only with a roadmap item that Shaun scopes.
 
 **A released version is never changed or replaced.** 2.0.0 is the example: its documentation was rejected
 after its GitHub release was published, the release stayed as it is, and the correction is a new version. If

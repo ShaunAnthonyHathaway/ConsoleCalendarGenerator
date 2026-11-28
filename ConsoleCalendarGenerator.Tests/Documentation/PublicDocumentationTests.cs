@@ -23,8 +23,9 @@ public class PublicDocumentationTests
     };
 
     /// <summary>
-    /// The first version, which is on NuGet, and the version released on GitHub alone. This release is on both:
-    /// it was published to NuGet on the day below, a date in the maintainer's time zone, like every date here.
+    /// The first version, which is on NuGet, deprecated there and still listed, and the version released on
+    /// GitHub alone. This release is on both: it was published to NuGet on the day below, a date in the
+    /// maintainer's time zone, like every date here.
     /// </summary>
     private const string OnNuGet = "1.0.0";
     private const string OnGitHubOnly = "2.0.0";
@@ -182,18 +183,20 @@ public class PublicDocumentationTests
     // ---- where each version is available ----
 
     /// <summary>
-    /// What the documents may say about availability, as it stands: 1.0.0 is on NuGet and supported; 2.0.0 was
-    /// released on GitHub and never on NuGet; and this release is on GitHub Releases and on NuGet. Three things
-    /// follow. No line connects 2.0.0 with NuGet except to say that it was not published there. Nothing says
-    /// that 1.0.0 is deprecated, unlisted or unsupported, because it is none of those. And no document
-    /// announces this release: the README names its version and gives the command that installs it, the
-    /// changelog gives its date, and that is all a reader needs, on the day of publication and a year later.
+    /// What the documents may say about availability, as it stands: 1.0.0 is on NuGet, deprecated there and
+    /// still listed and downloadable; 2.0.0 was released on GitHub and never on NuGet; and this release is on
+    /// GitHub Releases and on NuGet, and is the supported one. So: no line connects 2.0.0 with NuGet except to
+    /// say that it was not published there. The deprecation of 1.0.0 is stated in one place, the table of
+    /// `SECURITY.md`, as a fact and without a reason: nothing says that 1.0.0 is unlisted, deleted or faulty,
+    /// and nothing says that the 2.x line is deprecated. And no document announces this release: the README
+    /// names its version and gives the command that installs it, and the changelog gives its date.
     /// </summary>
     [TestCaseSource(nameof(Prose))]
-    public void NoDocumentPutsTheGitHubOnlyReleaseOnNuGet_CallsTheFirstVersionDeprecated_OrAnnouncesThisRelease(string document)
+    public void NoDocumentPutsTheGitHubOnlyReleaseOnNuGet_SaysMoreOfTheFirstVersionThanThatItIsDeprecated_OrAnnouncesThisRelease(string document)
     {
         string text = Repository.Read(document);
         string release = Regex.Escape(ReleaseVersion());
+        string[] deprecated = text.Split('\n').Where(line => Regex.IsMatch(line, "(?i)deprecat")).ToArray();
 
         using (Assert.EnterMultipleScope())
         {
@@ -201,8 +204,11 @@ public class PublicDocumentationTests
                     && line.Contains("NuGet", StringComparison.OrdinalIgnoreCase)
                     && !line.Contains("not published to NuGet", StringComparison.Ordinal)),
                 Is.Empty, OnGitHubOnly + " is not described as being on NuGet");
-            Assert.That(Regex.Matches(text, @"(?i)deprecat|unlisted|no longer supported|unsupported|end of life|out of support").Select(match => match.Value),
-                Is.Empty, OnNuGet + " is listed and supported, and nothing says otherwise");
+            Assert.That(deprecated, document == "SECURITY.md" ? Has.Length.EqualTo(1) : Is.Empty,
+                "the deprecation is stated once, in the table of SECURITY.md, and nowhere else in public");
+            Assert.That(deprecated, Is.All.StartsWith("| " + OnNuGet + " |").Using(StringComparison.Ordinal), "and it is " + OnNuGet + " that is deprecated");
+            Assert.That(Regex.Matches(text, @"(?i)unlisted|delisted|(deleted|removed) from nuget|critical bug|no longer maintained|unusable|end of life").Select(match => match.Value),
+                Is.Empty, OnNuGet + " is listed and downloadable, and nothing in public gives it a fault");
             Assert.That(Regex.Matches(text, @"(?i)(?<!until )\b" + release + @" (is|was|has been) (now )?(published|released|available|out|on nuget)\b|is now available|now on nuget|--prerelease")
                 .Select(match => match.Value), Is.Empty, "this release is described, not announced");
         }
@@ -243,9 +249,9 @@ public class PublicDocumentationTests
     /// <summary>
     /// `SECURITY.md` is a document of current policy: it is not packed into the package, every link to it
     /// points at the default branch, and it is edited when the facts change. Its table has a row for the 2.x
-    /// line, which is on GitHub Releases and on NuGet, and a row for 1.0.0, which is on NuGet; both are
-    /// supported. The rows name no patch version of 2.x and so do not go out of date with each release. It
-    /// sends reports to GitHub's private vulnerability reporting.
+    /// line, which is on GitHub Releases and on NuGet and is supported, and a row for 1.0.0, which is on NuGet,
+    /// deprecated, and not supported. The rows name no patch version of 2.x and so do not go out of date with
+    /// each release. It sends reports to GitHub's private vulnerability reporting.
     /// </summary>
     [Test]
     public void TheSecurityDocument_SaysWhereEachVersionIs_AndSendsReportsToThePrivateChannel()
@@ -261,8 +267,12 @@ public class PublicDocumentationTests
             Assert.That(cells.Select(row => row.Length), Is.All.EqualTo(3), "version, availability, supported");
             Assert.That(cells[0][1], Ordinal.Contains("GitHub Releases"), "where the 2.x line is available");
             Assert.That(cells[0][1], Ordinal.Contains("NuGet"), "and since its publication there");
-            Assert.That(cells[1][1], Is.EqualTo("NuGet"), "where 1.0.0 is available");
-            Assert.That(cells.Select(row => row[2]), Is.All.EqualTo("Yes"), "both are supported, without a condition");
+            Assert.That(cells[0][1], Does.Not.Match("(?i)deprecat"), "the 2.x line is not deprecated");
+            Assert.That(cells[0][2], Is.EqualTo("Yes"), "the 2.x line is supported");
+            Assert.That(cells[1][1], Does.StartWith("NuGet").Using(StringComparison.Ordinal), "where 1.0.0 is still available");
+            Assert.That(cells[1][1], Does.Match("(?i)\\bdeprecated\\b"), "and that it is deprecated there");
+            Assert.That(cells[1][1], Does.Not.Match("(?i)unlisted|deleted|removed"), "it is not unlisted");
+            Assert.That(cells[1][2], Is.EqualTo("No"), "1.0.0 is no longer supported");
             Assert.That(string.Concat(rows), Does.Not.Match(@"\b2\.\d+\.\d+\b"), "no patch version of 2.x in the table");
             Assert.That(security, Ordinal.Contains("Published versions are never changed"));
 
@@ -410,7 +420,9 @@ public class PublicDocumentationTests
 
     /// <summary>
     /// The original API is described as part of the library, by its full name, with what it does: the section
-    /// of the README about it names both of its drawing methods, and nothing public calls it deprecated.
+    /// of the README about it names both of its drawing methods, and nothing public calls it deprecated. What is
+    /// deprecated on NuGet is version 1.0.0 of the package, which the table of `SECURITY.md` states in its row
+    /// for that version; the API itself is part of version 2 and stays.
     /// </summary>
     [Test]
     public void TheReadme_DescribesTheOriginalApi_ByNameAndByWhatItDoes()
@@ -427,7 +439,9 @@ public class PublicDocumentationTests
             Assert.That(section, Ordinal.Contains("`GenerateYear`"));
             foreach (string document in Prose)
             {
-                Assert.That(Repository.Read(document), Does.Not.Match(@"(?i)\bdeprecated\b|\bobsolete\b|will be removed"), document);
+                string text = string.Join("\n", Repository.Read(document).Split('\n')
+                    .Where(line => !(document == "SECURITY.md" && line.StartsWith("| " + OnNuGet + " |", StringComparison.Ordinal))));
+                Assert.That(text, Does.Not.Match(@"(?i)\bdeprecated\b|\bobsolete\b|will be removed"), document);
             }
         }
     }

@@ -138,7 +138,8 @@ public class CurrentStateTests
     /// 2.0.1 was tagged and released on GitHub and its publication to NuGet was set up, that it has no tag,
     /// that it is not released, and that the repository has one workflow and nothing that can publish; and,
     /// since 2.0.1 was published to NuGet, that it is not there, that the publication has not run, that
-    /// nuget.org has 1.0.0 alone, and that its changelog heading has no date.
+    /// nuget.org has 1.0.0 alone, and that its changelog heading has no date; and, since 1.0.0 was deprecated,
+    /// that it is not, that it is supported, and that a question about it is open.
     /// </summary>
     private static readonly string[] RetiredClaims =
     {
@@ -171,6 +172,14 @@ public class CurrentStateTests
         @"\[2\.0\.1\] - Unreleased",
         @"until a 2\.x version is published",
         @"the version that goes to NuGet",
+        @"1\.0\.0 is (listed and )?not deprecated",
+        @"neither (is|of them is) deprecated|, neither deprecated",
+        @"1\.0\.0 (stays|is)( on NuGet,)? listed( and|,) supported",
+        @"(is|stays) listed and supported",
+        @"One question is open",
+        @"Q-15 (remains|stays|is) open",
+        @"Whether 1\.0\.0 is deprecated( afterwards)? is open",
+        @"deprecating it is a (separate )?decision that has not been made",
     };
 
     private static IEnumerable<TestCaseData> ActiveDocumentsAndRetiredClaims() =>
@@ -205,39 +214,47 @@ public class CurrentStateTests
     }
 
     /// <summary>
-    /// How the publication is authenticated is settled, by the decision that set up Trusted Publishing. The one
-    /// question that is open is whether 1.0.0 is deprecated, and it stays a question until Shaun answers it.
+    /// No question is open. How the publication is authenticated was settled by the decision that set up
+    /// Trusted Publishing, and whether 1.0.0 is deprecated by the decision that deprecated it. A question that
+    /// is open has a section of its own in the notes; a settled one has a line that names its decision.
     /// </summary>
     [Test]
-    public void TheOnlyOpenQuestion_IsWhetherTheFirstVersionIsDeprecated()
+    public void NoQuestionIsOpen()
     {
-        string questions = Repository.Read("docs/ai-context/open-questions.md");
-        string[] open = questions.Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal))
-            .Select(line => Regex.Match(line, @"^## (Q-\d+):").Groups[1].Value).ToArray();
+        string questions = Regex.Replace(Repository.Read("docs/ai-context/open-questions.md"), @"\s+", " ");
+        string decisions = Repository.Read(Decisions);
 
-        Assert.That(open, Is.EqualTo(new[] { "Q-15" }), "a question that is open has a section; a settled one has a line");
-        Assert.That(Regex.Replace(questions, @"\s+", " "), Does.Match(@"Q-14 \([^)]*\) is settled[^Q]*D-88"), "settled by the decision on Trusted Publishing");
-        Assert.That(StatusOf(Repository.Read(Decisions), "D-88"), Ordinal.Contains("Q-14"));
+        Assert.That(Repository.Read("docs/ai-context/open-questions.md").Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)), Is.Empty,
+            "no question has a section, so none is open");
+        Assert.That(questions, Does.Match(@"Q-14 \([^)]*\) is settled[^Q]*D-88"), "authentication: settled by the decision on Trusted Publishing");
+        Assert.That(questions, Does.Match(@"Q-15 \([^)]*\) is settled[^Q]*D-92"), "the deprecation of 1.0.0: settled by the decision that made it");
+        Assert.That(StatusOf(decisions, "D-88"), Ordinal.Contains("Q-14"));
+        Assert.That(StatusOf(decisions, "D-92"), Ordinal.Contains("Q-15"));
     }
 
     /// <summary>
-    /// The roadmap records the setup of the publication, the publication and the update after it as done, and
-    /// has one thing left, which is not part of the release: the deprecation of 1.0.0, pending its own approval.
+    /// The roadmap records every step of the release as done, the deprecation of 1.0.0 last, says that the
+    /// release program is complete, and has nothing left: no numbered step under what remains, and no next
+    /// action. A later version is not planned here.
     /// </summary>
     [Test]
-    public void TheRoadmap_RecordsThePublicationAsDone_AndLeavesOnlyTheDeprecation()
+    public void TheRoadmap_RecordsTheReleaseProgramAsComplete_AndHasNothingLeft()
     {
         string roadmap = Repository.Read("docs/ai-context/roadmap.md");
         string completed = Between(roadmap, "\n## Completed\n", "\n## Remaining sequence\n");
         string remaining = Between(roadmap, "\n## Remaining sequence\n", "\n## Next action\n");
+        string next = roadmap.Substring(roadmap.IndexOf("\n## Next action\n", StringComparison.Ordinal));
         string[] phases = completed.Split('\n').Where(line => line.StartsWith("| ", StringComparison.Ordinal)).Select(line => line.Split('|')[1].Trim()).ToArray();
-        string[] left = remaining.Split('\n').Where(line => Regex.IsMatch(line, @"^\d+\. ")).ToArray();
 
-        Assert.That(phases, Is.SupersetOf(new[] { "NuGet Trusted Publishing", "NuGet publication of " + ReleaseVersion(), "Post-publication update" }));
-        Assert.That(left, Has.Length.EqualTo(1), "one thing is left");
-        Assert.That(left[0], Ordinal.Contains("1.0.0"));
-        Assert.That(left[0], Does.Match("(?i)deprecat"));
-        Assert.That(remaining, Ordinal.Contains("Q-15"));
+        Assert.That(phases, Is.SupersetOf(new[]
+        {
+            "NuGet Trusted Publishing", "NuGet publication of " + ReleaseVersion(), "Post-publication update", "Deprecation of 1.0.0",
+        }));
+        Assert.That(remaining.Split('\n').Where(line => Regex.IsMatch(line, @"^\d+\. ")), Is.Empty, "no step is left");
+        Assert.That(Regex.Replace(remaining, @"\s+", " "), Does.Match(@"(?i)release program.{0,60}\bis complete\b"));
+        Assert.That(next, Does.Match(@"(?m)^\*\*None\.\*\*"), "and there is no next action");
+        Assert.That(Regex.Matches(roadmap, @"\b[23]\.\d+\.\d+\b").Select(match => match.Value).Distinct(), Is.SubsetOf(new[] { "2.0.0", ReleaseVersion() }),
+            "no later version is planned here");
     }
 
     private static string Between(string text, string start, string end)
@@ -250,19 +267,47 @@ public class CurrentStateTests
     }
 
     /// <summary>
-    /// 1.0.0 is on NuGet, listed and supported. Deprecating it is a decision that has not been made, so no
-    /// document states it as a fact. A sentence that asks whether, or says what would follow if, states nothing.
+    /// 1.0.0 is deprecated on nuget.org and stays listed: the two places a maintainer reads first say both, and
+    /// the notes on releases record the deprecation as it was made, with its reason, the version it recommends
+    /// and the message consumers are shown.
     /// </summary>
     [Test]
-    public void NoDocument_SaysThatTheFirstVersionIsDeprecated()
+    public void TheNotes_SayThatTheFirstVersionIsDeprecatedAndStillListed_AndRecommendThisRelease()
     {
+        const string message = "Version 2.0.1 is the current supported release and retains the original ConsoleCalendar API.";
+        string releases = Repository.Read("docs/ai-context/packaging-and-releases.md");
+        string section = Between(releases, "\n### The deprecation of 1.0.0\n", "\n## ");
+
+        foreach (string document in new[] { "CLAUDE.md", "docs/ai-context/packaging-and-releases.md" })
+        {
+            string text = Regex.Replace(Repository.Read(document), @"\s+", " ");
+            Assert.That(text, Does.Match(@"(?i)\b1\.0\.0\b.{0,250}?\bis deprecated\b.{0,120}?\bstays listed\b"),
+                document + " says that 1.0.0 is deprecated and that it stays listed");
+        }
+        Assert.That(section, Does.Match(@"(?m)^\| Reason \| Legacy\b"));
+        Assert.That(section, Does.Match(@"(?m)^\| Alternate \| `ConsoleCalendarGenerator`, version " + Regex.Escape(ReleaseVersion()) + @" \|$"));
+        Assert.That(section, Does.Match(@"(?m)^\| Listed \| yes\b"));
+        Assert.That(section, Ordinal.Contains("| Message | " + message + " |"), "the message, as it was entered");
+    }
+
+    /// <summary>
+    /// What no document says, because none of it is so: that 1.0.0 is unlisted, deleted or removed; that it has
+    /// critical bugs, which is the other reason nuget.org offers and was not given; and that 2.0.1, the current
+    /// version, is deprecated. A sentence that says a thing is not so, or was not done, states nothing.
+    /// </summary>
+    [Test]
+    public void NoDocument_SaysThatTheFirstVersionIsGoneOrFaulty_OrThatThisReleaseIsDeprecated()
+    {
+        string release = Regex.Escape(ReleaseVersion());
         var stated = new List<string>();
         foreach (string document in NotesAndPublicDocuments)
         {
             stated.AddRange(Repository.Read(document).Split('\n')
-                .Where(line => Regex.IsMatch(line, @"(?i)\b1\.0\.0 (is|was|has been) (now )?(deprecated|unlisted|unsupported|no longer supported)\b|\bdeprecated 1\.0\.0\b")
-                    && !Regex.IsMatch(line, @"(?i)\bwhether\b|\bif\b|\?"))
+                .Where(line => Regex.IsMatch(line,
+                        @"(?i)\b1\.0\.0 (is|was|has been) (now )?(unlisted|delisted|deleted|removed)\b|\b" + release + @" (is|was|has been) (now )?deprecated\b|\b2\.x (line )?is deprecated\b")
+                    && !Regex.IsMatch(line, @"(?i)\bnot\b|\bnever\b|\bno\b|\bnor\b|\bneither\b|\bwhether\b|\bif\b|\?"))
                 .Select(line => document + ": " + line.Trim()));
+            stated.AddRange(Regex.Matches(Repository.Read(document), @"(?i)critical bugs?").Select(match => document + ": " + match.Value));
         }
 
         Assert.That(stated, Is.Empty);

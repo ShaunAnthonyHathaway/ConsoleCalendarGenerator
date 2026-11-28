@@ -11,7 +11,7 @@ console applications. It is .NET only.
 
 - **Released:** `ConsoleCalendarGenerator` 1.0.0 on NuGet (June 2023); 2.0.0 on GitHub Releases only
   (2026-11-27); and 2.0.1 on GitHub Releases (2026-11-27) and on NuGet (2026-11-28). **nuget.org has 1.0.0
-  and 2.0.1, both listed, and neither is deprecated.**
+  and 2.0.1, both listed. 2.0.1 is the current version, and 1.0.0 is deprecated there since 2026-11-28.**
   - **2.0.0 is on GitHub only and is never pushed to NuGet:** its public documentation was rejected after the
     GitHub release was published, so its package is not authorized for NuGet (D-85). No runtime or API defect
     was involved. Its release is published and immutable, and its tag `v2.0.0` is on
@@ -22,8 +22,11 @@ console applications. It is .NET only.
     `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`. Its package is
     <https://www.nuget.org/packages/ConsoleCalendarGenerator/2.0.1>: the candidate's package, to which
     nuget.org added its signature and nothing else.
-  - **1.0.0 stays on NuGet, listed and supported.** It is not deprecated. Deprecating it is a separate
-    decision that has not been made (Q-15).
+  - **1.0.0 is deprecated on NuGet and stays listed and downloadable** (D-92). With Shaun's approval it was
+    deprecated on 2026-11-28: reason Legacy, alternate `ConsoleCalendarGenerator` 2.0.1, and the message
+    "Version 2.0.1 is the current supported release and retains the original ConsoleCalendar API." It was
+    not unlisted and not deleted: projects that use it restore it as before, and its consumers are shown the
+    notice. It is no longer supported.
   - **Never edit, replace, delete or recreate either release, its four files or its tag.** From the tag on,
     any change to what the package contains is a new version.
 - **`master` is the source of the release `2.0.1`,** which replaces 2.0.0 as the 2.x version for NuGet: package
@@ -113,11 +116,10 @@ console applications. It is .NET only.
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
   start and every example supply theirs, so they print the same text on all three systems. Do not add a label
   mode or change `WeekdayLabelStyle` for this.
-- **Publication (decided, D-55, D-85, D-88 and D-91):** no 1.x release and no prerelease exists or is
-  authorized. 2.0.1 is published and verified, and no further publication is planned or authorized. 1.0.0
-  stays on NuGet, listed and supported, until Shaun decides otherwise: deprecating it is a separate decision
-  and a separate, explicitly approved action, and nothing in the repository deprecates, unlists or deletes a
-  version.
+- **Publication (decided, D-55, D-85, D-88, D-91 and D-92):** no 1.x release and no prerelease exists or is
+  authorized. 2.0.1 is published and verified, and 1.0.0 is deprecated in its favor and stays listed. **The
+  release program of ConsoleCalendarGenerator 2.0.1 is complete,** and no further publication is planned or
+  authorized. Nothing in the repository deprecates, unlists or deletes a version.
 - **Repository settings (made 2026-11-27, D-82):** a published release is immutable; private vulnerability
   reporting is on, and `SECURITY.md` sends reports there (D-81); secret scanning and push protection are on;
   Actions must be pinned to full commit SHAs; a ruleset on `master` requires the three CI checks by their
@@ -129,12 +131,14 @@ console applications. It is .NET only.
   `nuget-production` (D-88): Shaun is its required reviewer, only `master` may deploy to it, administrators
   cannot bypass it, and it holds no secret and one variable, the nuget.org user name. The record is in
   [development.md](docs/ai-context/development.md#repository-settings).
-- **`SECURITY.md` states the present,** unlike the README: the 2.x line is on GitHub Releases and on NuGet,
-  1.0.0 is on NuGet, and both are supported. Its table names no patch version of 2.x. It is on `master` only,
-  and its row for 1.0.0 changes only with Shaun's decision about that version.
-- **Next phase:** the deprecation of 1.0.0 on nuget.org, if and when Shaun approves it: an action on a
-  published version, outside this repository, with its own explicit approval (Q-15). Nothing else of the
-  release is outstanding. See [roadmap.md](docs/ai-context/roadmap.md). Start nothing unprompted.
+- **`SECURITY.md` states the present,** unlike the README: the 2.x line is on GitHub Releases and on NuGet and
+  is supported; 1.0.0 is on NuGet, deprecated, and not supported. Its table names no patch version of 2.x. It
+  is on `master` only. It is the one public document that states the deprecation: as a fact, in its table,
+  with no reason and no judgment of 1.0.0 (D-84).
+- **Next phase:** none. The release program is complete and no question is open. Future work begins only
+  through a roadmap item that Shaun scopes and approves: do not start a new version, and do not plan or
+  prepare Campertron's adoption from here. Trusted Publishing stays configured for a later release, and the
+  publication workflow stays manual and written for 2.0.1. See [roadmap.md](docs/ai-context/roadmap.md).
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -211,8 +215,9 @@ publication workflow: that is never a command to run in passing.
    stays pinned to a full commit SHA (D-75). **The publication workflow is started only by hand and only with
    that approval, and a run of it is never run again.** It ran once, for 2.0.1, and is not started again for
    that version. It publishes only the approved release, whose identity and checksums are in
-   `eng/publication.sh`; no API key is created and no secret is stored (D-88, D-89). **1.0.0 is not
-   deprecated, unlisted or changed on nuget.org without Shaun's explicit approval for that action** (D-91). If a
+   `eng/publication.sh`; no API key is created and no secret is stored (D-88, D-89). **1.0.0 is deprecated on
+   nuget.org and stays listed (D-92): it is not unlisted or deleted, and its deprecation is not undone or
+   edited, without Shaun's explicit approval for that action.** If a
    publication fails after the push, nothing is pushed again, replaced or unlisted: what happens next is
    Shaun's decision. The GitHub releases of 2.0.0 and 2.0.1, their files and their tags are never edited,
    replaced or deleted, and the package of 2.0.0 is never pushed to NuGet (D-85). A repository setting or a

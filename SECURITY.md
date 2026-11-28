@@ -5,7 +5,7 @@
 | Version | Availability | Supported |
 |---|---|---|
 | 2.x | GitHub Releases and NuGet | Yes |
-| 1.0.0 | NuGet | Yes |
+| 1.0.0 | NuGet, deprecated | No |
 
 A fix is released as a new version. Published versions are never changed.
 

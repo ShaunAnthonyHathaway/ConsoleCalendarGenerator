@@ -17,7 +17,8 @@
 #   3. The README has the links that are part of the version at the tag of the release, and the others on the
 #      default branch (eng/release-links.sh --check).
 #   4. The changelog's first section is the section of that version. Its heading carries the date of
-#      publication, or says that the version is not yet published; it never carries a date that was guessed.
+#      publication, or "Unreleased" until there is one; it never carries a date that was guessed. The notes of
+#      the release are written (docs/release-notes/<version>.md).
 #
 # With a version suffix, the repository holds a development version, and this is a rehearsal: it works out
 # whether release preparation would succeed from this commit, without doing any of it. It never produces a
@@ -78,15 +79,19 @@ if [ -z "$suffix" ]; then
   echo "== 4. The changelog"
   changelog="$(tr -d '\r' < "$repository/CHANGELOG.md")"
   first="$(grep '^## ' <<< "$changelog" | sed -n 1p)"
-  if ! grep -q -E "^## \[$prefix\] - ([0-9]{4}-[0-9]{2}-[0-9]{2}|not yet published)$" <<< "$first"; then
-    fail "the first section of the changelog is '$first', not the section of $prefix with its date or 'not yet published'"
+  if ! grep -q -E "^## \[$prefix\] - ([0-9]{4}-[0-9]{2}-[0-9]{2}|Unreleased)$" <<< "$first"; then
+    fail "the first section of the changelog is '$first', not the section of $prefix with its date or 'Unreleased'"
   fi
   if grep -q '^## \[Unreleased\]' <<< "$changelog"; then fail "the changelog has an Unreleased section beside the section of $prefix"; fi
   grep -q "^\[$prefix\]: $repository_url/releases/tag/$tag\$" <<< "$changelog" || fail "the changelog has no link definition for $prefix that points at the release $tag"
-  for section in "### Added" "### Changed" "### Breaking changes" "### Compatibility"; do
+  for section in "### Added" "### Changed" "### Compatibility"; do
     grep -q -x -F "$section" <<< "$changelog" || fail "the changelog has no '$section'"
   done
   echo "Changelog:      $first"
+
+  echo "== 5. The notes of the release"
+  bash "$repository/eng/release-notes.sh" "$prefix" > "$work/notes.md" || fail "the notes of $prefix cannot be printed"
+  echo "Release notes:  docs/release-notes/$prefix.md, $(wc -l < "$work/notes.md" | tr -d ' ') lines"
 
   echo
   echo "The repository holds the release $prefix, and agrees with itself about it. Nothing was built, changed, tagged or published."
@@ -138,7 +143,7 @@ released="$(sed -e "s/^## \[Unreleased\]$/## [$prefix] - 2000-01-01/" <<< "$chan
 headings="$(grep '^## ' <<< "$released")"
 [ "$(sed -n 1p <<< "$headings")" = "## [$prefix] - 2000-01-01" ] || fail "the section of $prefix would not be the first section of the changelog"
 grep -q -E '^## \[1\.0\.0\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$' <<< "$headings" || fail "the changelog has no dated section for 1.0.0 to follow"
-for section in "### Added" "### Changed" "### Breaking changes" "### Compatibility"; do
+for section in "### Added" "### Changed" "### Compatibility"; do
   grep -q -x -F "$section" <<< "$released" || fail "the changelog has no '$section'"
 done
 echo "Changelog:      one Unreleased section with its link definition; it becomes '## [$prefix] - <date>', before the section of 1.0.0."

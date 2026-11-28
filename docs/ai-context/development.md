@@ -7,7 +7,7 @@ How to build, test and change this repository today. Every command here is run f
 - **.NET SDK 11.0.100,** or a later 11.0 feature band. `global.json` pins it (`rollForward: latestFeature`, no
   prereleases). The SDK also builds the `net10.0` and `netstandard2.1` targets; no other SDK is needed.
 - **A .NET 11 runtime** to run the tests, which the SDK includes.
-- **bash** for the two scripts in `eng/`. On Windows, Git Bash works; `.gitattributes` keeps `*.sh` files on LF
+- **bash** for the scripts in `eng/`. On Windows, Git Bash works; `.gitattributes` keeps `*.sh` files on LF
   line endings for that reason.
 - **unzip** and **git,** used by `eng/verify-package.sh` and the release scripts.
 - Optional: a native toolchain (for example clang on Linux) for the Native AOT part of the consumer smoke tests,
@@ -87,7 +87,7 @@ bash eng/direct-reference-smoke.sh artifacts/release-bundle
 
 Packing is explicit; a build never creates a package. Packing also runs package validation against published
 1.0.0. What each step checks: [packaging-and-releases.md](packaging-and-releases.md). The package and the
-bundle these commands make call themselves `2.0.0`, like every build of this source, and are **not** the
+bundle these commands make call themselves `2.0.1`, like every build of this source, and are **not** the
 release: the release is the one candidate, which is never built again
 ([packaging-and-releases.md](packaging-and-releases.md#the-candidate)). Do not publish, attach or hand on what
 these commands make. None of them publishes anything, and no command that needs a credential belongs in this
@@ -140,29 +140,37 @@ What to do when one of them changes:
   ```
 
   Then copy the changed lines into the README's output block. Every output block must be consecutive lines of
-  that file. Record it on Linux or macOS: one line, the weekday row of the culture-derived example, is
-  different on Windows, and the file and the README show the Linux and macOS form
+  that file. Every example supplies its weekday labels, or builds on the `options` of the quick start, which
+  do, so the file is the same on Linux, Windows and macOS
   ([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).
-  An example that should print the same text everywhere supplies its weekday labels, or builds on the
-  `options` of the quick start, which do.
+  Keep it so: an example that took its labels from a culture would print another row on Windows.
 - **A link.** In the README every link is an absolute `https` address or `#a-heading-of-the-page`, because the
   same file is shown on nuget.org. The other three documents may use relative links. A new link from the
   README into this repository also has to be added to the list in `DocumentationLinkTests`, with whether it
   moves to the release tag when a version is released, and to the table of the
   [release preparation checklist](packaging-and-releases.md#release-preparation-checklist). In the list every
-  address is written as it is on `master`; in the README of 2.0.0 the ones that are part of the version are at
-  `v2.0.0`.
-- **What a document says about the state of the project.** The repository is the source of 2.0.0, and 2.0.0 is
-  not published. The public documents name the version and say nothing that publication would make false
-  ([D-78](decisions.md#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false)): do
-  not write that 2.0.0 is published, tagged or released, and do not write that it is unpublished either, in a
-  file that is packed into the package. Tests hold the documents to it.
+  address is written as it is on `master`; in the README of 2.0.1 the ones that are part of the version are at
+  `v2.0.1`.
+- **How public text is written** ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)).
+  Everything a user reads describes the library positively and directly: the README, the changelog,
+  `SECURITY.md`, `CONTRIBUTING.md`, the notes of a release, the package description, the XML comments, the
+  example and what it prints. `CalendarGenerator.ConsoleCalendar` is "the original API" there, the types of
+  the `ConsoleCalendarGenerator` namespace are "the structured rendering API", and version 2 "updates five
+  observable behaviors". Nothing public judges version 1.0.0 or the original code, and nothing public narrates
+  how the project is run. Read a public text as a user would before committing it; the tests catch the exact
+  rejected phrases and nothing more.
+- **What a document says about a release** ([D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version)).
+  The README is packed into the package: it says which version it documents, gives the installation command
+  with that version, and says nothing about whether the version is published. The changelog's heading of an
+  unreleased version says "Unreleased". `SECURITY.md` says where each version is. The notes of a release are
+  `docs/release-notes/<version>.md`. No document says that a version is published, tagged or released before
+  it is, and none says that 2.0.0 is on NuGet. Tests hold the documents to it.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a
   terminal, and only needs redoing when the "Colors" example changes what it draws. The tools are not part of
   the build: util-linux `script` and ImageMagick with Pango.
   1. Run the built example on a pseudo-terminal and keep the bytes:
      `TERM=xterm-256color script -qec "dotnet ConsoleCalendarGeneratorExample/bin/Release/net10.0/ConsoleCalendarGeneratorExample.dll" /dev/null`.
-  2. Take the lines between the "Colors" heading and the next heading. Remove the carriage returns.
+  2. Take the lines between the "Console colors" heading and the next heading. Remove the carriage returns.
   3. Turn each color sequence into Pango markup: the sequence for a bright color opens a
      `<span foreground="...">`, the reset sequence closes it. The palette used is `#F9F1A5` for bright yellow
      (code 93), `#61D6D6` for bright cyan (96), `#16C60C` for bright green (92), `#CCCCCC` for the default

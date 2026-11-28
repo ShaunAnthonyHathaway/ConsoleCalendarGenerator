@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **2,508 tests**: 299 tests of the legacy API, 25 tests of the legacy class
+`ConsoleCalendarGenerator.Tests` holds **2,532 tests**: 299 tests of the legacy API, 25 tests of the legacy class
 as a facade, 109 tests of the frozen source of 1.0.0, 376 migration tests that compare the library with it, 184
 tests of the layout model, 283 tests of text rendering, 98 tests of day states and markers, 52 tests of the
-theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 222
+theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 246
 tests of the documentation and the example, 27 tests of the workflow and the release tooling, 2 tests of the modern public surface, 16 tests of the version
 identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
@@ -115,16 +115,16 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Parity/Campertron/ParityDeterminismTests` | 51 | The same spans every time and on every thread, whatever the order of the dates |
 | `Parity/Campertron/WidthTests` | 96 | That no line exceeds the width Campertron writes to, and that the indent is part of the line |
 | `Parity/Campertron/ApiSufficiencyTests` | 6 | That the adapter can only have used public API, and that nothing is built against Campertron |
-| `Documentation/ExampleProgramTests` | 20 | The example program: it runs with redirected output and no input and prints `expected-output.txt` on every system; the primary example prints the same text everywhere; the one culture-derived weekday row is what the machine's culture data gives; the output does not depend on the culture the process starts with; its source follows the rules the README recommends |
+| `Documentation/ExampleProgramTests` | 19 | The example program: it runs with redirected output and no input and prints `expected-output.txt` on every system; the primary example prints the same text everywhere; every weekday row is made of labels an example supplies; the output does not depend on the culture the process starts with; its source follows the rules the README recommends |
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 11 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
-| `Documentation/DocumentationLinkTests` | 24 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows; and that every link of the README into the repository is classified for the release in `eng/release-links.txt`, as approved, the three that are part of the version are at the tag `v2.0.0` and no other link is, and the release checklist names each of them |
-| `Documentation/PublicDocumentationTests` | 60 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0 and 2.0.0; that the README says which version it describes and where to see what is published, in words that stay true after publication; that no document says the release has happened, or that it has not; that the changelog's first section is the release, dated only once it is published; what `SECURITY.md` says is supported and where the release stands, and that it sends reports to GitHub's private vulnerability reporting and to nothing public; that each of the five corrections is described in the README's migration section and in the changelog with its facts, five and once each; that what 1.0.0 did is told only in the migration section; what did not change; that the legacy class is described as kept and supported; nothing machine-specific and nothing about a consumer |
+| `Documentation/DocumentationLinkTests` | 24 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows; and that every link of the README into the repository is classified for the release in `eng/release-links.txt`, as approved, the three that are part of the version are at the tag `v2.0.1` and no other link is, and the release checklist names each of them |
+| `Documentation/PublicDocumentationTests` | 84 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0, 2.0.0 and 2.0.1, and the README names only its own and 1.0.0; that the installation command names the version; that nothing says 2.0.1 is published or that 2.0.0 is on NuGet; that the changelog has a section for each version, the unreleased one without a date; what `SECURITY.md` says about where each version is, and that it sends reports to GitHub's private vulnerability reporting; that each of the five updated behaviors is described in the README's section on moving from 1.0.0 and in the changelog, five and once each; that the README speaks of 1.0.0 in that section only; that every API name the README and the release notes mention in code exists; what the release notes link to and name; and, for every public text including the example and the package description, none of the rejected phrases, nothing about how the project is run, no machine path and nothing about another language or a consumer |
 | `Documentation/CurrentStateTests` | 85 | That the documents describe the repository as it is: no active document names a development version, and the release version is named where a maintainer looks for it; the decision log marks the five corrections implemented and the old rules superseded; the compatibility notes list all five as made; and no active document, a public one, a maintenance note or a source file of the library, still makes a claim about the present that was true before (a 1.x line, a correction still to come, layers not built, an undecided release version). Also no machine path and no instruction for another language in the maintenance notes; and that the names of the three checks the ruleset for `master` requires, as the notes record them, are the names the workflow gives its jobs |
-| `Documentation/PackageMetadataTests` | 4 | The package's description (about the modern API, naming the class of 1.0, saying nothing about a release), its tags, its release notes (the changelog of this repository, not at a tag that does not exist) and that its identity is what it was |
-| `Documentation/XmlDocumentationTests` | 15 | Every public type, member and parameter of the built documentation file has text; the comments of the legacy constructors say that each argument colors what it is named for and that 1.0.0 did otherwise; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException` and what 1.0.0 threw; no documentation warning is suppressed |
+| `Documentation/PackageMetadataTests` | 4 | The package's description (what the package does, naming the original API, saying nothing about a version or a release), its tags, its release notes (the changelog of this repository on the default branch) and that its identity is what it was |
+| `Documentation/XmlDocumentationTests` | 16 | Every public type, member and parameter of the built documentation file has text; the comments of the constructors that take colors say that each argument is the color of what it is named for; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException`; how a month ends and which month the title names are documented as the library does them; an earlier version is mentioned in five members only, and no comment uses a rejected phrase; no documentation warning is suppressed |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
-| `VersionIdentityTests` | 16 | The assembly version, the file version and the informational version of the library build under test: the release version 2.0.0 with the commit and no suffix; that the major version of the assembly is that of the package; that nothing says it is 1.0.0; that the project file sets those versions and has no version suffix; that package validation compares with 1.0.0 and nothing is suppressed; that no maintenance note still names a development version, outside the decision log and the roadmap's table of completed phases |
+| `VersionIdentityTests` | 16 | The assembly version, the file version and the informational version of the library build under test: the release version 2.0.1 with the commit and no suffix, assembly version 2.0.0.0 and file version 2.0.1.0; that the major version of the assembly is that of the package; that nothing says it is 1.0.0 or 2.0.0; that the project file sets those versions and has no version suffix; that package validation compares with 1.0.0 and nothing is suppressed; that no maintenance note still names a development version, outside the decision log and the roadmap's table of completed phases |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
 | `Infrastructure/WorkflowTests` | 7 | The workflow, read as text: there is one; every action is pinned to the full SHA of a commit with its version beside it; the actions are the three that were reviewed; the only permission is to read the contents; it runs on pull requests and pushes to `master` and cannot be started by hand; it uses no secret; it builds on three systems and runs every check script |
 | `Infrastructure/ReleaseToolingTests` | 20 | The release scripts, read as text: they are there; no script and no workflow can push a package, create a release, a tag or an attestation, or push commits; no file of a release is kept in the repository; the two expected reports of the upgrade differ in the five corrections and the modern API and in nothing else; the program of the upgrade starts from the published version and the direct one has no package |
@@ -199,9 +199,9 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 2,483 pass | 5 Windows-only | 19 pass |
-| macOS | 2,483 pass | 5 Windows-only | not part of CI |
-| Windows | 2,394 pass | 94 that need Linux or macOS | not part of CI |
+| Linux | 2,507 pass | 5 Windows-only | 19 pass |
+| macOS | 2,507 pass | 5 Windows-only | not part of CI |
+| Windows | 2,418 pass | 94 that need Linux or macOS | not part of CI |
 
 One more test is inconclusive in the normal run on each system, and which one depends on the system's culture
 data: `Legacy/GregorianTitleTests` has a case for `ar-SA` counting in the Gregorian calendar and a case for it
@@ -583,43 +583,52 @@ only run from a build inside a checkout. What they are built on:
 - **The example is run as a real process** from `ConsoleCalendarGeneratorExample/bin/<configuration>/net10.0/`
   with its standard input closed, and its output is compared with `expected-output.txt` after line ends are
   made the same.
-- **The complete output is compared on every system.** Every example but one supplies its weekday labels, so
-  `expected-output.txt` is the same on Linux, macOS and Windows in every line but one
+- **The complete output is compared on every system, as it is.** Every example supplies its weekday labels
+  or builds on the options of the quick start, so `expected-output.txt` is the same on Linux, macOS and
+  Windows in every line
   ([D-54](decisions.md#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).
-  That line is the weekday row of the example that takes its labels from the culture: the file has what
-  Linux and macOS give (`lu ma me je ve sa di`), Windows gives ` L  M  M  J  V  S  D`, and the comparison puts
-  in whatever the machine's culture data gives (`ExampleProgram.ExpectedOutputOnThisMachine`). A separate test
-  builds that row from the culture's day names directly. Never write a culture-derived row into a test as the
-  one right answer.
+  Never add an example that takes its labels from a culture: its weekday row would differ on Windows.
 - **What is still assumed:** the English and the French name of March, which are in the titles and are the same
   on all three systems. On a machine with other names those comparisons are inconclusive, not failed. The
   test that the starting culture of the process changes nothing compares two runs on the same machine and
   assumes nothing.
-- **Two structural tests keep the output deterministic:** exactly two examples start from
-  `MonthRenderOptions.Default` (the quick start, which supplies labels, and the culture-derived one, which
-  must not), and every weekday row of the expected output except the culture-derived one is made of labels
-  that an example supplies.
+- **Two structural tests keep the output deterministic:** every example that starts from
+  `MonthRenderOptions.Default` names its culture and supplies its labels, and every weekday row of the
+  expected output is made of labels that an example supplies or is the fixed row of `ConsoleCalendar`.
 - **Links are checked against the checkout, never the network.** A link to a file of this repository on GitHub
   or on `raw.githubusercontent.com` must name a file that exists; a `#` link must name a heading; other
   addresses must be `https`. That a file exists here says nothing about `master` until the change is merged,
   which matters for a new image: look at the README on GitHub after merging.
-- **Facts are tested, wording is not.** The tests check which documents and images exist, which target
-  frameworks, versions and commands the documents name, and the statements a release would have to change
-  (what is published, the changelog's section headings). Prose can be edited freely otherwise.
-- **The five corrections are data.** `PublicDocumentationTests` holds, for each correction, the handful of
-  facts a user needs to recognize it, mostly names in code (`TitleColor`, `ArgumentNullException`, `dates`,
-  `fa-IR`). Both the README's migration section and the changelog's breaking changes must contain them, the
-  README as exactly five numbered points and the changelog as exactly five entries. What 1.0.0 did may be told
-  in the README's migration section only; a test looks for those facts in the rest of the file.
+- **Facts are tested, wording is not, with one exception** ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)).
+  The tests check which documents and images exist, which target frameworks, versions, commands and API names
+  the documents mention, and what they say about where each version is. They do not fix headings, the order of
+  sections or sentences: the README's section on moving from 1.0.0 is found as the one section whose heading
+  names that version, and its section on the original API as the one whose heading names `ConsoleCalendar`.
+  The exception is a short list of phrases the project does not use in public, the exact ones that were
+  rejected, which `NoRejectedPhrase` looks for in every public text: the four documents, the notes of the
+  release, the example's source and output, and the package's description. Whether a text reads well is
+  judged by reading it; do not grow that list into a style guide.
+- **Nothing public is about how the project is run.** `NothingAboutHowTheProjectIsRun` fails on a decision or
+  question number, a pull request number, a workflow run, the word "candidate", an audit, an approval, a count
+  of tests, or the name of a tool the project is maintained with, in any public text.
+- **The five updated behaviors are data.** `PublicDocumentationTests` holds, for each, the names a user needs
+  to recognize it, mostly names in code (`TitleColor`, `ArgumentNullException`, `dates`, `fa-IR`). The
+  README's section on moving from 1.0.0 and the "Changed" part of the changelog's section of 2.0.0 must
+  contain them, the README as exactly five numbered points and the changelog as the same five entries under
+  the same names. The README speaks of 1.0.0 in that section only; a test looks for it in the rest of the
+  file.
+- **API names in prose are checked by reflection.** Every identifier the README or the release notes show as
+  inline code, alone or joined by dots, must be a public type of the library, a public member, an enumeration
+  value or a parameter of a public method; a few names of .NET itself are listed in the test. A renamed or
+  mistyped name fails.
 - **The state of the project is checked against the project file.** The project has no version suffix, so
   the repository holds a release, and the tests are those of a release: no active document names a development
-  version; the documents users read name only 1.0.0 and 2.0.0; the README says which version it describes and
-  where to see what is published, as conditions that stay true after publication; no document says that the
-  release has happened (published, tagged, released, a candidate designated), nor that it has not; and the
-  changelog's first section is the section of 2.0.0, whose heading holds either "not yet published" or a date,
-  with the sentence that explains the missing date present exactly as long as the date is missing. The same
-  facts are checked from the shell by `eng/release-state.sh`. `CurrentStateTests` also looks, in every active
-  document, for a short list of claims
+  version; the documents users read name only 1.0.0, 2.0.0 and 2.0.1; the README names the version it
+  documents and gives the installation command with it ([D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version));
+  nothing says that 2.0.1 is published, released or available, and no line connects 2.0.0 with NuGet except to
+  say that it was not published there; and the changelog has a section for each version, the first with
+  "Unreleased" or a date and never a guessed one. The same facts are checked from the shell by
+  `eng/release-state.sh`. `CurrentStateTests` also looks, in every active document, for a short list of claims
   about the present that stopped being true (a 1.x line, a correction still to come, layers not built). The
   decision log is not an active document in that sense: it keeps superseded decisions on purpose, each marked
   as superseded, which is what the test checks there. A sentence in a column headed "1.0.0", or in
@@ -629,10 +638,10 @@ only run from a build inside a checkout. What they are built on:
   ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)); `DocumentationLinkTests` reads
   it. A link that is not in the list fails, and the list is compared with the table of the
   [release preparation checklist](packaging-and-releases.md#release-preparation-checklist). The repository
-  holds the release, so the tests require the substitution to have been made: the three links of the version at
-  `v2.0.0`, exactly, and no other link at the tag, in any document or in the package's metadata.
+  holds the release, so the tests require the links of the version to be at the tag: the three of them at
+  `v2.0.1`, exactly, and no other link at the tag, in any document or in the package's metadata.
 - **A link at the tag is checked by its shape and by what it names, never over the network.** The address must
-  be one of three forms (`blob/v2.0.0/`, `tree/v2.0.0/`, the raw address at `v2.0.0`), and the file or folder
+  be one of three forms (`blob/v2.0.1/`, `tree/v2.0.1/`, the raw address at `v2.0.1`), and the file or folder
   it names must be in the checkout, because the tag is put on the release commit. Until the tag exists such an
   address answers "not found"; that is expected and no test looks at it. A malformed address, or one that
   names something the checkout lacks, fails.
@@ -648,15 +657,16 @@ example, an output line the program does not print, a relative link and a link t
 README, an image nothing shows, a missing legacy comment, a restored warning suppression, an example that
 reads a key, and a parameterized legacy constructor in the example.
 
-The checks added with the final documentation were tried the same way, each change made in a scratch copy and
-seen to fail: a sixth numbered point in the README's migration section; `NullReferenceException` mentioned in
-the README outside that section; the sentence "2.0 is published" in the README; a release date in the
-changelog's section; a new README link to a file of the repository that is not classified; a README link at
-the tag `v2.0.0`; the earlier development version named in a maintenance note; the sentence about a line of
-1.x versions restored in the comments of the legacy class; a decision of the five marked "Not implemented";
-a package description that speaks of a release; the legacy class called deprecated in the README; one of the
-five corrections taken out of the changelog; `SECURITY.md` claiming a private reporting channel; and the
-package's release notes pointed at the tag. Fourteen in all.
+The tests were redesigned when the public text was rewritten for 2.0.1, and the redesigned checks were tried
+the same way, each change made in a scratch copy and seen to fail: a rejected phrase in the
+README; the word "legacy" in the README and in the package description; an installation command without the
+version; the README saying that this release is published; the changelog putting 2.0.0 on NuGet; a changelog
+heading that is neither "Unreleased" nor a date; a sixth numbered point in the README's section on moving from
+1.0.0; 1.0.0 mentioned in another section of the README; an API name that does not exist; release notes that
+link to another tag; the word "candidate", a pull request number and the name of a tool in a public document;
+an example that takes its labels from the culture; a version missing from the table of `SECURITY.md`; the
+changelog and the README naming one of the five behaviors differently; and an XML comment that says version 2
+"corrects" the "legacy" class. Eighteen in all.
 
 ### The release checks
 
@@ -671,7 +681,7 @@ all three systems. What each does is in
 | `eng/release-bundle-tamper-test.sh` | The check accepting any of sixteen damaged copies of a good bundle, or refusing one for another reason than the damage |
 | `eng/direct-reference-smoke.sh` | A program that references an assembly of the archive directly not building, not running with exactly that assembly, resolving a package after all, or not reporting the behavior of 2.0 |
 | `eng/upgrade-smoke.sh` | The published 1.0.0 not behaving as `expected-1.0.0.txt` says; modern code compiling against 1.0.0; the upgraded program not building from unchanged source, not getting the build for its framework, or not reporting exactly the five corrections |
-| `eng/release-state.sh` | The repository disagreeing with itself about its version: the project not evaluating to the release identity, the package check or the version tests expecting another version, a development version still stated, the README's links not at the tag, or the changelog's first section not being the section of the version with its date or "not yet published" |
+| `eng/release-state.sh` | The repository disagreeing with itself about its version: the project not evaluating to the release identity, the package check or the version tests expecting another version, a development version still stated, the README's links not at the tag, the changelog's first section not being the section of the version with its date or "Unreleased", or the notes of the release missing or naming another version's files |
 | `eng/verify-published-package-selftest.sh` | The download of the published 1.0.0 not matching nuget.org's own record of it or lacking the signature; the comparison refusing a package plus nuget.org's signature; or the comparison accepting any of twelve differences |
 | `eng/verify-release-bundle.sh` (symbols) | A symbol file that is not the one its assembly was built with, by the identifier and the checksum the assembly records |
 
@@ -840,5 +850,6 @@ more.
 
 None. All five corrections have their tests, and the documents are checked as they stand, in the state of a
 release. Two tests change after publication, with the files they check: the heading of the changelog, when it
-gets its date, and the table of `SECURITY.md`, which says today that 2.0.0 is not yet published
+gets its date, and the table of `SECURITY.md`, which says today where each version is; the test of what the
+documents say about availability changes with them
 ([What is finalized after publication](packaging-and-releases.md#what-is-finalized-after-publication)).

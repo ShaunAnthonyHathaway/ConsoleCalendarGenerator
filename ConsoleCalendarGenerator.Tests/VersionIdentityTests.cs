@@ -10,18 +10,21 @@ namespace ConsoleCalendarGenerator.Tests;
 /// <see cref="LibraryBuildTests"/>), so each of these tests is a statement about both.
 ///
 /// <para>
-/// The repository holds the release 2.0.0: the version has no suffix. <see cref="ReleaseVersion"/> and
-/// <see cref="AssemblyAndFileVersion"/> are changed here in the same change that changes them in the project
-/// file. Every build of this source says it is 2.0.0; which one build is the release is not decided by the
+/// The repository holds the release 2.0.1: the version has no suffix. <see cref="ReleaseVersion"/> and
+/// <see cref="FileVersion"/> are changed here in the same change that changes them in the project file; the
+/// assembly version is 2.0.0.0 for all of 2.x. Every build of this source says it is 2.0.1; which one build
+/// is the release is not decided by the
 /// source, and is recorded outside the repository.
 /// </para>
 /// </summary>
 [TestFixture]
 public class VersionIdentityTests
 {
-    private const string ReleaseVersion = "2.0.0";
-    private const string AssemblyAndFileVersion = "2.0.0.0";
+    private const string ReleaseVersion = "2.0.1";
+    private const string AssemblyVersion = "2.0.0.0";
+    private const string FileVersion = "2.0.1.0";
     private const string PublishedVersion = "1.0.0";
+    private const string ReleasedOnGitHub = "2.0.0";
 
     private const string ProjectFile = "ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj";
 
@@ -41,14 +44,15 @@ public class VersionIdentityTests
     [Test]
     public void TheAssemblyVersion_IsTheMajorVersionAlone()
     {
-        Assert.That(Library.GetName().Version, Is.EqualTo(new Version(AssemblyAndFileVersion)));
+        Assert.That(Library.GetName().Version, Is.EqualTo(new Version(AssemblyVersion)));
         Assert.That(Library.GetName().Version, Is.EqualTo(new Version(2, 0, 0, 0)));
     }
 
     [Test]
-    public void TheFileVersion_IsTheSame()
+    public void TheFileVersion_FollowsThePackageVersion()
     {
-        Assert.That(Library.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version, Is.EqualTo(AssemblyAndFileVersion));
+        Assert.That(Library.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version, Is.EqualTo(FileVersion));
+        Assert.That(FileVersion, Is.EqualTo(ReleaseVersion + ".0"));
     }
 
     /// <summary>
@@ -80,11 +84,16 @@ public class VersionIdentityTests
         Assert.That(new Version(Library.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version).Major, Is.EqualTo(packageMajor));
     }
 
-    /// <summary>1.0.0 is published. Nothing built here may say it is that version, in any of its three version numbers.</summary>
+    /// <summary>
+    /// 1.0.0 is published on NuGet and 2.0.0 is released on GitHub. Nothing built here may say it is either:
+    /// not in its package version, and for 1.0.0 not in its assembly or file version.
+    /// </summary>
     [Test]
-    public void NoVersionOfTheAssembly_IsThePublishedOne()
+    public void NoVersionOfTheAssembly_IsAReleasedOne()
     {
         Assert.That(PackageVersion, Is.Not.EqualTo(PublishedVersion));
+        Assert.That(PackageVersion, Is.Not.EqualTo(ReleasedOnGitHub));
+        Assert.That(Library.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version, Is.Not.EqualTo(ReleasedOnGitHub + ".0"));
         Assert.That(Library.GetName().Version, Is.Not.EqualTo(new Version(1, 0, 0, 0)));
         Assert.That(Library.GetCustomAttribute<AssemblyFileVersionAttribute>()!.Version, Does.Not.StartWith("1."));
     }
@@ -98,7 +107,7 @@ public class VersionIdentityTests
         {
             Assert.That(Property("VersionPrefix"), Is.EqualTo(ReleaseVersion));
             Assert.That(Repository.Read(ProjectFile), Does.Not.Match("<VersionSuffix>|<Version>|<PackageVersion>"), "no suffix, and the version is stated once");
-            Assert.That(Property("AssemblyVersion"), Is.EqualTo(AssemblyAndFileVersion));
+            Assert.That(Property("AssemblyVersion"), Is.EqualTo(AssemblyVersion));
             Assert.That(Property("FileVersion"), Is.EqualTo("$(VersionPrefix).0"), "the file version follows the version prefix");
             Assert.That(Property("PackageId"), Is.EqualTo("ConsoleCalendarGenerator"));
         }
@@ -157,7 +166,8 @@ public class VersionIdentityTests
         foreach (string note in new[] { "CLAUDE.md", "docs/ai-context/packaging-and-releases.md", "docs/ai-context/compatibility.md" })
         {
             Assert.That(Repository.Read(note), Ordinal.Contains("`" + ReleaseVersion + "`"), note);
-            Assert.That(Repository.Read(note), Ordinal.Contains("`" + AssemblyAndFileVersion + "`"), note);
+            Assert.That(Repository.Read(note), Ordinal.Contains("`" + AssemblyVersion + "`"), note);
+            Assert.That(Repository.Read(note), Ordinal.Contains("`" + FileVersion + "`"), note);
         }
     }
 }

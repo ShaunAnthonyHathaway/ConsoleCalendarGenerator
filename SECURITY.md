@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-| Version | State | Security fixes |
+| Version | Availability | Security fixes |
 |---|---|---|
-| 2.0.0 | Final in this repository, with an immutable release candidate. Not yet published. | From the day it is published on NuGet |
-| 1.0.0 | Published on NuGet. It is the only package publicly available until the publication of 2.0.0 completes. | Until the publication of 2.0.0 |
+| 2.0.1 | The version this repository builds, and the next release | Yes |
+| 2.0.0 | GitHub Releases | Yes, through a newer 2.x version |
+| 1.0.0 | NuGet, where it is the current version | Yes, until 2.0.1 is published on NuGet |
 
-A fix is released as a new version. Published versions are never changed. A problem found in the code of this
-repository is worth reporting whichever version it is in.
+A fix is released as a new version. Published versions are never changed.
 
 ## What the library does
 

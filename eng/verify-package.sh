@@ -25,10 +25,11 @@ shopt -s nullglob
 
 repository_url="https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator"
 
-# The version this repository builds: 2.0.0, with the assembly and file version of the 2.x line. Both are
+# The version this repository builds: 2.0.1, with the assembly version of the 2.x line and its own file version. Both are
 # changed here in the same change that changes them in the project file.
-expected_version="2.0.0"
+expected_version="2.0.1"
 expected_assembly_version="2.0.0.0"
+expected_file_version="$expected_version.0"
 
 fail() {
   echo "error: $*" >&2
@@ -221,8 +222,8 @@ for framework in net10.0 netstandard2.1; do
     | LC_ALL=C grep -a -o -E '(Assembly Version|FileVersion|ProductVersion)[0-9A-Za-z.+-]+' || true)"
   grep -q -F "Assembly Version$expected_assembly_version" <<< "$version_resource" \
     || fail "lib/$framework/ConsoleCalendarGenerator.dll does not have the assembly version $expected_assembly_version"
-  grep -q -F "FileVersion$expected_assembly_version" <<< "$version_resource" \
-    || fail "lib/$framework/ConsoleCalendarGenerator.dll does not have the file version $expected_assembly_version"
+  grep -q -F "FileVersion$expected_file_version" <<< "$version_resource" \
+    || fail "lib/$framework/ConsoleCalendarGenerator.dll does not have the file version $expected_file_version"
   grep -q -F "ProductVersion$version+$commit" <<< "$version_resource" \
     || fail "lib/$framework/ConsoleCalendarGenerator.dll does not have the informational version $version+$commit"
   # Nothing of the test project is in the package. That includes the frozen source of 1.0.0, which the tests

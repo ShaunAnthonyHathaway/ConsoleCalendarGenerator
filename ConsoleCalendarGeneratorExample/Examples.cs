@@ -4,17 +4,12 @@ using ConsoleCalendarGenerator;
 namespace ConsoleCalendarGeneratorExample;
 
 /// <summary>
-/// One method for each thing the library does. The code between a "// &lt;Name&gt;" comment and its
-/// "// &lt;/Name&gt;" comment is an example in README.md, word for word. The tests compare the two, compile this
-/// file against both builds of the library, and compare what the program prints with expected-output.txt.
-///
-/// Every example but one supplies its weekday labels, directly or through the options of the first example, so
-/// that it prints the same text on every operating system. <see cref="Culture"/> is the exception on purpose:
-/// it shows the day names .NET has for a culture, which are not the same on every system.
+/// The examples of README.md, one method each. An example is the code between a "// &lt;Name&gt;" comment and
+/// its "// &lt;/Name&gt;" comment; the README shows that code as it is written here.
 /// </summary>
 internal static class Examples
 {
-    /// <summary>A month as text: a title in a chosen culture, and weekday labels that are the same everywhere.</summary>
+    /// <summary>A month as text, with an explicit culture and weekday labels.</summary>
     public static MonthRenderOptions QuickStart()
     {
         // <QuickStart>
@@ -29,30 +24,7 @@ internal static class Examples
         return options;
     }
 
-    /// <summary>The culture's own day names as labels. What they are depends on the system's culture data.</summary>
-    public static MonthRenderOptions Culture()
-    {
-        // <Culture>
-        MonthRenderOptions french = MonthRenderOptions.Default
-            .WithCulture(CultureInfo.GetCultureInfo("fr-FR"));
-
-        Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
-        // </Culture>
-        return french;
-    }
-
-    /// <summary>The same culture with labels of the caller's own, which are the same on every system.</summary>
-    public static void OwnLabels(MonthRenderOptions french)
-    {
-        // <OwnLabels>
-        MonthRenderOptions frenchWithLabels = french
-            .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
-
-        Console.WriteLine(MonthRenderer.Render(2027, 3, frenchWithLabels).ToText());
-        // </OwnLabels>
-    }
-
-    /// <summary>The first day of the week is chosen separately from the culture.</summary>
+    /// <summary>Weeks that start on Sunday.</summary>
     public static void FirstDayOfWeek(MonthRenderOptions options)
     {
         // <FirstDayOfWeek>
@@ -62,7 +34,19 @@ internal static class Examples
         // </FirstDayOfWeek>
     }
 
-    /// <summary>Days in a state show its marker, and the title says what the marker means.</summary>
+    /// <summary>A French title with French weekday labels.</summary>
+    public static void Localized()
+    {
+        // <Localized>
+        MonthRenderOptions french = MonthRenderOptions.Default
+            .WithCulture(CultureInfo.GetCultureInfo("fr-FR"))
+            .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
+
+        Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
+        // </Localized>
+    }
+
+    /// <summary>Dates marked in the text, with a legend in the title.</summary>
     public static RenderedMonth MarkedDates(MonthRenderOptions options)
     {
         // <MarkedDates>
@@ -80,7 +64,7 @@ internal static class Examples
         return month;
     }
 
-    /// <summary>The same month on the console, in the colors of a theme.</summary>
+    /// <summary>The marked month on the console, in the colors of a theme.</summary>
     public static void Colors(RenderedMonth month)
     {
         // <Colors>
@@ -93,7 +77,7 @@ internal static class Examples
         // </Colors>
     }
 
-    /// <summary>The same month written to a writer that is not the console.</summary>
+    /// <summary>The marked month written to a <see cref="TextWriter"/>.</summary>
     public static void AnyTextWriter(RenderedMonth month)
     {
         // <AnyTextWriter>
@@ -106,7 +90,7 @@ internal static class Examples
         Console.Write(text);
     }
 
-    /// <summary>The marked days, found from what the segments say and not from their text.</summary>
+    /// <summary>The marked days, read from the segments of the rendered month.</summary>
     public static void Segments(RenderedMonth month)
     {
         // <Segments>
@@ -120,7 +104,7 @@ internal static class Examples
         // </Segments>
     }
 
-    /// <summary>Where the days of a month go, without any text.</summary>
+    /// <summary>The weeks and weekday columns of a month, without any text.</summary>
     public static void Layout()
     {
         // <Layout>
@@ -134,11 +118,11 @@ internal static class Examples
         // </Layout>
     }
 
-    /// <summary>The API of version 1.0.0, which draws straight on the console.</summary>
-    public static void Legacy()
+    /// <summary>A month drawn on the console by <see cref="CalendarGenerator.ConsoleCalendar"/>.</summary>
+    public static void OriginalApi()
     {
-        // <Legacy>
-        // The legacy class takes the month name from the current culture of the process.
+        // <OriginalApi>
+        // ConsoleCalendar takes the month name from the current culture.
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
         var calendar = new CalendarGenerator.ConsoleCalendar();
@@ -146,6 +130,6 @@ internal static class Examples
         calendar.SetSelectedDateColor(ConsoleColor.Green);
 
         calendar.GenerateMonth(3, 2027, new List<DateTime> { new DateTime(2027, 3, 17) });
-        // </Legacy>
+        // </OriginalApi>
     }
 }

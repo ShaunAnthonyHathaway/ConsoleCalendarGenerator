@@ -65,8 +65,10 @@ has to be able to rely on:
 - the modern API, which is new in 2.0 and whose behavior no correction touched;
 - the Campertron parity fixtures and what the modern API renders for them.
 
-The README tells users the same in its section "Migrating from 1.0.0 to 2.0", without the last item: the
-public documents name no consumer of the package
+The README tells users what they need of this in its section on moving from 1.0.0, in one sentence and
+without the last item: the public documents name no consumer of the package, and they describe the five as
+updated behaviors, not as corrections
+([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library))
 ([D-73](decisions.md#d-73-the-migration-guidance-is-one-section-of-the-readme-and-the-changelog)).
 
 **Why package validation passes although behavior changed.** Package validation compares the shape of the
@@ -360,10 +362,13 @@ others.
   in 1.0.0 and is `2.0.0.0` now, for 2.0 and every later 2.x version
   ([D-65](decisions.md#d-65-the-repository-builds-200-dev-with-assembly-and-file-version-2000)).
 - **The package version** is SemVer and is what identifies a release to consumers. The repository builds
-  `2.0.0`, with no suffix: it is the source of the release
-  ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)).
-  Every build carries that number; only the candidate is the release.
-- **The file version** follows the version prefix: `2.0.0.0`.
+  `2.0.1`, with no suffix: it is the source of the release
+  ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated),
+  [D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
+  Every build carries that number; only the candidate is the release. 2.0.0 is released on GitHub and 1.0.0 on
+  NuGet, and neither number is ever built again.
+- **The file version** follows the version prefix: `2.0.1.0`. It is the one version number of the assembly
+  that tells 2.0.1 from 2.0.0.
 - **The informational version** carries the package version and the commit, added by the SDK's Source Link
   support. Keep it.
 

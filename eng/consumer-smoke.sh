@@ -119,8 +119,9 @@ build_probe() {
 check_output() {
   local expected
   # The version the library must say it was built as is the version of the package that was installed, so an
-  # application that was given any other package, such as a cached or a published one, fails here.
-  expected="$(sed -e "s/{LIBRARY_BUILD}/$2/" -e "s/{PACKAGE_VERSION}/$version/" "$templates/AssetProbe/expected-output.txt" | tr -d '\r')"
+  # application that was given any other package, such as a cached or a published one, fails here. The file
+  # version follows the package version; the assembly version is that of the 2.x line.
+  expected="$(sed -e "s/{LIBRARY_BUILD}/$2/" -e "s/{PACKAGE_VERSION}/$version/g" "$templates/AssetProbe/expected-output.txt" | tr -d '\r')"
   if [ "$3" != "$expected" ]; then
     echo "Expected:" >&2
     echo "$expected" >&2

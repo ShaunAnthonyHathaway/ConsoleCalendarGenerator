@@ -65,11 +65,11 @@ public class ReadmeExamplesTests
     }
 
     [Test]
-    public void TheProgramHasTheTenExamples()
+    public void TheProgramHasTheNineExamples()
     {
         Assert.That(ExampleProgram.Examples().Keys, Is.EqualTo(new[]
         {
-            "QuickStart", "Culture", "OwnLabels", "FirstDayOfWeek", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "Legacy",
+            "QuickStart", "FirstDayOfWeek", "Localized", "MarkedDates", "Colors", "AnyTextWriter", "Segments", "Layout", "OriginalApi",
         }));
     }
 
@@ -110,24 +110,26 @@ public class ReadmeExamplesTests
     {
         string firstOutput = Blocks.First(block => block.Language == "text" && !IsCommands(block)).Text;
 
-        Assert.That(ExampleProgram.ExpectedOutput, Does.StartWith("\n== A month ==\n" + firstOutput + "\n\n").Using(StringComparison.Ordinal));
+        Assert.That(ExampleProgram.ExpectedOutput, Does.StartWith("\n== Quick start ==\n" + firstOutput + "\n\n").Using(StringComparison.Ordinal));
     }
 
     /// <summary>
-    /// The one example that takes its labels from the culture supplies none, and the README shows it once. Its
-    /// output block is the Linux recording; the test of the program compares that row with the machine's data.
+    /// Every example that starts from the default options names its culture and supplies its weekday labels,
+    /// so what the README shows is what every operating system prints. The other examples build on those.
     /// </summary>
     [Test]
-    public void ExactlyOneExample_TakesItsWeekdayLabelsFromTheCulture()
+    public void EveryExampleThatStartsFromTheDefaults_NamesItsCultureAndSuppliesItsLabels()
     {
-        IReadOnlyDictionary<string, string> examples = ExampleProgram.Examples();
+        KeyValuePair<string, string>[] fromTheDefaults = ExampleProgram.Examples()
+            .Where(example => example.Value.Contains("MonthRenderOptions.Default", StringComparison.Ordinal))
+            .ToArray();
 
-        string[] startFromTheDefaults = examples.Where(example => example.Value.Contains("MonthRenderOptions.Default", StringComparison.Ordinal)).Select(example => example.Key).ToArray();
-
-        Assert.That(startFromTheDefaults, Is.EqualTo(new[] { "QuickStart", "Culture" }), "the other examples build on the options of these two");
-        Assert.That(examples["QuickStart"], Ordinal.Contains(".WithWeekdayLabels("));
-        Assert.That(examples["Culture"], Ordinal.DoesNotContain("WithWeekdayLabel"));
-        Assert.That(examples["OwnLabels"], Does.StartWith("MonthRenderOptions frenchWithLabels = french\n    .WithWeekdayLabels(").Using(StringComparison.Ordinal));
+        Assert.That(fromTheDefaults.Select(example => example.Key), Is.EqualTo(new[] { "QuickStart", "Localized" }));
+        foreach (KeyValuePair<string, string> example in fromTheDefaults)
+        {
+            Assert.That(example.Value, Ordinal.Contains(".WithCulture(CultureInfo.GetCultureInfo(\""), example.Key);
+            Assert.That(example.Value, Ordinal.Contains(".WithWeekdayLabels(new[] { \""), example.Key);
+        }
     }
 
     [Test]
@@ -156,8 +158,12 @@ public class ReadmeExamplesTests
     }
 
     [Test]
-    public void TheInstallationCommand_IsTheDotNetCommandForThePackage()
+    public void TheInstallationCommand_IsTheDotNetCommandForThePackage_WithItsVersion()
     {
-        Assert.That(Blocks.Where(IsCommands).Select(block => block.Text), Has.Member("dotnet add package ConsoleCalendarGenerator"));
+        string version = System.Text.RegularExpressions.Regex.Match(
+            Repository.Read("ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj"), "<VersionPrefix>([^<]+)</VersionPrefix>").Groups[1].Value;
+
+        Assert.That(version, Does.Match(@"^\d+\.\d+\.\d+$"));
+        Assert.That(Blocks.Where(IsCommands).Select(block => block.Text), Has.Member("dotnet add package ConsoleCalendarGenerator --version " + version));
     }
 }

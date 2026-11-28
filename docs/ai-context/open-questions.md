@@ -6,8 +6,10 @@ decision identifier and delete it here; do not renumber the rest.
 Recommendations are starting points, not decisions.
 
 Two questions are open: Q-14 and Q-15. Both belong to the steps of the release that come after
-the candidate. The implementation, the documentation, the release infrastructure and release preparation of
-2.0.0 are complete and depend on none of them.
+the candidate. The implementation, the documentation, the release infrastructure and release preparation are
+complete and depend on none of them. The version they are about is 2.0.1, the 2.x version that goes to NuGet
+([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)); where a
+question says 2.0, that is the version meant.
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
 D-28, rendering in D-30 to D-37, and states, the theme and output in
@@ -40,8 +42,8 @@ five in D-57 to D-61). The legacy class and its namespace remain, and so does `n
 Q-09 (parity fixtures for Campertron's unused value stream) is settled: there are none
 ([D-47](decisions.md#d-47-campertron-parity-is-shown-with-recorded-fixtures)).
 
-Q-10 (what the links of a published readme point at) is settled: the README of the 2.0 package uses the
-immutable tag `v2.0.0`, from the change that prepares the release
+Q-10 (what the links of a published readme point at) is settled: the README of a released package uses the
+immutable tag of its release, `v2.0.1` for 2.0.1, from the change that prepares the release
 ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)).
 
 Q-11 (whether private vulnerability reporting is turned on) is settled: it is on, and `SECURITY.md` sends

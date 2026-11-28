@@ -23,14 +23,15 @@ public class DocumentationLinkTests
     private const string RawFilesAtTheTag = "https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/" + ReleaseTag + "/";
 
     /// <summary>
-    /// Pages of the repository that are not files of it. The page of the release is where the changelog sends
-    /// a reader for version 2.0.0; it exists from the moment the release is published on GitHub. The form for
+    /// Pages of the repository that are not files of it. The page of a release is where the changelog sends
+    /// a reader for that version: the page of 2.0.0 exists, and the page of this release exists from the
+    /// moment it is published on GitHub. The form for
     /// a private vulnerability report is where SECURITY.md sends a reporter; it exists while private
     /// vulnerability reporting is turned on for the repository, and asks the reader to sign in.
     /// </summary>
     private static readonly string[] RepositoryPages =
     {
-        RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/releases/tag/" + ReleaseTag, RepositoryPage + "/security/advisories/new",
+        RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/releases/tag/" + ReleaseTag, RepositoryPage + "/releases/tag/v2.0.0", RepositoryPage + "/security/advisories/new",
     };
 
     private static readonly string[] Documents = Repository.PublicDocuments;
@@ -121,8 +122,8 @@ public class DocumentationLinkTests
 
     // ---- the links that change when a version is released ----
 
-    /// <summary>The tag a released 2.0 package will be built from. It does not exist yet.</summary>
-    internal const string ReleaseTag = "v2.0.0";
+    /// <summary>The tag of this release. It exists once the release is tagged; the tests never use the network.</summary>
+    internal const string ReleaseTag = "v2.0.1";
 
     /// <summary>
     /// Every link of the README that points into this repository, and what becomes of it when version 2.0 is

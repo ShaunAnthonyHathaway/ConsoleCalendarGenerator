@@ -30,7 +30,7 @@ public class ExampleProgramTerminalTests
         ChildResult result = RunOnPseudoTerminal();
 
         Assert.That(TerminalOutput.ColorSequence.Matches(result.StandardOutput), Has.Count.GreaterThan(30));
-        Assert.That(TerminalOutput.WithoutTerminalControl(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutputOnThisMachine));
+        Assert.That(TerminalOutput.WithoutTerminalControl(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutput));
     }
 
     /// <summary>Nothing but color changes is sent after the program's first line: no clearing, no cursor movement.</summary>
@@ -40,7 +40,7 @@ public class ExampleProgramTerminalTests
         ChildResult result = RunOnPseudoTerminal();
 
         // What precedes the first heading is the .NET runtime preparing the terminal, not the program.
-        string fromTheProgram = result.StandardOutput.Substring(result.StandardOutput.IndexOf("== A month ==", StringComparison.Ordinal));
+        string fromTheProgram = result.StandardOutput.Substring(result.StandardOutput.IndexOf("== Quick start ==", StringComparison.Ordinal));
         string withoutColorChanges = TerminalOutput.ColorSequence.Replace(fromTheProgram, string.Empty);
 
         Assert.That(withoutColorChanges, Ordinal.DoesNotContain(TerminalOutput.EscapeCharacter));

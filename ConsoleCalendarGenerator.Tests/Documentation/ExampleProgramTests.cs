@@ -14,9 +14,8 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 public class ExampleProgramTests
 {
     /// <summary>
-    /// The complete output, on every system. Every example but one supplies its weekday labels, so the text is
-    /// the same on Linux, macOS and Windows; the one culture-derived weekday row is compared with what this
-    /// machine's culture data gives.
+    /// The complete output, on every system. Every example supplies its weekday labels, so the text is the same
+    /// on Linux, macOS and Windows.
     /// </summary>
     [Test]
     public void WithItsOutputRedirected_ItPrintsTheExpectedOutput_AndExitsWithoutInput()
@@ -29,7 +28,7 @@ public class ExampleProgramTests
 
         Assert.That(result.ExitCode, Is.Zero, result.StandardError);
         Assert.That(result.StandardError, Is.Empty);
-        Assert.That(WithLineFeeds(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutputOnThisMachine));
+        Assert.That(WithLineFeeds(result.StandardOutput), Is.EqualTo(ExampleProgram.ExpectedOutput));
     }
 
     /// <summary>
@@ -43,8 +42,8 @@ public class ExampleProgramTests
 
         ChildResult result = ChildProcess.RunProgram(ExampleProgram.AssemblyPath);
 
-        string[] primary = Section(WithLineFeeds(result.StandardOutput), "== A month ==");
-        Assert.That(primary, Is.EqualTo(Section(ExampleProgram.ExpectedOutput, "== A month ==")));
+        string[] primary = Section(WithLineFeeds(result.StandardOutput), "== Quick start ==");
+        Assert.That(primary, Is.EqualTo(Section(ExampleProgram.ExpectedOutput, "== Quick start ==")));
         Assert.That(primary, Is.EqualTo(new[]
         {
             "     March 2027",
@@ -58,57 +57,35 @@ public class ExampleProgramTests
     }
 
     /// <summary>
-    /// The one example that takes its labels from the culture prints what the runtime has for that culture on
-    /// this machine, whatever that is. The expected row is built here from the culture's day names directly,
-    /// not taken from the renderer and not written down.
+    /// No line of the output depends on the system: every weekday row is made of labels an example supplies,
+    /// or is the fixed row of <c>ConsoleCalendar</c>. This fails if an example starts taking its labels from a
+    /// culture, whose day names differ between operating systems.
     /// </summary>
     [Test]
-    public void TheCultureDerivedExample_PrintsTheDayNamesOfThisMachine()
-    {
-        System.Globalization.DateTimeFormatInfo french = System.Globalization.CultureInfo.GetCultureInfo("fr-FR").DateTimeFormat;
-        DayOfWeek[] mondayFirst = { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
-        string[] names = mondayFirst.Select(day => french.GetShortestDayName(day)).ToArray();
-        Assume.That(names.All(name => name.Length is 1 or 2 && name.All(char.IsAsciiLetter)),
-            "This machine's shortest French day names are not one or two plain letters, so the row cannot be built this simply.");
-        string expectedRow = string.Join(" ", names.Select(name => name.PadLeft(2)));
-
-        ChildResult result = ChildProcess.RunProgram(ExampleProgram.AssemblyPath);
-
-        string[] lines = WithLineFeeds(result.StandardOutput).Split('\n');
-        Assert.That(lines[ExampleProgram.CultureDerivedWeekdayRowIndex(lines)], Is.EqualTo(expectedRow));
-        Assert.That(ExampleProgram.CultureDerivedWeekdayRowOnThisMachine, Is.EqualTo(expectedRow));
-    }
-
-    /// <summary>
-    /// Only that row may depend on the system: every other weekday row of the expected output is made of labels
-    /// an example supplies. This fails if another example starts taking its labels from a culture.
-    /// </summary>
-    [Test]
-    public void EveryOtherWeekdayRow_IsMadeOfLabelsAnExampleSupplies()
+    public void EveryWeekdayRow_IsMadeOfLabelsAnExampleSupplies()
     {
         string source = Repository.Read(ExampleProgram.ExamplesFile);
         string[] lines = ExampleProgram.ExpectedOutput.Split('\n');
-        int derived = ExampleProgram.CultureDerivedWeekdayRowIndex(lines);
 
         // A weekday row is the line below a title; in this output the titles are the lines that name March.
         int[] weekdayRows = Enumerable.Range(1, lines.Length - 1)
             .Where(index => lines[index - 1].Contains("March 2027", StringComparison.Ordinal) || lines[index - 1].Contains("mars 2027", StringComparison.Ordinal))
             .ToArray();
 
-        Assert.That(weekdayRows, Has.Length.EqualTo(8), "ten headings, of which the segments and the layout print no month");
-        Assert.That(weekdayRows, Has.Member(derived));
-        foreach (int index in weekdayRows.Where(index => index != derived))
+        Assert.That(weekdayRows, Has.Length.EqualTo(7), "nine headings, of which the segments and the layout print no month");
+        foreach (int index in weekdayRows)
         {
             string[] labels = lines[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             Assert.That(labels, Has.Length.EqualTo(7), lines[index]);
             foreach (string label in labels)
             {
-                // Supplied in Examples.cs as a string, or part of the fixed English row of the legacy class.
+                // Supplied in Examples.cs as a string, or part of the fixed English row of ConsoleCalendar.
                 Assert.That(source.Contains("\"" + label + "\"", StringComparison.Ordinal) || "Mo Tu We Th Fr Sa Su".Contains(label, StringComparison.Ordinal),
                     "the label " + label + " in: " + lines[index]);
             }
         }
-        Assert.That(Regex.Matches(source, @"\.WithWeekdayLabels\("), Has.Count.EqualTo(2), "the quick start and the French labels");
+        Assert.That(Regex.Matches(source, @"MonthRenderOptions\.Default"), Has.Count.EqualTo(Regex.Matches(source, @"\.WithWeekdayLabels\(").Count),
+            "every example that starts from the default options supplies its labels");
     }
 
     /// <summary>
@@ -208,24 +185,23 @@ public class ExampleProgramTests
     }
 
     /// <summary>
-    /// The legacy constructors that take colors color other elements in 1.0.0 than in 2.0, which corrected them
-    /// (D-57). The example shows the form that draws the same with both: the parameterless constructor and the
-    /// setters.
+    /// The example creates <c>ConsoleCalendar</c> with its parameterless constructor and sets colors with the
+    /// setters, the form that draws the same with version 1.0.0 and with version 2 (D-57).
     /// </summary>
     [TestCaseSource(nameof(SourceFiles))]
-    public void TheSource_CreatesTheLegacyCalendar_OnlyWithItsParameterlessConstructor(string file)
+    public void TheSource_CreatesConsoleCalendar_OnlyWithItsParameterlessConstructor(string file)
     {
         MatchCollection creations = Regex.Matches(Repository.Read(file), @"new\s+(CalendarGenerator\.)?ConsoleCalendar\s*\(([^)]*)\)");
 
         Assert.That(creations.Select(creation => creation.Groups[2].Value.Trim()), Is.All.Empty);
         if (file == ExampleProgram.ExamplesFile)
         {
-            Assert.That(creations, Has.Count.EqualTo(1), "the example shows the legacy class once");
+            Assert.That(creations, Has.Count.EqualTo(1), "the example shows the class once");
         }
     }
 
     [Test]
-    public void TheExampleNeverReadsTheCurrentCulture_ExceptToSetItForTheLegacyClass()
+    public void TheExampleNeverReadsTheCurrentCulture_ExceptToSetItForConsoleCalendar()
     {
         string source = Repository.Read(ExampleProgram.ExamplesFile);
 

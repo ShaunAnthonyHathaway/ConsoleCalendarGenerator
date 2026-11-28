@@ -1,44 +1,39 @@
 using ConsoleCalendarGenerator;
 using ConsoleCalendarGeneratorExample;
 
-// A short tour of ConsoleCalendarGenerator: run it with "dotnet run --project ConsoleCalendarGeneratorExample".
+// A short tour of ConsoleCalendarGenerator. Run it with:
 //
-// It needs no input, uses fixed dates and explicit cultures, and prints plain text when its output is
-// redirected. Each step is one method in Examples.cs, and README.md shows the same code.
+//     dotnet run --project ConsoleCalendarGeneratorExample
 //
-// The examples supply their weekday labels, so the program prints the same text on every operating system.
-// The one exception is "The culture's own day names", which prints the names .NET has for French on this
-// machine: two letters on Linux and macOS, one letter on Windows.
+// The program uses fixed dates and explicit cultures, takes no input, and prints plain text when its output
+// is redirected. Each step is a method in Examples.cs, and README.md shows the same code.
 
-Heading("A month");
+Heading("Quick start");
 MonthRenderOptions options = Examples.QuickStart();
 
-Heading("The culture's own day names");
-MonthRenderOptions french = Examples.Culture();
-
-Heading("Labels of your own");
-Examples.OwnLabels(french);
-
-Heading("Another first day of the week");
+Heading("First day of the week");
 Examples.FirstDayOfWeek(options);
+
+Heading("Culture and labels");
+Examples.Localized();
 
 Heading("Marked dates");
 RenderedMonth marked = Examples.MarkedDates(options);
 
-Heading("Colors");
+Heading("Console colors");
 Examples.Colors(marked);
 
 Heading("Any TextWriter");
 Examples.AnyTextWriter(marked);
 
-Heading("What each piece of text is");
+Heading("Segments");
 Examples.Segments(marked);
 
-Heading("Layout only");
+Heading("Layout");
 Examples.Layout();
 
-Heading("The legacy API");
-Examples.Legacy();
+Heading("ConsoleCalendar");
+Examples.OriginalApi();
 
 static void Heading(string text)
 {

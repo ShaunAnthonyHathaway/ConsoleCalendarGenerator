@@ -527,7 +527,9 @@ not verified on Windows (D-43). The API and the contracts are listed in
 
 ### D-43: The console writer restores the caller's colors and serializes its own writes
 
-- **Status:** Approved. Implemented.
+- **Status:** Approved. Implemented. The README stated that the restoration is not verified on Windows; since
+  the rewrite of the public text ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)) it no longer does,
+  and the roadmap records that fact about the tests.
 - **Decision:** `ConsoleMonthWriter` reads the console's colors only when it is about to change one, sets only
   the foreground, writes every uncolored segment and every line end in the caller's foreground, and puts the
   caller's foreground and background back in a `finally` block. A foreground that was never set cannot be
@@ -721,7 +723,10 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
 ### D-54: Culture-derived labels may differ between systems, and supplied labels are the stable option
 
 - **Status:** Approved by Shaun after the user-facing material phase. Implemented in documentation, the example
-  and tests. Resolves the former open question Q-12.
+  and tests. Resolves the former open question Q-12. Since the rewrite of the public text
+  ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)) every example supplies its labels: the example
+  that showed a culture's own day names is gone, and the README says in one sentence that such names vary
+  between operating systems.
 - **Decision:** `WeekdayLabelStyle.Shortest` keeps using the selected culture's shortest day names as the
   runtime provides them. Labels taken from a culture are allowed to vary with the globalization data of the
   operating system and are not guaranteed to be byte-identical across systems. No runtime behavior and no
@@ -1094,10 +1099,11 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
 
 ### D-72: The release is 2.0.0, built once, and published as the files that were validated
 
-- **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. The repository is prepared: it is
-  the source of 2.0.0. **No tag, release or publication is authorized or exists.** Which build is the
-  candidate is [D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit);
-  that it has been designated is recorded outside the repository.
+- **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. Carried out for GitHub: 2.0.0 was
+  built once, designated, tagged and released there on 2026-11-27, as the files that were validated. Its NuGet
+  publication does not happen ([D-85](#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)). The rule
+  itself stands for every release and applies to 2.0.1 unchanged. Which build is the
+  candidate is [D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit).
 - **Decision:** The version that is released is 2.0.0. It is an immutable release:
   1. the candidate is built once, from the release commit Shaun approves;
   2. the SHA-256 of that exact `.nupkg` and `.snupkg` is recorded;
@@ -1137,7 +1143,10 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
 
 ### D-74: The package describes the modern API, and its release notes are the changelog
 
-- **Status:** Approved. Implemented in the final documentation.
+- **Status:** Approved. Implemented in the final documentation. Amended for 2.0.1: the description and the
+  tags were rewritten ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)), and the GitHub release has
+  written notes of its own ([D-86](#d-86-a-release-has-written-notes-and-the-readme-names-its-version)). The
+  package's release-notes field is still the changelog on `master`.
 - **Decision:** The package's description says what the modern API does and that the `ConsoleCalendar` class
   of version 1.0 is still included. The tags gain `month`, `text` and `layout` and keep the earlier ones. The
   release notes of the package are a link to the changelog of this repository. Package ID, version, authors,
@@ -1216,7 +1225,10 @@ phase where he left the choice to it.
 
 ### D-78: The documents of the release say nothing that publication would make false
 
-- **Status:** Approved. Implemented in release preparation.
+- **Status:** Approved. Implemented in release preparation of 2.0.0. The principle stands; how it is carried
+  out changed for 2.0.1 ([D-86](#d-86-a-release-has-written-notes-and-the-readme-names-its-version)): the README no
+  longer speaks of publication at all, the changelog's heading says "Unreleased", and the notes of a release
+  are a text of their own.
 - **Decision:** The release commit is made before the tag, the GitHub release and the NuGet publication, and
   nobody knows on that day when those will happen. So:
   1. **The README,** which is packed into the package and can never be edited there, says which version it
@@ -1242,8 +1254,9 @@ phase where he left the choice to it.
 ### D-79: The candidate is the Linux bundle of the first push run for the release commit
 
 - **Status:** Approved by Shaun. Resolves the former open question Q-16. Enforced by
-  `eng/designate-candidate.sh`. A candidate has been designated; which commit and run it comes from is in
-  [D-83](#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release).
+  `eng/designate-candidate.sh`. It was applied to 2.0.0, whose commit and run are in
+  [D-83](#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release), and it applies
+  to 2.0.1 in the same way ([D-85](#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
 - **Decision:** The immutable candidate of 2.0.0 is the `release-bundle` artifact of the Linux job, of the
   first successful workflow run that a push to `master` started for the final release-preparation merge
   commit. It is never rebuilt. It is never replaced by the artifact of a rerun, nor by a local, a
@@ -1361,3 +1374,89 @@ phase where he left the choice to it.
   their own commit. `eng/designate-candidate.sh` is not run again: it looks at the head of `master` and
   would accept the first push run of a later commit, which is right for a new release commit and wrong while
   this candidate stands. A new candidate needs a new reviewed release commit and Shaun's decision.
+
+### D-84: Public text is positive, direct and about the library
+
+- **Status:** Decided by Shaun, who rejected the public wording of 2.0.0 after its GitHub release. Implemented
+  for 2.0.1: every public text was rewritten from scratch.
+- **Decision:** Everything a user reads describes one coherent, maintained library, positively and directly:
+  the README, the changelog, `SECURITY.md`, `CONTRIBUTING.md`, the notes of a release, the package's
+  description and tags, the XML comments, the example program and what it prints.
+  - `CalendarGenerator.ConsoleCalendar` is "the original API", or is called by its type name. It is not called
+    "legacy" in public. It is described by what it does and as part of the library, not as something kept
+    out of obligation.
+  - The types of the `ConsoleCalendarGenerator` namespace are "the structured rendering API".
+  - Version 2 "updates five observable behaviors" of the original API. The five are stated as facts, with what
+    1.0.0 did where a reader moving from it needs that, and without judgment: nothing public says that 1.0.0
+    or the original code "got" something "wrong", or is "broken", "flawed" or "defective", or that version 2
+    "corrects" it.
+  - Nothing public narrates how the project is run: no release state that sounds unsure ("not yet published",
+    "if the command gives you", "until it appears"), no candidate, approval, audit, decision number, pull
+    request number, workflow run or count of tests, and nothing about the tools the project is maintained
+    with, about Campertron or about Python.
+  - Features are stated positively and briefly, with an example before an explanation.
+- **Reason:** The wording of 2.0.0 presented version 2 as an apology for version 1 and the project as unsure
+  of its own state. It distanced the library from its original implementation, which is the maintainer's own
+  work and which existing applications rely on. The facts were right; the way they were told was not what the
+  project wants to say about itself.
+- **Consequences:** The README has no status section and no limitations section; scope is stated where it
+  belongs (one month per call, the Gregorian calendar, foreground colors). The example program has nine
+  examples, each supplying its weekday labels, so it prints the same text on every system
+  ([D-54](#d-54-culture-derived-labels-may-differ-between-systems-and-supplied-labels-are-the-stable-option)).
+  IntelliSense describes what the library does now; an earlier version is mentioned in five places only, the
+  class and the four constructors that take colors. `PublicDocumentationTests` and `XmlDocumentationTests`
+  check the exact rejected phrases and the facts; they do not fix headings, order or sentences, and the tone
+  of a text is judged by reading it. The maintenance notes, the tests and the code keep "legacy class",
+  "modern API" and "correction" as internal names: they are not public text. The screenshot is unchanged,
+  because the example that it shows draws the same.
+
+### D-85: 2.0.0 stays on GitHub only, and 2.0.1 replaces it for NuGet
+
+- **Status:** Decided by Shaun on 2026-11-27, after the GitHub release of 2.0.0 was published and before any
+  NuGet publication.
+- **Decision:** The GitHub release of 2.0.0 (release 461197895, tag `v2.0.0` on
+  `117df06e5b6d684da6891cd3ac0310e5aa81ec98`) is published and immutable, and it stays exactly as it is: the
+  release, its four files, its notes and its tag are never edited, replaced, deleted or recreated. The package
+  of 2.0.0 is not authorized for NuGet and is never pushed there. Version 2.0.1 replaces it as the 2.x version
+  for NuGet and will be the first 2.x version published there. 1.0.0 stays on NuGet and supported until 2.0.1
+  is published and verified; its deprecation remains a separate decision
+  ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
+- **Reason:** The package and the archive of 2.0.0 contain the README whose wording was rejected
+  ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)). A released version is never changed, an
+  immutable release cannot be, and a version number is never used for other bytes, so the correction is a new
+  version. **No runtime or API defect was involved.** 2.0.1 has the runtime behavior and the public API of
+  2.0.0: the code of the library differs in comments and in the version it carries.
+- **Consequences:** 2.0.0 is not a failed release; it is a release on GitHub, and it is history that stays.
+  Its candidate, its records and the checksums of its files are preserved as they are. The repository builds
+  `2.0.1` with assembly version `2.0.0.0` and file version `2.0.1.0`. The candidate of 2.0.1 is the Linux
+  bundle of the first push run for the merge commit of the pull request that set the version to 2.0.1
+  ([D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)), and that
+  commit is the release commit of 2.0.1: the tag `v2.0.1` belongs on it. Its record is kept outside the
+  repository, in a folder of its own. The public documents say that 2.0.0 was distributed through GitHub
+  Releases and was not published to NuGet, and no document says otherwise; a test requires it.
+
+### D-86: A release has written notes, and the README names its version
+
+- **Status:** Approved by Shaun with the rewrite of the public text. Implemented for 2.0.1. Changes how
+  [D-78](#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false) is carried out.
+- **Decision:**
+  - **The README says which version it documents and gives the installation command with that version:**
+    `dotnet add package ConsoleCalendarGenerator --version 2.0.1`. It says nothing about whether the version
+    is published, in either direction, and has no sentence about what a command might return.
+  - **The changelog's heading of an unreleased version says "Unreleased",** as in `## [2.0.1] - Unreleased`,
+    and gets its date when the version is published. A date is never guessed. Dates are local dates, as in
+    the rest of the project: 2.0.0 is dated 2026-11-27.
+  - **The notes of a GitHub release are a text of their own,** `docs/release-notes/<version>.md`, written for
+    the people who read the release page: a summary, the highlights, compatibility, a short note on moving
+    from 1.0.0, the supported frameworks, what each attached file is, and links to the documentation. They are
+    reviewed in the pull request that prepares the release and are part of the release commit.
+    `eng/release-notes.sh <version>` prints them.
+- **Reason:** A README that explains what happens if its own version is not there yet reads as a project
+  that does not know its state. The README inside a package is read by someone who has that package, so naming
+  the version is simply true. The changelog's section is a list of changes; a release page wants a short
+  introduction for someone who has not followed the project.
+- **Consequences:** The installation command names a version that exists on NuGet only once it is published;
+  that is the order of things for every package and needs no sentence. The notes of 2.0.0 on GitHub are the
+  changelog's section as it was then, and stay. `eng/release-state.sh` requires the notes of the version to
+  exist, and tests check that they name the four files of the version and link only to the tag of the release
+  and to the changelog.

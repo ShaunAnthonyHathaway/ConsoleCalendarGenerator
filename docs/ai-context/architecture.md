@@ -329,21 +329,24 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
 
 ### Public documents and the example
 
-- **`README.md`** is written for someone who has never seen the package, is the readme inside the NuGet
-  package, and leads with the modern API. Its sections: status, features, installation, quick start, culture
-  and first day of week, marked dates, colors, output, what each piece of text is, layout only, more options,
-  legacy API, migrating from 1.0.0 to 2.0, supported frameworks, limitations, building and testing, project,
-  license. The migration section lists the five corrections and what did not change, and is the only place in
-  the README that tells what 1.0.0 did.
-- **`CHANGELOG.md`** has the section of 2.0.0 (added, changed, breaking changes, compatibility), whose heading
-  holds the date of publication once there is one, and one entry for 1.0.0. **`CONTRIBUTING.md`** has where the project is,
-  the commands, what a change must keep and the two rules a release follows. **`SECURITY.md`** says which
-  version gets fixes, what the library does with text it is given, and how to report a problem.
+- **`README.md`** is written for someone who has never seen the package and is the readme inside the NuGet
+  package. Its sections: installation, quick start, features, culture and first day of the week, marking
+  dates, styling and console output, structured rendering, layout API, options, using `ConsoleCalendar`,
+  moving from 1.0.0 to 2.x, supported frameworks, building and testing, support and security, license. The
+  section on moving from 1.0.0 lists the five updated behaviors and is the only place in the README that
+  speaks of 1.0.0. The headings are free; the tests find the sections by what they are about. How it is
+  worded is decided in [D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library).
+- **`CHANGELOG.md`** has a section for each version: 2.0.1, whose heading holds "Unreleased" until its date
+  is known; 2.0.0, which says it was distributed through GitHub Releases and not published to NuGet, with what
+  it added, the five updated behaviors and its compatibility; and 1.0.0. **`CONTRIBUTING.md`** has what a
+  contributor needs, the commands, what a change must keep compatible, and one paragraph on releases.
+  **`SECURITY.md`** says where each version is and which gets fixes, what the library does with text it is
+  given, and how to report a problem. **`docs/release-notes/<version>.md`** is the text of that version's
+  GitHub release.
 - **The example application** has two files. `Examples.cs` has one method per capability, each containing one
   marked example. `Program.cs` calls them in order under headings. It needs no input, uses fixed dates and
-  explicit cultures, and prints plain text when redirected. The quick start supplies its weekday labels and
-  the later examples build on its options, so the program prints the same text on Linux, Windows and macOS,
-  except for the one weekday row of the example that shows the culture's own day names.
+  explicit cultures, and prints plain text when redirected. Every example supplies its weekday labels or
+  builds on the options of the quick start, so the program prints the same text on Linux, Windows and macOS.
 - **The link between them** is one-directional: `Examples.cs` and `expected-output.txt` are the sources, and
   the README copies from them. Tests compare the copies
   ([D-49](decisions.md#d-49-the-readmes-code-and-output-are-the-example-programs)).

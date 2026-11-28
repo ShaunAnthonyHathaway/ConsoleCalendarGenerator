@@ -77,7 +77,7 @@ Su Mo Tu We Th Fr Sa
 
 To follow a culture's own convention, pass `culture.DateTimeFormat.FirstDayOfWeek`.
 
-Weekday labels are always seven, Sunday first, whichever day the week starts on:
+Supply seven weekday labels, Sunday first, whichever day the week starts on:
 
 ```csharp
 MonthRenderOptions french = MonthRenderOptions.Default
@@ -133,7 +133,7 @@ Console.WriteLine(month.ToText());
 ```
 
 - **Give the marker room.** A marker has to fit in the cell beside a two-digit day, so a one-character marker
-  needs `WithCellWidth(3)`. A marker that does not fit is reported as an error.
+  needs `WithCellWidth(3)`. A marker that does not fit throws `ArgumentException`.
 - **Add a legend.** `WithTitleSuffix` is a simple place to say what a marker means.
 - **Dates match by year, month and day.** The time of day is ignored, and dates in other months are skipped.
 - **Use several states** by passing dates with their states, for example a `Dictionary<DateTime, DayState>`.
@@ -213,7 +213,7 @@ MonthLayout layout = MonthLayout.Create(2027, 4, DayOfWeek.Monday);
 Console.WriteLine($"April 2027 needs {layout.Weeks.Count} weeks. Its first week:");
 foreach (MonthLayoutCell cell in layout.Weeks[0].Cells)
 {
-    Console.WriteLine($"  {cell.DayOfWeek}: {(cell.Date is DateTime date ? $"the {date.Day}" : "empty")}");
+    Console.WriteLine($"  {cell.DayOfWeek}: {(cell.Date is DateTime date ? $"day {date.Day}" : "empty")}");
 }
 ```
 
@@ -222,10 +222,10 @@ April 2027 needs 5 weeks. Its first week:
   Monday: empty
   Tuesday: empty
   Wednesday: empty
-  Thursday: the 1
-  Friday: the 2
-  Saturday: the 3
-  Sunday: the 4
+  Thursday: day 1
+  Friday: day 2
+  Saturday: day 3
+  Sunday: day 4
 ```
 
 `MonthRenderer` uses the same layout. Use `MonthLayout` directly when you draw the month yourself.
@@ -295,9 +295,10 @@ against 1.0.0 runs with version 2 without being rebuilt.
    `TitleColor` to the title, `DateColor` to the dates, `SelectedDateColor` to the selected dates and
    `DayOfWeekColor` to the weekday row. In 1.0.0, `TitleColor` applied to the weekday row and, with four
    arguments, `DayOfWeekColor` applied to the title. An application that chose its four arguments for that
-   assignment keeps its appearance by swapping the first and fourth values; with fewer arguments,
-   `SetDayOfWeekColor` and `SetTitleColor` give the same result. The parameterless constructor and the `Set`
-   methods behave the same in both versions.
+   assignment can keep the same appearance by swapping the first and fourth values. With one to three
+   arguments, 1.0.0 applied the first color to the weekday row and kept the title yellow; to keep that
+   appearance, pass `ConsoleColor.Yellow` first and set the weekday-row color with `SetDayOfWeekColor`. The
+   parameterless constructor and the `Set` methods behave the same in both versions.
 2. **Null date lists.** `GenerateMonth` and `GenerateYear` throw `ArgumentNullException` with the parameter
    name `dates` when the list is `null`. In 1.0.0 they threw `NullReferenceException`. Catch
    `ArgumentNullException`, or pass an empty list to select no dates.

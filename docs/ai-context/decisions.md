@@ -1413,7 +1413,8 @@ phase where he left the choice to it.
 ### D-85: 2.0.0 stays on GitHub only, and 2.0.1 replaces it for NuGet
 
 - **Status:** Decided by Shaun on 2026-11-27, after the GitHub release of 2.0.0 was published and before any
-  NuGet publication.
+  NuGet publication. Which commit is the release commit of 2.0.1 changed afterwards:
+  [D-87](#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes).
 - **Decision:** The GitHub release of 2.0.0 (release 461197895, tag `v2.0.0` on
   `117df06e5b6d684da6891cd3ac0310e5aa81ec98`) is published and immutable, and it stays exactly as it is: the
   release, its four files, its notes and its tag are never edited, replaced, deleted or recreated. The package
@@ -1460,3 +1461,39 @@ phase where he left the choice to it.
   changelog's section as it was then, and stay. `eng/release-state.sh` requires the notes of the version to
   exist, and tests check that they name the four files of the version and link only to the tag of the release
   and to the changelog.
+
+### D-87: The release commit of 2.0.1 is the merge of the final wording changes
+
+- **Status:** Approved by Shaun on 2026-11-27, after a final editorial review of the first candidate of 2.0.1.
+- **Decision:** Everything public in the first candidate of 2.0.1 was read once more, in full, before any tag.
+  The review approved the public presentation and named ten passages that could be better; Shaun approved
+  all ten. Four are in the README, which is inside the package, so they needed a new commit and a new
+  candidate:
+  - the README: what to do with one to three constructor arguments when moving from 1.0.0; the exception a
+    marker that does not fit throws; "day 1" for "the 1" in the layout example; and the sentence that
+    introduces the weekday labels;
+  - the XML comment of `GenerateMonth`: the paragraph about the console, shortened to what a caller needs;
+  - `SECURITY.md`: a table with a row for the 2.x line and a row for 1.0.0, naming no patch version;
+  - the notes of the release: the point about 1.0.0 first, and "updates the documentation and the package
+    metadata";
+  - `CONTRIBUTING.md`: the sentence about CI, one sentence removed, and the section that linked to the
+    maintenance notes removed.
+
+  The first candidate, built from `097eace95f90d668badf9684188f32c3db164f4b` by run 46094403379, is
+  **superseded** and is never tagged, released or published. The release commit of 2.0.1 is the merge commit
+  of these changes, its candidate is the Linux bundle of that commit's first push run
+  ([D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)), and the tag
+  `v2.0.1` belongs on that commit. The version stays 2.0.1. The repository's description on GitHub was
+  changed, as a setting and with Shaun's explicit approval, to: "A .NET library for month calendars: deterministic text rendering, structured output, date markers, themes, and console output."
+- **Reason:** The README inside a package can never be edited, and nothing of 2.0.1 was tagged, released or
+  published yet, so this was the last moment at which a sentence could be improved without another version
+  number. **No runtime or API defect was involved,** and none was found: the first candidate's assemblies had
+  the public API and the method bodies of 2.0.0.
+- **Consequences:** The superseded candidate is kept as it is, outside the repository, with a record that says
+  it is superseded; a superseded candidate is evidence, not a release. A version number may be built again
+  only as long as nothing carries it in public: no tag, no release, no package. From the tag on, a change is
+  a new version. `CONTRIBUTING.md` sends nobody to `CLAUDE.md` or `docs/ai-context/`: those are working
+  notes in the project's internal vocabulary, they stay in the repository, and a test fails on a link to them
+  from a public document. How public text is written is unchanged
+  ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)): positive, direct, concise, respectful, and
+  neutral about what an earlier version did.

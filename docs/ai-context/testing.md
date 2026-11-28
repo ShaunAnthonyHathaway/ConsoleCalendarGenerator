@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **2,532 tests**: 299 tests of the legacy API, 25 tests of the legacy class
+`ConsoleCalendarGenerator.Tests` holds **2,537 tests**: 299 tests of the legacy API, 25 tests of the legacy class
 as a facade, 109 tests of the frozen source of 1.0.0, 376 migration tests that compare the library with it, 184
 tests of the layout model, 283 tests of text rendering, 98 tests of day states and markers, 52 tests of the
-theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 246
+theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 251
 tests of the documentation and the example, 27 tests of the workflow and the release tooling, 2 tests of the modern public surface, 16 tests of the version
 identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
@@ -119,7 +119,7 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 11 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
 | `Documentation/DocumentationLinkTests` | 24 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows; and that every link of the README into the repository is classified for the release in `eng/release-links.txt`, as approved, the three that are part of the version are at the tag `v2.0.1` and no other link is, and the release checklist names each of them |
-| `Documentation/PublicDocumentationTests` | 84 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0, 2.0.0 and 2.0.1, and the README names only its own and 1.0.0; that the installation command names the version; that nothing says 2.0.1 is published or that 2.0.0 is on NuGet; that the changelog has a section for each version, the unreleased one without a date; what `SECURITY.md` says about where each version is, and that it sends reports to GitHub's private vulnerability reporting; that each of the five updated behaviors is described in the README's section on moving from 1.0.0 and in the changelog, five and once each; that the README speaks of 1.0.0 in that section only; that every API name the README and the release notes mention in code exists; what the release notes link to and name; and, for every public text including the example and the package description, none of the rejected phrases, nothing about how the project is run, no machine path and nothing about another language or a consumer |
+| `Documentation/PublicDocumentationTests` | 89 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0, 2.0.0 and 2.0.1, and the README names only its own and 1.0.0; that the installation command names the version; that nothing says 2.0.1 is published or that 2.0.0 is on NuGet; that the changelog has a section for each version, the unreleased one without a date; what `SECURITY.md` says about where the 2.x line and 1.0.0 are available, without naming a patch version of 2.x, and that it sends reports to GitHub's private vulnerability reporting; that each of the five updated behaviors is described in the README's section on moving from 1.0.0 and in the changelog, five and once each; that the README speaks of 1.0.0 in that section only; that every API name the README and the release notes mention in code exists; what the release notes link to and name; and, for every public text including the example and the package description, none of the rejected phrases, nothing about how the project is run, no machine path and nothing about another language or a consumer; and that no public document links to the maintenance notes |
 | `Documentation/CurrentStateTests` | 85 | That the documents describe the repository as it is: no active document names a development version, and the release version is named where a maintainer looks for it; the decision log marks the five corrections implemented and the old rules superseded; the compatibility notes list all five as made; and no active document, a public one, a maintenance note or a source file of the library, still makes a claim about the present that was true before (a 1.x line, a correction still to come, layers not built, an undecided release version). Also no machine path and no instruction for another language in the maintenance notes; and that the names of the three checks the ruleset for `master` requires, as the notes record them, are the names the workflow gives its jobs |
 | `Documentation/PackageMetadataTests` | 4 | The package's description (what the package does, naming the original API, saying nothing about a version or a release), its tags, its release notes (the changelog of this repository on the default branch) and that its identity is what it was |
 | `Documentation/XmlDocumentationTests` | 16 | Every public type, member and parameter of the built documentation file has text; the comments of the constructors that take colors say that each argument is the color of what it is named for; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException`; how a month ends and which month the title names are documented as the library does them; an earlier version is mentioned in five members only, and no comment uses a rejected phrase; no documentation warning is suppressed |
@@ -199,9 +199,9 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 2,507 pass | 5 Windows-only | 19 pass |
-| macOS | 2,507 pass | 5 Windows-only | not part of CI |
-| Windows | 2,418 pass | 94 that need Linux or macOS | not part of CI |
+| Linux | 2,512 pass | 5 Windows-only | 19 pass |
+| macOS | 2,512 pass | 5 Windows-only | not part of CI |
+| Windows | 2,423 pass | 94 that need Linux or macOS | not part of CI |
 
 One more test is inconclusive in the normal run on each system, and which one depends on the system's culture
 data: `Legacy/GregorianTitleTests` has a case for `ar-SA` counting in the Gregorian calendar and a case for it
@@ -666,7 +666,9 @@ heading that is neither "Unreleased" nor a date; a sixth numbered point in the R
 link to another tag; the word "candidate", a pull request number and the name of a tool in a public document;
 an example that takes its labels from the culture; a version missing from the table of `SECURITY.md`; the
 changelog and the README naming one of the five behaviors differently; and an XML comment that says version 2
-"corrects" the "legacy" class. Eighteen in all.
+"corrects" the "legacy" class. Eighteen in all. Two more were tried with the wording changes that followed the
+editorial review: a link from `CONTRIBUTING.md` to the maintenance notes, and a row of `SECURITY.md` that
+names a patch version of 2.x.
 
 ### The release checks
 
@@ -850,6 +852,6 @@ more.
 
 None. All five corrections have their tests, and the documents are checked as they stand, in the state of a
 release. Two tests change after publication, with the files they check: the heading of the changelog, when it
-gets its date, and the table of `SECURITY.md`, which says today where each version is; the test of what the
+gets its date, and the table of `SECURITY.md`, which says today where the 2.x line and 1.0.0 are available; the test of what the
 documents say about availability changes with them
 ([What is finalized after publication](packaging-and-releases.md#what-is-finalized-after-publication)).

@@ -35,8 +35,8 @@ dotnet test ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj
 - **The second command** runs the tests against the library's `netstandard2.1` build. The first run uses the
   `net10.0` build.
 
-CI runs all of this on Linux, Windows and macOS for every pull request, and a pull request is merged when all
-three pass.
+CI runs all of this on Linux, Windows and macOS for every pull request, and all three must pass before a
+merge.
 
 ## Pack and check the package
 
@@ -51,8 +51,6 @@ bash eng/consumer-smoke.sh artifacts/package
 - `verify-package.sh` checks the contents and the metadata of the package.
 - `consumer-smoke.sh` installs the package into small separate applications and runs them. Add `--native-aot`
   where a native toolchain is installed.
-
-None of these commands publishes anything.
 
 ## Compatibility
 
@@ -88,8 +86,3 @@ None of these commands publishes anything.
 The maintainer publishes packages, creates tags and makes releases. A released version is never changed; a
 correction is a new version. Pull requests keep the workflow at read access, reference actions by the full SHA
 of a commit, and add nothing that publishes.
-
-## Project notes
-
-[docs/ai-context](docs/ai-context) holds the project's design decisions, compatibility rules, test
-organization and release process.

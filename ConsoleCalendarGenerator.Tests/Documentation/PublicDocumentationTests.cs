@@ -147,9 +147,11 @@ public class PublicDocumentationTests
     }
 
     /// <summary>
-    /// No document says that the release has happened: that 2.0.0 is published, released or available, that
-    /// its tag or its GitHub release exists, or that a build has been made the candidate. Whether any of that
-    /// is so cannot be read from the source, and is not written into it.
+    /// No document says that the release has happened: that 2.0.0 is published, released or available, or that
+    /// its tag or its GitHub release exists. Whether any of that is so cannot be read from the source, and is
+    /// not written into it. `SECURITY.md` is the one public document that says where the release stands, that
+    /// 2.0.0 has a candidate and is not yet published, and it has a test of its own; the others do not speak of
+    /// a candidate at all.
     /// </summary>
     [TestCaseSource(nameof(Documents))]
     public void NoDocumentClaimsThatTheReleaseHasHappened(string document)
@@ -160,6 +162,11 @@ public class PublicDocumentationTests
                 @"(?i)\b2\.0(\.0)? (is|was|has been) (now )?(published|released|available|out|on nuget)\b|is now available|now on nuget|--version 2\.|--prerelease"
                 + @"|\b(tag|release) `?v2\.0\.0`? (exists|was created|has been created|is published)|\bcandidate (is|was|has been) (designated|built|chosen)|not published yet|-dev\b")
             .Select(match => match.Value), Is.Empty);
+
+        if (document != "SECURITY.md")
+        {
+            Assert.That(text, Does.Not.Match(@"(?i)\bcandidate\b"), "only SECURITY.md says where the release stands");
+        }
     }
 
     /// <summary>
@@ -190,21 +197,37 @@ public class PublicDocumentationTests
         }
     }
 
+    /// <summary>
+    /// `SECURITY.md` is a document of current policy: it is not packed into the package, every link to it
+    /// points at the default branch, and it is edited when the facts change. So, unlike the README, it says
+    /// how things stand today: which version is published, that 2.0.0 has a release candidate and is not yet
+    /// published, and that reports go through GitHub's private vulnerability reporting, which is turned on for
+    /// the repository. It is the one public document that speaks of the candidate.
+    /// </summary>
     [Test]
-    public void TheSecurityDocument_SaysWhichVersionIsSupported_AndThatThereIsNoPrivateChannelYet()
+    public void TheSecurityDocument_SaysWhichVersionsAreSupported_AndSendsReportsToThePrivateChannel()
     {
         string security = Repository.Read("SECURITY.md");
         string supported = Regex.Replace(SectionOf(security, "## Supported versions"), @"\s+", " ");
+        string reporting = Regex.Replace(SectionOf(security, "## Reporting a problem"), @"\s+", " ");
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(supported, Ordinal.Contains("latest version published on NuGet"));
-            Assert.That(supported, Ordinal.Contains(ReleaseVersion()), "the version of this repository");
-            Assert.That(supported, Ordinal.Contains("Until it is published on NuGet, the latest published version is 1.0.0"),
-                "said as a condition, so that it is true before and after publication");
-            Assert.That(SectionOf(security, "## Reporting a problem"), Ordinal.Contains("does not have a private channel"),
-                "true while private vulnerability reporting is off; this sentence changes in the change that turns it on");
+            // One row for each version there is, and nothing about a version that does not exist.
+            Assert.That(Regex.Matches(supported, @"\| (\d+\.\d+\.\d+) \|").Select(match => match.Groups[1].Value), Is.EqualTo(new[] { ReleaseVersion(), "1.0.0" }));
+            Assert.That(supported, Ordinal.Contains("only package publicly available until the publication of " + ReleaseVersion() + " completes"), "what is public today");
+            Assert.That(supported, Ordinal.Contains("immutable release candidate"), "where the release stands");
+            Assert.That(supported, Ordinal.Contains("Not yet published"));
+            Assert.That(supported, Ordinal.Contains("Published versions are never changed"));
+
+            // The route for a report: the form of GitHub's private vulnerability reporting for this repository.
+            Assert.That(reporting, Ordinal.Contains("](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/security/advisories/new)"));
+            Assert.That(reporting, Ordinal.Contains("private vulnerability reporting"));
+            Assert.That(reporting, Ordinal.Contains("**Security** tab"), "the way there through the page, for a link that moves");
+            Assert.That(reporting, Ordinal.Contains("do not put the details of a vulnerability in a public issue"));
+            Assert.That(security, Does.Not.Match("(?i)does not have a private channel|open an issue|/issues"), "no route through a public issue any more");
             Assert.That(security, Does.Not.Match(@"[\w.+-]+@[\w-]+\.[\w.]+"), "no e-mail address");
+            Assert.That(reporting, Does.Not.Match(@"(?i)within \d+|\d+ (hours|days|business days)|we will respond|guarantee[sd]? (a|to)"), "no promise of a response time");
         }
     }
 

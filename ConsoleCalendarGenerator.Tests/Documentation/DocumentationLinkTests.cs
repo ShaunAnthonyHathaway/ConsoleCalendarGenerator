@@ -24,9 +24,14 @@ public class DocumentationLinkTests
 
     /// <summary>
     /// Pages of the repository that are not files of it. The page of the release is where the changelog sends
-    /// a reader for version 2.0.0; it exists from the moment the release is published on GitHub.
+    /// a reader for version 2.0.0; it exists from the moment the release is published on GitHub. The form for
+    /// a private vulnerability report is where SECURITY.md sends a reporter; it exists while private
+    /// vulnerability reporting is turned on for the repository, and asks the reader to sign in.
     /// </summary>
-    private static readonly string[] RepositoryPages = { RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/releases/tag/" + ReleaseTag };
+    private static readonly string[] RepositoryPages =
+    {
+        RepositoryPage, RepositoryPage + "/issues", RepositoryPage + "/releases/tag/" + ReleaseTag, RepositoryPage + "/security/advisories/new",
+    };
 
     private static readonly string[] Documents = Repository.PublicDocuments;
 

@@ -13,8 +13,12 @@ console applications. It is .NET only.
 - **`master` is the source of the release `2.0.0`,** with assembly and file version `2.0.0.0` and no version
   suffix. Every build of it says it is 2.0.0. **It is not published:** no tag, no GitHub release and no package
   on nuget.org exists for it. Only one build of it is the release, the **candidate**: the bundle the Linux job
-  of the first push run for the release commit uploaded. It is designated outside the repository, and its
-  record and its checksums are **not in the repository**. Never build, name or substitute another.
+  of the first push run for the release commit uploaded. **The release commit is
+  `117df06e5b6d684da6891cd3ac0310e5aa81ec98` and the candidate is designated** (run 46083727520, first attempt;
+  D-83). `master` has moved on from that commit and will again: **the tag `v2.0.0` belongs on the release
+  commit, never on a later one,** and a bundle CI makes of a later commit is not the candidate, although it
+  also says 2.0.0. The candidate's record and its checksums are **not in the repository**. Never build, name
+  or substitute another, and do not run `eng/designate-candidate.sh` again.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
@@ -72,7 +76,17 @@ console applications. It is .NET only.
   culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
 - **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
   approval. No 1.x release, no prerelease, no tag and no release is authorized.
-- **Next phase:** the separately approved steps of the release itself: repository settings, the tag, the
+- **Repository settings (made 2026-11-27, D-82):** a published release is immutable; private vulnerability
+  reporting is on, and `SECURITY.md` sends reports there (D-81); secret scanning and push protection are on;
+  Actions must be pinned to full commit SHAs; a ruleset on `master` requires the three CI checks by their
+  exact names (`Build (ubuntu-latest)`, `Build (windows-latest)`, `Build (macos-latest)`) and blocks force
+  pushes and deletion; a ruleset on tags `v*` blocks moving and deleting a tag. So every change reaches
+  `master` through a pull request with the three checks green, and renaming a CI job stops every merge until
+  the ruleset is changed. The record is in
+  [development.md](docs/ai-context/development.md#repository-settings).
+- **`SECURITY.md` states the present,** unlike the README: that 1.0.0 is the only published package and that
+  2.0.0 has a candidate and is not yet published. It is on `master` only and is edited when that changes.
+- **Next phase:** the separately approved steps of the release itself: the tag on the release commit, the
   GitHub release, the NuGet publication, verification. See [roadmap.md](docs/ai-context/roadmap.md). Each
   needs its own approval; start none unprompted.
 
@@ -141,7 +155,8 @@ The build must finish with 0 warnings. None of these commands publishes anything
    never rebuild the candidate, and never use a local, pull-request, Windows or macOS build in its place; if
    it is not good, there is no candidate until a new reviewed commit has its own first push run. The workflow
    keeps read-only permission, no secret and no manual trigger, and every action stays pinned to a full commit
-   SHA (D-75). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
+   SHA (D-75). A repository setting or a ruleset is changed, and a ruleset's bypass used, only with that
+   approval (D-82). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
    done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
    fixtures and what the modern API renders for them do not change.
@@ -165,3 +180,4 @@ The build must finish with 0 warnings. None of these commands publishes anything
 | Building, CI, SDK or framework upgrades | [development.md](docs/ai-context/development.md) |
 | The package, versions, releases, the release bundle | [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md) |
 | The workflow, a pinned action | [development.md](docs/ai-context/development.md#ci) |
+| Repository settings, rulesets, the names of the CI checks | [development.md](docs/ai-context/development.md#repository-settings) |

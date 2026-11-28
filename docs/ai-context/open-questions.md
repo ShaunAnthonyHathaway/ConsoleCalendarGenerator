@@ -5,7 +5,7 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-Three questions are open: Q-11, Q-14 and Q-15. All three belong to the steps of the release that come after
+Two questions are open: Q-14 and Q-15. Both belong to the steps of the release that come after
 the candidate. The implementation, the documentation, the release infrastructure and release preparation of
 2.0.0 are complete and depend on none of them.
 
@@ -44,22 +44,8 @@ Q-10 (what the links of a published readme point at) is settled: the README of t
 immutable tag `v2.0.0`, from the change that prepares the release
 ([D-68](decisions.md#d-68-the-published-readme-of-20-links-to-the-tag-v200)).
 
-## Q-11: Is private vulnerability reporting turned on?
-
-- **Why it matters:** `SECURITY.md` has to tell people how to report a problem. GitHub's private vulnerability
-  reporting is off for the repository, so the file says there is no private channel and asks for a public
-  issue without details.
-- **Evidence needed:** Shaun's choice. It is a repository setting, which needs his approval each time.
-- **Decide in:** the repository-setting phase, which Shaun approves separately. It stays open until then; no
-  setting is changed by any other phase.
-- **Recommendation:** Turn it on before the GitHub release of 2.0.0 is published and point `SECURITY.md` at it
-  in the same step.
-- **When it is settled:** `SECURITY.md` is changed in the same separately approved step that turns the
-  setting on, never before, so that the file is true at every commit. The sentence to replace is the one that
-  says the repository has no private channel; `PublicDocumentationTests` requires that sentence today and
-  changes with it. That commit comes after the release commit and does not touch the candidate: `SECURITY.md`
-  is in neither the package nor the archive, and the packed README only links to it on `master`. See
-  [What is finalized after publication](packaging-and-releases.md#what-is-finalized-after-publication).
+Q-11 (whether private vulnerability reporting is turned on) is settled: it is on, and `SECURITY.md` sends
+reports there ([D-81](decisions.md#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)).
 
 Q-12 (whether weekday labels should be the same on every operating system) is settled: culture-derived labels
 may differ between systems, nothing in the library changes, and supplied labels are the stable option

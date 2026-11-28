@@ -690,8 +690,8 @@ Settled in the user-facing material phase, within the authority Shaun gave that 
 
 ### D-52: Security reports go through a public issue until a private channel exists
 
-- **Status:** Approved as the accurate statement of the present. To be revisited
-  ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)).
+- **Status:** Superseded by [D-81](#d-81-security-reports-go-through-githubs-private-vulnerability-reporting) when
+  private reporting was turned on. It was the accurate statement until then.
 - **Decision:** `SECURITY.md` says that the latest published version receives fixes, that there is no private
   channel for reports, and that a reporter should open an issue that says a problem exists without the details.
   It gives no e-mail address.
@@ -1242,7 +1242,8 @@ phase where he left the choice to it.
 ### D-79: The candidate is the Linux bundle of the first push run for the release commit
 
 - **Status:** Approved by Shaun. Resolves the former open question Q-16. Enforced by
-  `eng/designate-candidate.sh`. Whether a candidate has been designated is not recorded in the repository.
+  `eng/designate-candidate.sh`. A candidate has been designated; which commit and run it comes from is in
+  [D-83](#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release).
 - **Decision:** The immutable candidate of 2.0.0 is the `release-bundle` artifact of the Linux job, of the
   first successful workflow run that a push to `master` started for the final release-preparation merge
   commit. It is never rebuilt. It is never replaced by the artifact of a rerun, nor by a local, a
@@ -1282,3 +1283,81 @@ phase where he left the choice to it.
   after the package is already public. What stays unverifiable is said plainly: the bytes of the symbol
   package as nuget.org stores it. See
   [packaging-and-releases.md](packaging-and-releases.md#after-publication-what-is-checked-and-what-cannot-be).
+
+### D-81: Security reports go through GitHub's private vulnerability reporting
+
+- **Status:** Approved by Shaun. Implemented: the setting is on (2026-11-27) and `SECURITY.md` points at it.
+  Supersedes [D-52](#d-52-security-reports-go-through-a-public-issue-until-a-private-channel-exists) and
+  settles the former open question Q-11.
+- **Decision:** `SECURITY.md` sends a report to the form of GitHub's private vulnerability reporting for this
+  repository, by a link and by the way there through the **Security** tab. It asks that the details of a
+  vulnerability are not put in a public issue, a discussion or a pull request. It gives no e-mail address,
+  promises no response time, and says about confidentiality only what the mechanism does: GitHub shows the
+  report to the reporter and the maintainer. Its table states the present: 1.0.0 is the only package publicly
+  available until the publication of 2.0.0 completes, and 2.0.0 has an immutable release candidate and is not
+  yet published.
+- **Reason:** With a private channel there is no reason left to send anyone to a public issue. `SECURITY.md`
+  is in neither the package nor the archive, and every link to it points at `master`, so, unlike the README
+  ([D-78](#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false)), it can say how
+  things stand today and be edited when they change.
+- **Consequences:** The setting was turned on before the file was merged, so the file was true at its commit.
+  That commit is on `master` after the release commit and changes nothing of the release
+  ([D-83](#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)). When 2.0.0 is on
+  nuget.org the table is edited on `master`, with the date in the changelog. If the setting is ever turned
+  off, the file changes in the same step. `PublicDocumentationTests` requires the route and the statement of
+  the present, and fails on a route through a public issue, an e-mail address or a promised response time.
+
+### D-82: Repository settings protect master, release tags and published releases
+
+- **Status:** Approved by Shaun. Made on 2026-11-27 through GitHub's API; the record, with the way to read
+  each setting back, is in [development.md](development.md#repository-settings).
+- **Decision:** For this repository:
+  - **Immutable releases** are on. A release published from now on cannot have a file changed or removed and
+    its tag cannot be moved, or deleted while the release exists.
+  - **Private vulnerability reporting** is on ([D-81](#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)).
+  - **Secret scanning** and **push protection** are on. They are free for a public repository; nothing paid
+    was started. The related options GitHub shows as off (patterns that are not a provider's, validity
+    checks) were left off.
+  - **Actions must be pinned to a full commit SHA.** The workflow already was
+    ([D-75](#d-75-actions-are-pinned-to-the-full-sha-of-a-commit)); GitHub now refuses one that is not.
+  - **A ruleset on `master`** requires the three CI checks, `Build (ubuntu-latest)`, `Build (windows-latest)`
+    and `Build (macos-latest)`, reported by GitHub Actions, and blocks force pushes and deletion. It requires
+    no review, no linear history and no signed commit, and leaves the merge methods alone. The repository
+    administrator may bypass it for a pull request only.
+  - **A ruleset on tags `v*`** blocks moving and deleting a tag. Creating one is not restricted. The
+    repository administrator may bypass it.
+- **Reason:** The release is one tag, one GitHub release and one package, each made once. Immutability only
+  protects a release published after it is turned on, so it had to come first. The rulesets keep `master` and
+  the tag from being rewritten by accident, without asking for a second reviewer that a project with one
+  maintainer does not have. The bypasses exist for recovery: without one, a mistake in a ruleset or in the
+  workflow could leave `master` unable to take the commit that corrects it, and a tag put on the wrong commit
+  before the release could not be corrected.
+- **Consequences:** Every change reaches `master` through a pull request whose three checks passed. **The
+  names of the checks are part of the ruleset:** renaming the job, the matrix or a runner in the workflow
+  stops every merge until the ruleset is changed with it, and `CurrentStateTests` fails when the workflow and
+  the recorded names differ. Changing a setting or a ruleset, and using a bypass, each need Shaun's separate
+  approval. Once the GitHub release is published, immutability locks the tag whatever the ruleset's bypass
+  says. The workflow's own permission, triggers and pins did not change. The repository's description and
+  topics were not part of this and are as they were.
+
+### D-83: The release commit is 117df06, and master moves on without changing the release
+
+- **Status:** Approved by Shaun.
+- **Decision:** The release commit of 2.0.0 is `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of release
+  preparation. The candidate was designated on 2026-11-27 from workflow run 46083727520, the first push run
+  for that commit, in its first attempt
+  ([D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)). The tag
+  `v2.0.0` belongs on that commit, whatever the head of `master` is by then. A commit on `master` after it
+  changes only what is in neither the package nor the archive: `SECURITY.md`, the maintenance notes, tests,
+  and later the date in the changelog.
+- **Reason:** `master` had to move for the security policy before the tag existed, and it will move again
+  for the changelog's date. From then on "the head of `master`" and "the release commit" are two commits, and
+  a tag on the wrong one would name a commit the package was not built from: the package records its commit,
+  and the check after publication compares it.
+- **Consequences:** The commit and the run are named in the repository, here and in
+  [packaging-and-releases.md](packaging-and-releases.md#the-candidate). The candidate's record and its
+  checksums stay outside it, as before. Every build of a later commit also calls itself 2.0.0, and CI uploads
+  a `release-bundle` for each push: none of them is the candidate, and their informational version names
+  their own commit. `eng/designate-candidate.sh` is not run again: it looks at the head of `master` and
+  would accept the first push run of a later commit, which is right for a new release commit and wrong while
+  this candidate stands. A new candidate needs a new reviewed release commit and Shaun's decision.

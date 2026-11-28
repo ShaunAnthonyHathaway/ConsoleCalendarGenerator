@@ -1,9 +1,10 @@
 # Compatibility
 
-The baseline is the package that is actually on nuget.org: **`ConsoleCalendarGenerator` 1.0.0**, published
-2023-06-25, containing one `netstandard2.1` assembly. The next published version is 2.0
-([D-55](decisions.md#d-55-the-next-published-version-is-20)), and this page says exactly how 2.0 may differ
-from 1.0.0 and how everything else is kept.
+The baseline is the first package on nuget.org: **`ConsoleCalendarGenerator` 1.0.0**, published 2023-06-25,
+containing one `netstandard2.1` assembly. The version published after it is 2.0
+([D-55](decisions.md#d-55-the-next-published-version-is-20)): on NuGet that is 2.0.1, since 2026-11-28
+([D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)). This page says exactly how 2.0
+differs from 1.0.0 and how everything else is kept.
 
 ## Policy
 
@@ -33,7 +34,8 @@ such version was ever published, so that rule protected nothing and is gone.
 - **What the modern API renders for Campertron does not change.** The parity fixtures stay as they are and keep
   passing. Campertron itself is out of scope
   ([D-19](decisions.md#d-19-campertron-adoption-happens-elsewhere)).
-- **Nothing is published before the final approval of 2.0.**
+- **Nothing is published before the final approval of 2.0.** That approval was given for 2.0.1, which is
+  published; 1.0.0 stays on NuGet beside it, listed and supported.
 
 ## The five approved corrections
 
@@ -365,8 +367,9 @@ others.
   `2.0.1`, with no suffix: it is the source of the release
   ([D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated),
   [D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
-  Every build carries that number; only the candidate is the release. 2.0.0 is released on GitHub and 1.0.0 on
-  NuGet, and neither number is ever built again.
+  Every build carries that number; only the candidate is the release, and it is on GitHub and on NuGet. The
+  repository keeps building `2.0.1` until work on a later version gives it a new number. 2.0.0 is released on
+  GitHub and 1.0.0 on NuGet, and neither number is ever built again.
 - **The file version** follows the version prefix: `2.0.1.0`. It is the one version number of the assembly
   that tells 2.0.1 from 2.0.0.
 - **The informational version** carries the package version and the commit, added by the SDK's Source Link

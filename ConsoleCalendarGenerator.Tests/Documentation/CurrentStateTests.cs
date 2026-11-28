@@ -5,8 +5,8 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 
 /// <summary>
 /// The documents describe the repository as it is now: all five corrections of version 2.0 made, the modern API
-/// built, and the version 2.0.1 with no suffix: the source of the release. These tests look for what went stale
-/// when each of those became true.
+/// built, and the version 2.0.1 with no suffix: the source of a release that is on GitHub and on NuGet. These
+/// tests look for what went stale when each of those became true.
 ///
 /// <para>
 /// "Active" documents are the ones that say how things are: the four public documents, CLAUDE.md, the
@@ -136,7 +136,9 @@ public class CurrentStateTests
     /// repository wrote about itself: that the old behavior holds in every 1.x version, that a correction is
     /// still to come, that the modern layers are not built, that the release version is undecided; and, since
     /// 2.0.1 was tagged and released on GitHub and its publication to NuGet was set up, that it has no tag,
-    /// that it is not released, and that the repository has one workflow and nothing that can publish.
+    /// that it is not released, and that the repository has one workflow and nothing that can publish; and,
+    /// since 2.0.1 was published to NuGet, that it is not there, that the publication has not run, that
+    /// nuget.org has 1.0.0 alone, and that its changelog heading has no date.
     /// </summary>
     private static readonly string[] RetiredClaims =
     {
@@ -160,6 +162,15 @@ public class CurrentStateTests
         @"(is|was) the only workflow",
         @"There is (still )?no publication workflow",
         @"Nothing in the repository can (publish|push)",
+        @"2\.0\.1 is (released on GitHub and is )?not on NuGet",
+        @"set up and (\*\*)?(has )?not run",
+        @"(it|workflow) has (not|never) run",
+        @"nuget\.org has 1\.0\.0 (only|and nothing else)",
+        @"1\.0\.0 only \(verified",
+        @"The publication to NuGet is not authorized",
+        @"\[2\.0\.1\] - Unreleased",
+        @"until a 2\.x version is published",
+        @"the version that goes to NuGet",
     };
 
     private static IEnumerable<TestCaseData> ActiveDocumentsAndRetiredClaims() =>
@@ -172,6 +183,127 @@ public class CurrentStateTests
         string text = document == "CHANGELOG.md" ? Markdown.WithoutLinks(Repository.Read(document)) : Repository.Read(document);
 
         Assert.That(RetiredClaims.Where(claim => Regex.IsMatch(text, claim, RegexOptions.IgnoreCase)), Is.Empty);
+    }
+
+    // ---- the release is published ----
+
+    private static readonly string[] NotesAndPublicDocuments = Repository.PublicDocuments.Concat(MaintenanceNotes).ToArray();
+
+    /// <summary>
+    /// 2.0.1 is on nuget.org. The two places a maintainer reads first say so in the one form that cannot be
+    /// mistaken, the address of the package, and the notes on releases name the run that published it.
+    /// </summary>
+    [Test]
+    public void TheNotes_SayThatThisReleaseIsOnNuGet()
+    {
+        string page = "https://www.nuget.org/packages/ConsoleCalendarGenerator/" + ReleaseVersion();
+
+        Assert.That(Repository.Read("CLAUDE.md"), Ordinal.Contains(page));
+        Assert.That(Repository.Read("docs/ai-context/packaging-and-releases.md"), Ordinal.Contains(page));
+        Assert.That(Repository.Read("docs/ai-context/packaging-and-releases.md"), Does.Match(@"publish-nuget\.yml[^\n]*attempt 1|attempt 1[^\n]*publish-nuget\.yml"),
+            "the one run that published, in its first attempt");
+    }
+
+    /// <summary>
+    /// How the publication is authenticated is settled, by the decision that set up Trusted Publishing. The one
+    /// question that is open is whether 1.0.0 is deprecated, and it stays a question until Shaun answers it.
+    /// </summary>
+    [Test]
+    public void TheOnlyOpenQuestion_IsWhetherTheFirstVersionIsDeprecated()
+    {
+        string questions = Repository.Read("docs/ai-context/open-questions.md");
+        string[] open = questions.Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal))
+            .Select(line => Regex.Match(line, @"^## (Q-\d+):").Groups[1].Value).ToArray();
+
+        Assert.That(open, Is.EqualTo(new[] { "Q-15" }), "a question that is open has a section; a settled one has a line");
+        Assert.That(Regex.Replace(questions, @"\s+", " "), Does.Match(@"Q-14 \([^)]*\) is settled[^Q]*D-88"), "settled by the decision on Trusted Publishing");
+        Assert.That(StatusOf(Repository.Read(Decisions), "D-88"), Ordinal.Contains("Q-14"));
+    }
+
+    /// <summary>
+    /// The roadmap records the setup of the publication, the publication and the update after it as done, and
+    /// has one thing left, which is not part of the release: the deprecation of 1.0.0, pending its own approval.
+    /// </summary>
+    [Test]
+    public void TheRoadmap_RecordsThePublicationAsDone_AndLeavesOnlyTheDeprecation()
+    {
+        string roadmap = Repository.Read("docs/ai-context/roadmap.md");
+        string completed = Between(roadmap, "\n## Completed\n", "\n## Remaining sequence\n");
+        string remaining = Between(roadmap, "\n## Remaining sequence\n", "\n## Next action\n");
+        string[] phases = completed.Split('\n').Where(line => line.StartsWith("| ", StringComparison.Ordinal)).Select(line => line.Split('|')[1].Trim()).ToArray();
+        string[] left = remaining.Split('\n').Where(line => Regex.IsMatch(line, @"^\d+\. ")).ToArray();
+
+        Assert.That(phases, Is.SupersetOf(new[] { "NuGet Trusted Publishing", "NuGet publication of " + ReleaseVersion(), "Post-publication update" }));
+        Assert.That(left, Has.Length.EqualTo(1), "one thing is left");
+        Assert.That(left[0], Ordinal.Contains("1.0.0"));
+        Assert.That(left[0], Does.Match("(?i)deprecat"));
+        Assert.That(remaining, Ordinal.Contains("Q-15"));
+    }
+
+    private static string Between(string text, string start, string end)
+    {
+        int from = text.IndexOf(start, StringComparison.Ordinal);
+        int to = text.IndexOf(end, from + 1, StringComparison.Ordinal);
+        Assert.That(from, Is.GreaterThanOrEqualTo(0), start.Trim());
+        Assert.That(to, Is.GreaterThan(from), end.Trim());
+        return text.Substring(from, to - from);
+    }
+
+    /// <summary>
+    /// 1.0.0 is on NuGet, listed and supported. Deprecating it is a decision that has not been made, so no
+    /// document states it as a fact. A sentence that asks whether, or says what would follow if, states nothing.
+    /// </summary>
+    [Test]
+    public void NoDocument_SaysThatTheFirstVersionIsDeprecated()
+    {
+        var stated = new List<string>();
+        foreach (string document in NotesAndPublicDocuments)
+        {
+            stated.AddRange(Repository.Read(document).Split('\n')
+                .Where(line => Regex.IsMatch(line, @"(?i)\b1\.0\.0 (is|was|has been) (now )?(deprecated|unlisted|unsupported|no longer supported)\b|\bdeprecated 1\.0\.0\b")
+                    && !Regex.IsMatch(line, @"(?i)\bwhether\b|\bif\b|\?"))
+                .Select(line => document + ": " + line.Trim()));
+        }
+
+        Assert.That(stated, Is.Empty);
+    }
+
+    /// <summary>
+    /// The publication used a key that lasted an hour and was never written anywhere. Nothing that has the form
+    /// of a credential is in a document, a workflow or a script: no key of nuget.org, no token of GitHub, no
+    /// signed token, no private key.
+    /// </summary>
+    [Test]
+    public void NoCredentialIsWrittenDown()
+    {
+        var found = new List<string>();
+        foreach (string file in Repository.FilesWithExtension(".md", ".yml", ".yaml", ".sh", ".txt", ".json", ".config", ".props"))
+        {
+            found.AddRange(Regex.Matches(Repository.Read(file),
+                    @"\boy2[a-z0-9]{43}\b|\bgh[pousr]_[A-Za-z0-9]{30,}|\bgithub_pat_[A-Za-z0-9_]{20,}|\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|-----BEGIN [A-Z ]*PRIVATE KEY-----")
+                .Select(match => file + ": " + match.Value.Substring(0, 8) + "..."));
+        }
+
+        Assert.That(found, Is.Empty);
+    }
+
+    /// <summary>
+    /// Campertron adopts the package in its own project. These notes say that it is not changed from here; they
+    /// give no command or project change to carry out there.
+    /// </summary>
+    [Test]
+    public void NoNote_GivesAStepToCarryOutInCampertron()
+    {
+        var steps = new List<string>();
+        foreach (string document in MaintenanceNotes)
+        {
+            steps.AddRange(Repository.Read(document).Split('\n')
+                .Where(line => line.Contains("Campertron", StringComparison.Ordinal)
+                    && Regex.IsMatch(line, @"\bdotnet add\b|<PackageReference|\bgit (clone|commit|push|switch|checkout)\b|\bgh pr\b"))
+                .Select(line => document + ": " + line.Trim()));
+        }
+
+        Assert.That(steps, Is.Empty);
     }
 
     // ---- what is recorded of the repository's settings ----

@@ -96,7 +96,8 @@ these commands make. None of them publishes anything, and no command that needs 
 file.
 
 The checks of the NuGet publication can be run without publishing. The first is a dry run against the real
-release; the second shows that the checks refuse every wrong case, and uses no network:
+release; since 2.0.1 is published it stops at its third stage, as it must, because nuget.org lists the
+version. The second shows that the checks refuse every wrong case, and uses no network:
 
 ```bash
 bash eng/publication-preflight.sh --version 2.0.1 --tag v2.0.1 --release-id 461246889 --release-commit bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd
@@ -390,8 +391,9 @@ policy on nuget.org names. Changing it is changing a repository setting.
   ([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)). The
   variable is the nuget.org user name, which is public; the checks compare it with the name they expect, so a
   changed variable stops the publication and cannot redirect it.
-- **What was not tried.** No run has entered the environment: that would be a publication. Its rules are
-  known from what the API returns for them.
+- **How it was used.** One run has entered the environment: the publication of 2.0.1 on 2026-11-28, whose
+  job waited there until its one deployment was approved. The environment was not changed for it or after
+  it.
 
 The policy on nuget.org is not a setting of GitHub. Its record is in
 [packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg).

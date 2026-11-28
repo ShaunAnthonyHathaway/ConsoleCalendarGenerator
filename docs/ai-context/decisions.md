@@ -206,8 +206,9 @@ groundwork were merged, unless a decision gives another date.
 
 ### D-20: 2.0 is to be published and verified on NuGet
 
-- **Status:** Planned. **Not authorized.** How it is to be published is in
-  [D-69](#d-69-20-is-published-by-hand-from-the-validated-artifacts).
+- **Status:** Done. The 2.x version on NuGet is 2.0.1, published and verified there on 2026-11-28
+  ([D-91](#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)). How it was to be published was
+  first set out in [D-69](#d-69-20-is-published-by-hand-from-the-validated-artifacts).
 - **Decision:** `ConsoleCalendarGenerator` 2.0 must eventually be published on NuGet and verified there.
 - **Reason:** It is the version Campertron is expected to adopt.
 - **Consequences:** Every publication step still needs its own approval under D-18. See the sequence in
@@ -1104,7 +1105,9 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
 - **Status:** Approved by Shaun, including that 2.0 means version 2.0.0. Carried out for GitHub: 2.0.0 was
   built once, designated, tagged and released there on 2026-11-27, as the files that were validated. Its NuGet
   publication does not happen ([D-85](#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)). The rule
-  itself stands for every release and applies to 2.0.1 unchanged. Which build is the
+  itself stands for every release and was applied to 2.0.1 unchanged: its candidate was built once, and those
+  files are what is attached to its GitHub release and what was pushed to nuget.org
+  ([D-91](#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)). Which build is the
   candidate is [D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit).
 - **Decision:** The version that is released is 2.0.0. It is an immutable release:
   1. the candidate is built once, from the release commit Shaun approves;
@@ -1284,9 +1287,9 @@ phase where he left the choice to it.
 
 ### D-80: After publication, the served package is compared by its entries, and the symbols through the symbol server
 
-- **Status:** Approved by Shaun. The tooling is implemented and tested as far as it can be before a
-  publication; it has not been run on a published 2.x version, which does not exist. The last job of the
-  publication workflow runs it, through `eng/publication-verify.sh`, with a limited wait for nuget.org
+- **Status:** Approved by Shaun. Implemented, and run on the published 2.0.1 on 2026-11-28, where every part
+  of it passed. The last job of the publication workflow runs it, through `eng/publication-verify.sh`, with a
+  limited wait for nuget.org
   ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 - **Decision:** nuget.org signs every package it serves by adding the entry `.signature.p7s`. The package
   downloaded after publication is therefore not expected to have the candidate's SHA-256, and nothing claims
@@ -1425,7 +1428,9 @@ phase where he left the choice to it.
 
 - **Status:** Decided by Shaun on 2026-11-27, after the GitHub release of 2.0.0 was published and before any
   NuGet publication. Which commit is the release commit of 2.0.1 changed afterwards:
-  [D-87](#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes).
+  [D-87](#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes). Carried out: 2.0.1 is
+  the first 2.x version on NuGet, since 2026-11-28 ([D-91](#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)),
+  and 2.0.0 is not there.
 - **Decision:** The GitHub release of 2.0.0 (release 461197895, tag `v2.0.0` on
   `117df06e5b6d684da6891cd3ac0310e5aa81ec98`) is published and immutable, and it stays exactly as it is: the
   release, its four files, its notes and its tag are never edited, replaced, deleted or recreated. The package
@@ -1519,8 +1524,10 @@ where he left the choice to it.
 
 ### D-88: 2.0.1 goes to NuGet through Trusted Publishing, from a workflow that is started by hand
 
-- **Status:** Approved by Shaun on 2026-11-28. **Set up, and not run:** the workflow, the environment and the
-  policy on nuget.org exist, and nothing has been published. Resolves the former open question Q-14. Changes
+- **Status:** Approved by Shaun on 2026-11-28. **Set up, and then used once, the same day:** 2.0.1 was
+  published this way, with his separate approval for that publication
+  ([D-91](#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)). Resolves the former open question
+  Q-14. Changes
   how [D-69](#d-69-20-is-published-by-hand-from-the-validated-artifacts) and
   [D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated) are carried out:
   the push is made by a workflow and not by hand. What is pushed is unchanged: the exact files that were
@@ -1610,3 +1617,37 @@ where he left the choice to it.
   approval [D-18](#d-18-publication-requires-explicit-approval-every-time) asks for before the workflow is
   started. The environment is recorded in [development.md](development.md#the-environment-nuget-production).
   Changing it is changing a repository setting.
+
+### D-91: 2.0.1 is published on NuGet, and 1.0.0 stays listed and supported
+
+- **Status:** Approved by Shaun on 2026-11-28, and carried out that day. He approved the one publication
+  beforehand, and its report afterwards.
+- **Decision:** `ConsoleCalendarGenerator` 2.0.1 is published on nuget.org. It was published by one manual run
+  of `publish-nuget.yml` from `master` (run 46137844158, first attempt), through Trusted Publishing, after one
+  approved deployment to `nuget-production`. What was pushed is the candidate: the package and the symbol
+  package attached to the immutable GitHub release, with the checksums `eng/publication.sh` states. The date
+  of the release in the changelog is 2026-11-28, the day of the publication in Shaun's time zone, which is the
+  convention for every date of the project. **Version 1.0.0 stays on NuGet, listed and supported.** It is not
+  deprecated: deprecating it is a separate decision, which has not been made
+  ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)), and a separate action, which
+  needs its own explicit approval. `SECURITY.md` says that both the 2.x line and 1.0.0 are supported, without
+  a condition. The README was not changed: it names its version and the command that installs it, and
+  announces nothing.
+- **Reason:** The publication was the last step of the release, and it was held to what
+  [D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated) asks: the files
+  that were validated, not a rebuild. 1.0.0 has users, and a warning on a version they restore is an
+  outward-facing change of its own; it is not a side effect of publishing another version. The earlier
+  wording of `SECURITY.md`, "until a 2.x version is published on NuGet", would have ended the support of 1.0.0
+  by itself on the day of the publication, which nobody decided.
+- **Consequences:** nuget.org lists 1.0.0 and 2.0.1. The package it serves for 2.0.1 is the candidate's with
+  nuget.org's signature added: every entry of the candidate is in it byte for byte, and there is no other. It
+  was verified there by its metadata, its public API, new programs for both builds that install it from
+  nuget.org, the upgrade from 1.0.0, Native AOT, and both symbol files from nuget.org's symbol server. No
+  long-lived key was created and no secret is stored. The run is never run again, and the workflow is not
+  started again for 2.0.1. 2.0.0 is released on GitHub and is not on NuGet. Nothing in the repository
+  deprecates, unlists or deletes a version, and nothing on nuget.org is changed for 1.0.0 without Shaun's
+  approval for exactly that. Campertron's adoption of the package belongs to its own project and chat
+  ([D-19](#d-19-campertron-adoption-happens-elsewhere)). The evidence is in
+  [packaging-and-releases.md](packaging-and-releases.md#the-publication-of-201), and the full record is
+  outside the repository, beside the candidate.
+

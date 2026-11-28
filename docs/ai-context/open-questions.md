@@ -5,11 +5,10 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-One question is open: Q-15. It belongs to what follows the NuGet publication. The implementation, the
-documentation, the release infrastructure, release preparation and the setup of the publication are complete
-and do not depend on it. The version it is about is 2.0.1, the 2.x version that goes to NuGet
-([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)); where the
-question says 2.0, that is the version meant.
+One question is open: Q-15. The release of 2.0.1 is complete, on GitHub and on NuGet, and does not depend on
+it. The version the question speaks of as 2.0 is 2.0.1, the 2.x version that is on NuGet
+([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget),
+[D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)).
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
 D-28, rendering in D-30 to D-37, and states, the theme and output in
@@ -58,16 +57,20 @@ Q-13 (whether `netstandard2.1` stays a target in 2.0) is settled: it stays
 when the 2.0 scope was decided and was never a section of this file, where it had been one of the candidates
 of Q-08.
 
-Q-14 (how the publication is authenticated) is settled: by NuGet Trusted Publishing, from a workflow that is
-started by hand. No API key is created and no secret is stored
+Q-14 (how the publication is authenticated) is settled, and was carried out for 2.0.1: by NuGet Trusted
+Publishing, from a workflow that is started by hand. No API key was created and no secret is stored
 ([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 
 ## Q-15: Is 1.0.0 deprecated on nuget.org after 2.0?
 
 - **Why it matters:** Deprecating 1.0.0 would show a warning to everyone who still restores it and point them
   at 2.0. It is an outward-facing action on a published version.
-- **Evidence needed:** Shaun's choice, once 2.0 is published and verified.
-- **Decide in:** the release phase, after publication. It needs its own approval.
+- **Where it stands:** 2.0.1 is published and verified, so the condition for asking the question holds. 1.0.0
+  is listed, supported and not deprecated, and `SECURITY.md` says so
+  ([D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)).
+- **Evidence needed:** Shaun's choice.
+- **Decide in:** a step of its own. It needs his separate, explicit approval, and it is made on nuget.org:
+  nothing in the repository can do it.
 - **Recommendation:** None yet.
 
 Q-16 (where the candidate is built) is settled: it is the Linux `release-bundle` artifact of the first push run

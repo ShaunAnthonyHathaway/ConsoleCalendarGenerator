@@ -22,9 +22,13 @@ public class PublicDocumentationTests
         "ConsoleCalendarGenerator.Tests/ConsoleCalendarGenerator.Tests.csproj",
     };
 
-    /// <summary>The version on NuGet, and the version released on GitHub alone.</summary>
+    /// <summary>
+    /// The first version, which is on NuGet, and the version released on GitHub alone. This release is on both:
+    /// it was published to NuGet on the day below, a date in the maintainer's time zone, like every date here.
+    /// </summary>
     private const string OnNuGet = "1.0.0";
     private const string OnGitHubOnly = "2.0.0";
+    private const string PublishedOn = "2026-11-28";
 
     private static string[] TargetFrameworksOf(string projectFile) =>
         Regex.Match(Repository.Read(projectFile), @"<TargetFrameworks?>([^<]+)</TargetFrameworks?>").Groups[1].Value
@@ -123,9 +127,9 @@ public class PublicDocumentationTests
     // ---- versions ----
 
     /// <summary>
-    /// Three versions exist as far as a user is concerned: the one on NuGet, the one released on GitHub, and
-    /// the release this source is. No document names any other, and none names a development or prerelease
-    /// version.
+    /// Three versions exist as far as a user is concerned: the first one, on NuGet; the one released on GitHub
+    /// alone; and the release this source is, which is on both. No document names any other, and none names a
+    /// development or prerelease version.
     /// </summary>
     [TestCaseSource(nameof(Prose))]
     public void TheOnlyVersionsNamed_AreTheTwoReleasedOnes_AndThisRelease(string document)
@@ -178,35 +182,39 @@ public class PublicDocumentationTests
     // ---- where each version is available ----
 
     /// <summary>
-    /// What the documents may say about availability, as it stands: 1.0.0 is on NuGet, 2.0.0 was released on
-    /// GitHub and never on NuGet, and this release is not published anywhere yet. So nothing says this release
-    /// is published, released or available, and no line connects 2.0.0 with NuGet except to say that it was
-    /// not published there. This test is edited when this release is published.
+    /// What the documents may say about availability, as it stands: 1.0.0 is on NuGet and supported; 2.0.0 was
+    /// released on GitHub and never on NuGet; and this release is on GitHub Releases and on NuGet. Three things
+    /// follow. No line connects 2.0.0 with NuGet except to say that it was not published there. Nothing says
+    /// that 1.0.0 is deprecated, unlisted or unsupported, because it is none of those. And no document
+    /// announces this release: the README names its version and gives the command that installs it, the
+    /// changelog gives its date, and that is all a reader needs, on the day of publication and a year later.
     /// </summary>
     [TestCaseSource(nameof(Prose))]
-    public void NoDocumentSaysThatThisReleaseIsPublished_OrThatTheGitHubReleaseIsOnNuGet(string document)
+    public void NoDocumentPutsTheGitHubOnlyReleaseOnNuGet_CallsTheFirstVersionDeprecated_OrAnnouncesThisRelease(string document)
     {
         string text = Repository.Read(document);
         string release = Regex.Escape(ReleaseVersion());
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(Regex.Matches(text, @"(?i)(?<!until )\b" + release + @" (is|was|has been) (now )?(published|released|available|out|on nuget)\b|is now available|now on nuget|--prerelease")
-                .Select(match => match.Value), Is.Empty, "this release is not described as published");
             Assert.That(text.Split('\n').Where(line => line.Contains(OnGitHubOnly, StringComparison.Ordinal)
                     && line.Contains("NuGet", StringComparison.OrdinalIgnoreCase)
                     && !line.Contains("not published to NuGet", StringComparison.Ordinal)),
                 Is.Empty, OnGitHubOnly + " is not described as being on NuGet");
+            Assert.That(Regex.Matches(text, @"(?i)deprecat|unlisted|no longer supported|unsupported|end of life|out of support").Select(match => match.Value),
+                Is.Empty, OnNuGet + " is listed and supported, and nothing says otherwise");
+            Assert.That(Regex.Matches(text, @"(?i)(?<!until )\b" + release + @" (is|was|has been) (now )?(published|released|available|out|on nuget)\b|is now available|now on nuget|--prerelease")
+                .Select(match => match.Value), Is.Empty, "this release is described, not announced");
         }
     }
 
     /// <summary>
     /// The changelog has one section for each version, newest first, each with a link to where that version
-    /// is. This release has no date until it is published: its heading says "Unreleased" until then, and a
-    /// date is never guessed. The section of 2.0.0 says where that version was distributed.
+    /// is. This release is published, so its heading has the date of its publication, and nothing in the
+    /// changelog is "Unreleased". The section of 2.0.0 says where that version was distributed.
     /// </summary>
     [Test]
-    public void TheChangelog_HasASectionForEachVersion_AndThisReleaseIsDatedOnlyOncePublished()
+    public void TheChangelog_HasASectionForEachVersion_AndThisReleaseHasTheDateOfItsPublication()
     {
         string changelog = Repository.Read("CHANGELOG.md");
         string[] sections = changelog.Split('\n').Where(line => line.StartsWith("## ", StringComparison.Ordinal)).ToArray();
@@ -215,13 +223,13 @@ public class PublicDocumentationTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(sections, Has.Length.EqualTo(3));
-            Assert.That(sections[0], Does.Match(@"^## \[" + Regex.Escape(ReleaseVersion()) + @"\] - (Unreleased|\d{4}-\d{2}-\d{2})$"));
+            Assert.That(sections[0], Is.EqualTo("## [" + ReleaseVersion() + "] - " + PublishedOn));
             Assert.That(sections[1], Is.EqualTo("## [" + OnGitHubOnly + "] - 2026-11-27"));
             Assert.That(sections[2], Is.EqualTo("## [" + OnNuGet + "] - 2023-06-25"));
             Assert.That(changelog, Ordinal.Contains("\n[" + ReleaseVersion() + "]: " + releases + ReleaseVersion() + "\n"));
             Assert.That(changelog, Ordinal.Contains("\n[" + OnGitHubOnly + "]: " + releases + OnGitHubOnly + "\n"));
             Assert.That(changelog, Ordinal.Contains("\n[" + OnNuGet + "]: https://www.nuget.org/packages/ConsoleCalendarGenerator/" + OnNuGet + "\n"));
-            Assert.That(changelog, Ordinal.DoesNotContain("[Unreleased]"));
+            Assert.That(changelog, Does.Not.Match("(?i)unreleased|not yet (published|released)"), "every version in the changelog is released");
 
             string github = SectionOf(changelog, sections[1]);
             Assert.That(github, Ordinal.Contains("GitHub Releases"));
@@ -235,9 +243,9 @@ public class PublicDocumentationTests
     /// <summary>
     /// `SECURITY.md` is a document of current policy: it is not packed into the package, every link to it
     /// points at the default branch, and it is edited when the facts change. Its table has a row for the 2.x
-    /// line and a row for 1.0.0, each saying where that is available, in words that name no patch version of
-    /// 2.x and so do not go out of date with each release. It sends reports to GitHub's private vulnerability
-    /// reporting.
+    /// line, which is on GitHub Releases and on NuGet, and a row for 1.0.0, which is on NuGet; both are
+    /// supported. The rows name no patch version of 2.x and so do not go out of date with each release. It
+    /// sends reports to GitHub's private vulnerability reporting.
     /// </summary>
     [Test]
     public void TheSecurityDocument_SaysWhereEachVersionIs_AndSendsReportsToThePrivateChannel()
@@ -249,9 +257,12 @@ public class PublicDocumentationTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(rows.Select(row => row.Split('|')[1].Trim()), Is.EqualTo(new[] { "2.x", OnNuGet }));
-            Assert.That(rows[0], Ordinal.Contains("GitHub Releases"), "where the 2.x line is available today");
-            Assert.That(rows[1], Ordinal.Contains("NuGet"));
-            Assert.That(rows[1], Ordinal.Contains("until a 2.x version is published on NuGet"), "how long the version on NuGet is supported");
+            string[][] cells = rows.Select(row => row.Trim('|').Split('|').Select(cell => cell.Trim()).ToArray()).ToArray();
+            Assert.That(cells.Select(row => row.Length), Is.All.EqualTo(3), "version, availability, supported");
+            Assert.That(cells[0][1], Ordinal.Contains("GitHub Releases"), "where the 2.x line is available");
+            Assert.That(cells[0][1], Ordinal.Contains("NuGet"), "and since its publication there");
+            Assert.That(cells[1][1], Is.EqualTo("NuGet"), "where 1.0.0 is available");
+            Assert.That(cells.Select(row => row[2]), Is.All.EqualTo("Yes"), "both are supported, without a condition");
             Assert.That(string.Concat(rows), Does.Not.Match(@"\b2\.\d+\.\d+\b"), "no patch version of 2.x in the table");
             Assert.That(security, Ordinal.Contains("Published versions are never changed"));
 

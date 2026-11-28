@@ -2,11 +2,11 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **2,537 tests**: 299 tests of the legacy API, 25 tests of the legacy class
+`ConsoleCalendarGenerator.Tests` holds **2,569 tests**: 299 tests of the legacy API, 25 tests of the legacy class
 as a facade, 109 tests of the frozen source of 1.0.0, 376 migration tests that compare the library with it, 184
 tests of the layout model, 283 tests of text rendering, 98 tests of day states and markers, 52 tests of the
 theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 251
-tests of the documentation and the example, 27 tests of the workflow and the release tooling, 2 tests of the modern public surface, 16 tests of the version
+tests of the documentation and the example, 59 tests of the workflows, the publication and the release tooling, 2 tests of the modern public surface, 16 tests of the version
 identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
 
@@ -126,8 +126,10 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
 | `VersionIdentityTests` | 16 | The assembly version, the file version and the informational version of the library build under test: the release version 2.0.1 with the commit and no suffix, assembly version 2.0.0.0 and file version 2.0.1.0; that the major version of the assembly is that of the package; that nothing says it is 1.0.0 or 2.0.0; that the project file sets those versions and has no version suffix; that package validation compares with 1.0.0 and nothing is suppressed; that no maintenance note still names a development version, outside the decision log and the roadmap's table of completed phases |
 | `LibraryBuildTests` | 1 | That the run uses the library build it was built for |
-| `Infrastructure/WorkflowTests` | 7 | The workflow, read as text: there is one; every action is pinned to the full SHA of a commit with its version beside it; the actions are the three that were reviewed; the only permission is to read the contents; it runs on pull requests and pushes to `master` and cannot be started by hand; it uses no secret; it builds on three systems and runs every check script |
-| `Infrastructure/ReleaseToolingTests` | 20 | The release scripts, read as text: they are there; no script and no workflow can push a package, create a release, a tag or an attestation, or push commits; no file of a release is kept in the repository; the two expected reports of the upgrade differ in the five corrections and the modern API and in nothing else; the program of the upgrade starts from the published version and the direct one has no package |
+| `Infrastructure/WorkflowTests` | 10 | The workflows, read as text: there are two; every action of both is pinned to the full SHA of a commit with its version beside it; the actions of each are the ones that were reviewed, and an action both use is one commit in both. For `ci.yml`: the only permission is to read the contents; it runs on pull requests and pushes to `master` and cannot be started by hand; it uses no secret; it builds on three systems and runs every check script |
+| `Infrastructure/PublishWorkflowTests` | 21 | The publication workflow, read as text: it is started by hand and by nothing else; its four inputs are required, and their defaults are the values `eng/publication.sh` states, which are the version of the project file and its four files; the workflow reads, and only the job that publishes may ask for an identity token and uses the environment; the three jobs run one after the other, with no condition of their own and no step that is allowed to fail; the actions are the reviewed ones, at the commits `ci.yml` uses; nothing is built or packed; the push is one command, for the approved package, to nuget.org, with no option that skips a version that is already there; the key is the one the login returns, reaches the one step that pushes, and is written nowhere; the token of the run goes to the steps that read the release and to no other; every check comes before the login and the login before the push; and, worked out for a failure of each step in turn, neither the login nor the push runs after it. Also that the scripts of the publication read and compare and can neither publish nor start a workflow; and, on Linux, the self-test of the preflight, run as it is |
+| `Infrastructure/PublicApiFileTests` | 2 | `eng/public-api.txt` is the public API of the library under test, as the tool the publication scripts use writes it out; it lists both namespaces and every type once, in plain text |
+| `Infrastructure/ReleaseToolingTests` | 26 | The release scripts, read as text: they are there; no script, and no workflow but the publication workflow, can push a package, log in to nuget.org, create a release, a tag or an attestation, push commits or start a workflow, and that workflow is the one file with a command that publishes; no file of a release is kept in the repository; the two expected reports of the upgrade differ in the five corrections and the modern API and in nothing else; the program of the upgrade starts from the published version and the direct one has no package |
 
 `Support/` holds the helpers. The ones to know:
 
@@ -199,9 +201,9 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 2,512 pass | 5 Windows-only | 19 pass |
-| macOS | 2,512 pass | 5 Windows-only | not part of CI |
-| Windows | 2,423 pass | 94 that need Linux or macOS | not part of CI |
+| Linux | 2,544 pass | 5 Windows-only | 19 pass |
+| macOS | 2,543 pass | 5 Windows-only, 1 Linux-only | not part of CI |
+| Windows | 2,454 pass | 94 that need Linux or macOS, 1 Linux-only | not part of CI |
 
 One more test is inconclusive in the normal run on each system, and which one depends on the system's culture
 data: `Legacy/GregorianTitleTests` has a case for `ar-SA` counting in the Gregorian calendar and a case for it
@@ -251,6 +253,9 @@ cultures built in the test.
   On those systems the runtime keeps the current colors in the process, so they can be read without a
   terminal. On Windows the colors live in the console, and a test host without one ignores changes. These tests
   are marked `[Platform(Exclude = "Win")]`.
+- **Linux only (1):** the self-test of the publication's preflight
+  (`PublishWorkflowTests.ThePreflight_RefusesEveryWrongCase`), which runs a shell script that needs `jq`. Linux
+  is where the publication runs. Where bash or jq is missing the test is left out, not failed.
 - **Windows only (5):** that the legacy class ends every line with `\r\n`, in the test process and in the
   real output of a child process (2); that the frozen source of 1.0.0 mixed `\r\n` and `\n` in both (2); and
   the console writer's uniform `\r\n` endings (1). These are what shows D-59 where it matters: a Linux or
@@ -686,10 +691,60 @@ all three systems. What each does is in
 | `eng/release-state.sh` | The repository disagreeing with itself about its version: the project not evaluating to the release identity, the package check or the version tests expecting another version, a development version still stated, the README's links not at the tag, the changelog's first section not being the section of the version with its date or "Unreleased", or the notes of the release missing or naming another version's files |
 | `eng/verify-published-package-selftest.sh` | The download of the published 1.0.0 not matching nuget.org's own record of it or lacking the signature; the comparison refusing a package plus nuget.org's signature; or the comparison accepting any of twelve differences |
 | `eng/verify-release-bundle.sh` (symbols) | A symbol file that is not the one its assembly was built with, by the identifier and the checksum the assembly records |
+| `eng/publication-preflight.sh` | Anything that is not the approved publication, each before the next: another version, tag, release id or commit asked for; a run that is not a manual run of the publication workflow for `master` in its first attempt; nuget.org listing anything but 1.0.0; a tag that is not annotated, is another object or peels to another commit; a release that is a draft, a prerelease, not immutable, not published, not the release of the tag, or does not hold exactly the four files as GitHub records them; a downloaded file without the approved SHA-256; a bundle that fails `eng/verify-release-bundle.sh`; a package of another ID, version or commit, with a dependency or without a build; an assembly whose public API is not `eng/public-api.txt` |
+| `eng/publication-preflight-selftest.sh` | The preflight accepting any of 45 wrong cases, or refusing one for another reason than the thing that was made wrong; with the files of the release, also the preflight refusing the right answers |
+| `eng/publication-checksums.sh` | A folder that does not hold exactly the four approved files with the approved SHA-256 |
+| `eng/publication-verify.sh` | The release or its four files no longer being the approved ones; then everything `eng/verify-published-package.sh` refuses |
 
-The NUnit tests in `Infrastructure/` read the workflow and the scripts as text and hold what must stay true
-about them whatever they do: pinned actions, read-only permission, no trigger by hand, no secret, and no
-command that publishes. They cannot run the scripts; the workflow does.
+The NUnit tests in `Infrastructure/` read the workflows and the scripts as text and hold what must stay true
+about them whatever they do: pinned actions; for `ci.yml` read-only permission, no trigger by hand and no
+secret; no command that publishes outside the publication workflow; and for that workflow, everything that
+keeps it to the one approved publication ([The tests of the publication](#the-tests-of-the-publication)).
+They cannot run the release scripts; `ci.yml` does.
+
+### The tests of the publication
+
+The publication workflow cannot be run to test it: a run is a publication. So it is tested in three ways, and
+none of them publishes or asks nuget.org for a key.
+
+- **As text** (`Infrastructure/PublishWorkflowTests`). The tests read the workflow's trigger, inputs,
+  permissions, environment, jobs and steps. For the order of the job that publishes they do what GitHub does:
+  a step runs when every step before it succeeded, and after a failure only a step whose condition says so.
+  For a failure of each step in turn, neither the login nor the push may run after it, and the only steps
+  that do run are summaries, which have neither the key nor the token. No step may be allowed to fail, and no
+  job has a condition of its own.
+- **By its checks, on recorded answers** (`eng/publication-preflight-selftest.sh`). Files stand for what
+  GitHub and nuget.org answer, and one thing is made wrong at a time: the values asked for, the event, the
+  ref, the repository, the workflow, the attempt, the user, what nuget.org lists, the tag, the release, its
+  files. Each must be refused with the message of that check, and nothing may be downloaded for a request
+  that is refused early. Given the four files of the release, the right answers must pass and say they are a
+  simulation. A simulation is refused inside a workflow, so it can never stand in for the checks of a
+  publication. `PublishWorkflowTests` runs the self-test on Linux in every test run, without the files and
+  without the network. `ci.yml` was not changed for it.
+- **By its checks, on the real release.** `eng/publication-preflight.sh`, run on a machine, reads GitHub and
+  nuget.org, downloads the four files and checks everything, and has no way to publish. It was run when the
+  workflow was written and passed, against the immutable release of 2.0.1 and against the kept candidate.
+  `eng/publication-verify.sh` cannot pass before a publication: run the same way, it checks the release,
+  downloads the files and stops where nuget.org does not serve the version, which was seen.
+
+`eng/public-api.txt` is held to the source by `Infrastructure/PublicApiFileTests`, which compiles the tool's
+own listing code into the tests and runs it on the library under test, for both builds. When the public API
+changes, the file is written again with the tool in the same change:
+`dotnet run --project eng/tools/PublicApi -- <assembly> > eng/public-api.txt`.
+
+When the publication workflow was written, 31 deliberate changes were made one at a time, to the workflow and
+to the scripts, and each failed these tests: a push and a release as a trigger; another default version; the
+publishing job allowed to write the contents, and every job an identity token; no environment and another
+one; the login with a condition that runs it whatever happened; the checks allowed to fail, and made unable
+to; `--skip-duplicate`; a build step; a stored key in place of the login's; the login not pinned, and pinned
+to another commit; the key printed; the publishing job without its need for the preflight, and with a
+condition of its own; a simulation as the checks of the publishing job; the token of the run given to the
+push; no comparison of checksums before the push; a pattern in place of the package's name; the key handed
+to another job; the verification not waiting for the push; the commands of the push traced; the scripts
+stating another version and another commit; a script that pushes and one that starts the workflow; and a
+preflight that accepts another version or does not look at nuget.org. The workflow was checked with actionlint
+1.7.12, with no finding. The scripts of the publication were not put through ShellCheck, which was not on the
+machine they were written on: what is known of them is from running them.
 
 When these were written, each refusal was seen: the bundle script on a checkout at another commit and on one
 with uncommitted changes; the check on a build made without `ContinuousIntegrationBuild`; and the sixteen

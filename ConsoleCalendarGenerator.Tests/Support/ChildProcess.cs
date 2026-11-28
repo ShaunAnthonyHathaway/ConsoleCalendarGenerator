@@ -101,6 +101,20 @@ internal static class ChildProcess
         return Run(start);
     }
 
+    /// <summary>
+    /// A program of the machine, such as a shell with a script of this repository, started with the arguments
+    /// given and with its standard input closed.
+    /// </summary>
+    public static ChildResult RunCommand(string program, params string[] arguments)
+    {
+        ProcessStartInfo start = NewStartInfo(program);
+        foreach (string argument in arguments)
+        {
+            start.ArgumentList.Add(argument);
+        }
+        return Run(start);
+    }
+
     private static ProcessStartInfo NewStartInfo(string fileName) => new(fileName)
     {
         UseShellExecute = false,

@@ -1,0 +1,117 @@
+public class CalendarGenerator.ConsoleCalendar : System.Object
+  constructor()
+  constructor(System.ConsoleColor TitleColor)
+  constructor(System.ConsoleColor TitleColor, System.ConsoleColor DateColor)
+  constructor(System.ConsoleColor TitleColor, System.ConsoleColor DateColor, System.ConsoleColor SelectedDateColor)
+  constructor(System.ConsoleColor TitleColor, System.ConsoleColor DateColor, System.ConsoleColor SelectedDateColor, System.ConsoleColor DayOfWeekColor)
+  method System.ConsoleColor GetDateColor()
+  method System.ConsoleColor GetDayOfWeekColor()
+  method System.ConsoleColor GetSelectedDateColor()
+  method System.ConsoleColor GetTitleColor()
+  method System.Void GenerateMonth(System.Int32 Month, System.Int32 Year)
+  method System.Void GenerateMonth(System.Int32 Month, System.Int32 Year, System.Collections.Generic.List<System.DateTime> dates)
+  method System.Void GenerateYear(System.Int32 Year)
+  method System.Void GenerateYear(System.Int32 Year, System.Collections.Generic.List<System.DateTime> dates)
+  method System.Void SetDateColor(System.ConsoleColor TitleColor)
+  method System.Void SetDayOfWeekColor(System.ConsoleColor TitleColor)
+  method System.Void SetSelectedDateColor(System.ConsoleColor TitleColor)
+  method System.Void SetTitleColor(System.ConsoleColor TitleColor)
+public sealed class ConsoleCalendarGenerator.CalendarTheme : System.Object
+  method ConsoleCalendarGenerator.CalendarTheme WithDayColor(System.Nullable<System.ConsoleColor> color)
+  method ConsoleCalendarGenerator.CalendarTheme WithStateColor(System.String stateName, System.Nullable<System.ConsoleColor> color)
+  method ConsoleCalendarGenerator.CalendarTheme WithTitleColor(System.Nullable<System.ConsoleColor> color)
+  method ConsoleCalendarGenerator.CalendarTheme WithTitleSuffixColor(System.Nullable<System.ConsoleColor> color)
+  method ConsoleCalendarGenerator.CalendarTheme WithWeekdayLabelColor(System.Nullable<System.ConsoleColor> color)
+  method System.Nullable<System.ConsoleColor> GetColor(ConsoleCalendarGenerator.RenderedSegment segment)
+  property System.Collections.Generic.IReadOnlyDictionary<System.String, System.ConsoleColor> StateColors { get; }
+  property System.Nullable<System.ConsoleColor> DayColor { get; }
+  property System.Nullable<System.ConsoleColor> TitleColor { get; }
+  property System.Nullable<System.ConsoleColor> TitleSuffixColor { get; }
+  property System.Nullable<System.ConsoleColor> WeekdayLabelColor { get; }
+  static property ConsoleCalendarGenerator.CalendarTheme None { get; }
+public static class ConsoleCalendarGenerator.ConsoleMonthWriter : System.Object
+  static method System.Void Write(ConsoleCalendarGenerator.RenderedMonth month, ConsoleCalendarGenerator.CalendarTheme theme)
+public sealed class ConsoleCalendarGenerator.DayState : System.Object
+  constructor(System.String name, System.String marker)
+  override method System.String ToString()
+  property System.String Marker { get; }
+  property System.String Name { get; }
+public sealed class ConsoleCalendarGenerator.MonthLayout : System.Object
+  property System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.MonthLayoutWeek> Weeks { get; }
+  property System.Collections.Generic.IReadOnlyList<System.DayOfWeek> DaysOfWeek { get; }
+  property System.DayOfWeek FirstDayOfWeek { get; }
+  property System.Int32 Month { get; }
+  property System.Int32 Year { get; }
+  static method ConsoleCalendarGenerator.MonthLayout Create(System.Int32 year, System.Int32 month, System.DayOfWeek firstDayOfWeek)
+public sealed class ConsoleCalendarGenerator.MonthLayoutCell : System.Object
+  property System.Boolean IsEmpty { get; }
+  property System.DayOfWeek DayOfWeek { get; }
+  property System.Nullable<System.DateTime> Date { get; }
+public sealed class ConsoleCalendarGenerator.MonthLayoutWeek : System.Object
+  property System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.MonthLayoutCell> Cells { get; }
+public sealed class ConsoleCalendarGenerator.MonthRenderOptions : System.Object
+  method ConsoleCalendarGenerator.MonthRenderOptions WithCellWidth(System.Int32 cellWidth)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithColumnGap(System.Int32 columnGap)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithCulture(System.Globalization.CultureInfo culture)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithFirstDayOfWeek(System.DayOfWeek firstDayOfWeek)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithIndent(System.String indent)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithTitleAlignment(ConsoleCalendarGenerator.TitleAlignment titleAlignment)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithTitleFormat(System.String titleFormat)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithTitleSuffix(System.String titleSuffix)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithWeekdayLabelStyle(ConsoleCalendarGenerator.WeekdayLabelStyle weekdayLabelStyle)
+  method ConsoleCalendarGenerator.MonthRenderOptions WithWeekdayLabels(System.Collections.Generic.IEnumerable<System.String> weekdayLabels)
+  property ConsoleCalendarGenerator.TitleAlignment TitleAlignment { get; }
+  property ConsoleCalendarGenerator.WeekdayLabelStyle WeekdayLabelStyle { get; }
+  property System.Collections.Generic.IReadOnlyList<System.String> WeekdayLabels { get; }
+  property System.DayOfWeek FirstDayOfWeek { get; }
+  property System.Globalization.CultureInfo Culture { get; }
+  property System.Int32 CellWidth { get; }
+  property System.Int32 ColumnGap { get; }
+  property System.Int32 GridWidth { get; }
+  property System.String Indent { get; }
+  property System.String TitleFormat { get; }
+  property System.String TitleSuffix { get; }
+  static property ConsoleCalendarGenerator.MonthRenderOptions Default { get; }
+public static class ConsoleCalendarGenerator.MonthRenderer : System.Object
+  static method ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options)
+  static method ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<System.DateTime, ConsoleCalendarGenerator.DayState>> dayStates)
+  static method ConsoleCalendarGenerator.RenderedMonth Render(System.Int32 year, System.Int32 month, ConsoleCalendarGenerator.MonthRenderOptions options, System.Collections.Generic.IEnumerable<System.DateTime> dates, ConsoleCalendarGenerator.DayState state)
+public static class ConsoleCalendarGenerator.MonthWriter : System.Object
+  static method System.Void Write(ConsoleCalendarGenerator.RenderedMonth month, System.IO.TextWriter writer)
+public sealed class ConsoleCalendarGenerator.RenderedLine : System.Object
+  override method System.String ToString()
+  property ConsoleCalendarGenerator.RenderedLineKind Kind { get; }
+  property System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.RenderedSegment> Segments { get; }
+  property System.String Text { get; }
+public enum ConsoleCalendarGenerator.RenderedLineKind : System.Int32
+  constant field ConsoleCalendarGenerator.RenderedLineKind Title = 0
+  constant field ConsoleCalendarGenerator.RenderedLineKind Week = 2
+  constant field ConsoleCalendarGenerator.RenderedLineKind WeekdayLabels = 1
+public sealed class ConsoleCalendarGenerator.RenderedMonth : System.Object
+  method System.String ToText()
+  method System.String ToText(System.String newLine)
+  override method System.String ToString()
+  property ConsoleCalendarGenerator.MonthLayout Layout { get; }
+  property System.Collections.Generic.IReadOnlyList<ConsoleCalendarGenerator.RenderedLine> Lines { get; }
+public sealed class ConsoleCalendarGenerator.RenderedSegment : System.Object
+  override method System.String ToString()
+  property ConsoleCalendarGenerator.DayState State { get; }
+  property ConsoleCalendarGenerator.RenderedSegmentKind Kind { get; }
+  property System.Nullable<System.DateTime> Date { get; }
+  property System.Nullable<System.DayOfWeek> DayOfWeek { get; }
+  property System.String Text { get; }
+public enum ConsoleCalendarGenerator.RenderedSegmentKind : System.Int32
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind Day = 7
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind EmptyDay = 6
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind Gap = 5
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind Indent = 0
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind Padding = 1
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind Title = 2
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind TitleSuffix = 3
+  constant field ConsoleCalendarGenerator.RenderedSegmentKind WeekdayLabel = 4
+public enum ConsoleCalendarGenerator.TitleAlignment : System.Int32
+  constant field ConsoleCalendarGenerator.TitleAlignment Center = 1
+  constant field ConsoleCalendarGenerator.TitleAlignment Left = 0
+public enum ConsoleCalendarGenerator.WeekdayLabelStyle : System.Int32
+  constant field ConsoleCalendarGenerator.WeekdayLabelStyle Abbreviated = 1
+  constant field ConsoleCalendarGenerator.WeekdayLabelStyle Shortest = 0

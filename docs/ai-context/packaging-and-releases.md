@@ -2,12 +2,15 @@
 
 ## Current state
 
-- **On nuget.org:** `ConsoleCalendarGenerator` 1.0.0 only (verified 2026-11-27). It contains a single
+- **On nuget.org:** `ConsoleCalendarGenerator` 1.0.0 only (verified 2026-11-28). It contains a single
   `netstandard2.1` assembly, placeholder metadata, and no readme, license, symbols or documentation.
-- **On GitHub Releases:** 2.0.0, published 2026-11-27 for the tag `v2.0.0` on commit
-  `117df06e5b6d684da6891cd3ac0310e5aa81ec98`. The release is immutable and marked Latest, and it holds the four
-  files of the candidate of 2.0.0. **It is never edited, replaced, deleted or recreated, and neither are its
-  files or its tag.**
+- **On GitHub Releases:** 2.0.0 and 2.0.1, both published on 2026-11-27 and both immutable.
+  - **2.0.1,** for the tag `v2.0.1` on commit `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`, is marked Latest and
+    holds the four files of the candidate of 2.0.1. It is the version that goes to NuGet.
+  - **2.0.0,** for the tag `v2.0.0` on commit `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, holds the four files
+    of the candidate of 2.0.0.
+  - **Neither release is ever edited, replaced, deleted or recreated, and neither are their files or their
+    tags.**
 - **2.0.0 is not on NuGet and is never pushed there**
   ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)). Its public
   documentation was rejected after the GitHub release was published. The package cannot be changed and a
@@ -15,28 +18,33 @@
   or API defect was involved: 2.0.1 has the runtime behavior and the public API of 2.0.0. The files and the
   records of 2.0.0 are kept as they are.
 - **`master` is the source of the release `2.0.1`.** The version has no suffix, and every build of it, local
-  or in CI, identifies itself as `2.0.1` with assembly version `2.0.0.0` and file version `2.0.1.0`. **It is
-  not released:** no tag `v2.0.1`, no GitHub release and no package on nuget.org exists for it.
-- **Only one build of it is the release: the candidate.** The candidate is the bundle the Linux job of the
-  first push run for the release commit uploaded, and nothing else ([The candidate](#the-candidate)). The
-  release commit of 2.0.1 is the merge commit of the last pull request that changed what the package
-  contains: the wording changes that followed the final editorial review
+  or in CI, identifies itself as `2.0.1` with assembly version `2.0.0.0` and file version `2.0.1.0`. **No build
+  is the release.** `master` has moved past the release commit, and a commit after it changes nothing of the
+  release.
+- **The release is the candidate, and it is on GitHub.** The candidate is the bundle the Linux job of the
+  first push run for the release commit uploaded, and nothing else ([The candidate](#the-candidate)). It was
+  designated, and its four files are the files of the GitHub release. The release commit of 2.0.1 is the merge
+  commit of the last pull request that changed what the package contains: the wording changes that followed
+  the final editorial review
   ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)). An
-  earlier candidate, built from `097eace`, was superseded before any tag. Whether the
-  candidate has been designated, its record and its checksums are **not in the repository.** Read no checksum
-  here or in a CI log as the release's.
+  earlier candidate, built from `097eace`, was superseded before any tag. The candidate's record is **not in
+  the repository.** The SHA-256 of its four files are, in `eng/publication.sh`, where the publication checks
+  them ([D-89](decisions.md#d-89-the-workflow-publishes-one-approved-release-and-its-facts-are-in-the-repository)). Read
+  no checksum in a CI log as the release's: every run prints the checksums of its own bundle.
 - **The repository's settings for a release are made**
   ([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases)): a published
-  release is immutable, and rulesets protect `master` and the tags `v*`. See
-  [development.md](development.md#repository-settings).
+  release is immutable, rulesets protect `master` and the tags `v*`, and the environment `nuget-production` is
+  what a publication must be let into. See [development.md](development.md#repository-settings).
 - **The release machinery runs on every build.** CI makes the four files a release consists of (the package,
   the symbol package, an archive of the assemblies, a file of checksums), checks them, uses the assemblies
   directly, upgrades a program from the published 1.0.0, rehearses the check that follows publication, and
   checks that the repository agrees with itself about its version. See
   [The release bundle](#the-release-bundle). A bundle is not a release, and none but the candidate is ever
   used for one.
-- **There is no publication workflow.** Nothing in the repository can push a package, create a tag or create a
-  release, and a test fails on a script or a workflow that could.
+- **There is one publication workflow, and it has not run.** `.github/workflows/publish-nuget.yml` publishes
+  2.0.1 to nuget.org when it is started by hand, and at no other time
+  ([Publication to nuget.org](#publication-to-nugetorg)). It is the one file of the repository that can
+  publish. No script can push a package, create a tag or create a release, and a test fails on one that could.
 
 All package settings are in `ConsoleCalendarGenerator/ConsoleCalendarGenerator.csproj`.
 
@@ -436,9 +444,9 @@ GitHub can attest that a file was built by a workflow run of this repository at 
 (`gh attestation verify <file> -R <repository>`). It was considered for the four files and **deferred**
 ([D-77](decisions.md#d-77-no-artifact-attestations-for-now)):
 
-- Creating one needs `id-token: write` and `attestations: write` in the job that does it. The only workflow
-  runs on every pull request and every push with `contents: read` and nothing else, and that is worth more
-  here than what an attestation adds.
+- Creating one needs `id-token: write` and `attestations: write` in the job that does it. The workflow that
+  builds runs on every pull request and every push with `contents: read` and nothing else, and that is worth
+  more here than what an attestation adds.
 - An attestation is a public, permanent record. A job that attests on every push to `master` would make
   them for every bundle of every commit, not for the one that is the release.
 - An immutable GitHub release, which is a repository setting and part of the plan, makes GitHub record an
@@ -463,8 +471,10 @@ Each of the following needs Shaun's **separate, explicit approval**, every time:
 Approval of a phase, of a pull request or of one of these actions does not cover another. When in doubt, stop
 and ask. Routine work (branches, commits, pull requests, CI runs triggered by pushes) is not in this list.
 
-Adding a publication workflow would itself be a release-mechanism change. Do not add one unless a phase is
-explicitly scoped to do so.
+The publication workflow exists ([Publication to nuget.org](#publication-to-nugetorg)). Starting it is
+"publishing to NuGet" in the list above, and running one of its runs again is the rerun the list names.
+Changing the workflow, the environment it uses or the policy on nuget.org changes the release mechanism: do
+not change one unless a phase is explicitly scoped to do so.
 
 ## Release preparation checklist
 
@@ -495,7 +505,8 @@ For a later version the edit is one command, `bash eng/release-links.sh <tag> --
 is put on the release commit, without any file changing. What would be a defect is an address of another
 shape, or one that names something the release commit does not have: the tests and
 `eng/release-links.sh v2.0.1 --check` fail on those, and neither uses the network. After the tag exists,
-open the three addresses once, before the package is published.
+open the three addresses once, before the package is published. For 2.0.1 the tag exists, and the three
+addresses were opened and answer with the release commit's content.
 
 **The README's text.** It says which version it documents and gives the installation command with that
 version ([D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version)). It says
@@ -537,14 +548,14 @@ the package and not in the archive, and everything links to them on `master`.
 
 | | 2.0.0 | 2.0.1 |
 |---|---|---|
-| Release commit | `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of its release preparation | the merge commit of the wording changes that followed the final editorial review ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)) |
-| Workflow run | 46083727520, first attempt, never run again | the first push run for that commit, in its first attempt |
-| State | designated, tagged `v2.0.0`, and released on GitHub; not on NuGet, and never to be | designated after that run, outside the repository |
-| Record and checksums | outside the repository, with the four files, read-only, kept unchanged | outside the repository, in a folder of their own |
+| Release commit | `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of its release preparation | `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`, the merge commit of the wording changes that followed the final editorial review ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)) |
+| Workflow run | 46083727520, first attempt, never run again | 46097347304, the first push run for that commit, first attempt, never run again |
+| State | designated, tagged `v2.0.0`, and released on GitHub; not on NuGet, and never to be | designated, tagged `v2.0.1`, and released on GitHub; not on NuGet, where its publication is set up and not run |
+| Record and checksums | outside the repository, with the four files, read-only, kept unchanged | the record outside the repository, in a folder of its own, with the four files, read-only; the checksums also in `eng/publication.sh` |
 
 The candidate of 2.0.0 is history that stays: its four files are the files of the immutable GitHub release,
 and its package is not authorized for NuGet ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
-The candidate of 2.0.1 is the one that goes to GitHub and to NuGet.
+The candidate of 2.0.1 is on GitHub, and is the one that goes to NuGet.
 
 **A candidate of 2.0.1 was superseded.** The first one was the bundle of the first push run (46094403379)
 for `097eace95f90d668badf9684188f32c3db164f4b`, the merge commit of the pull request that set the version to
@@ -557,6 +568,7 @@ release or publication of 2.0.1 existed.
 `master` may get commits after a release commit. They are not part of that release, and its tag does not go
 on them. CI makes a bundle for every push, and each says the version of the project file: none of those is a
 candidate. `eng/designate-candidate.sh` is run once for a release commit, while it is the head of `master`.
+It was run for both release commits, and is not run again for either.
 
 The rule ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)):
 
@@ -597,6 +609,11 @@ them.
 
 `eng/verify-published-package.sh <folder with the candidate>` runs after the version is on nuget.org. It needs
 no credential ([D-80](decisions.md#d-80-after-publication-the-served-package-is-compared-by-its-entries-and-the-symbols-through-the-symbol-server)).
+In the publication workflow it is the last job: `eng/publication-verify.sh` downloads the four files of the
+GitHub release again, compares them with the approved checksums, and runs this check on them with
+`--wait 45 --native-aot`. With `--wait`, the two things that depend on nuget.org's own pace, the version being
+served and listed and the symbol server having the symbol files, are asked for again every half minute until
+they hold or the minutes are over. Waiting only reads: nothing is pushed again.
 
 **nuget.org changes the package file.** It signs every package it serves by adding one entry,
 `.signature.p7s`. So the file downloaded from nuget.org is **not** the file that was pushed, its size is
@@ -609,12 +626,13 @@ in its output; it does not pretend the two files are the same. What it requires 
    byte, the manifest included; and it has no other entry. A missing, changed or added entry is a failure.
 3. **The served package as a package** (`eng/verify-package.sh --published`): identity, version, metadata,
    license, no dependency, both builds with their documentation, the readme, the commit, the versions the
-   assemblies carry. The public API is the candidate's because the assemblies are the candidate's bytes, and
-   step 5 compiles and runs against them.
+   assemblies carry. Both assemblies must have exactly the public API of `eng/public-api.txt`; they are the
+   candidate's bytes, and step 5 compiles and runs against them.
 4. **The symbols.** See below.
 5. **Installed from nuget.org.** A `net8.0` and a `net10.0` program install the version from nuget.org alone,
    build, run with the candidate's assembly for their framework, use both APIs and report the five
-   corrections. The consumer smoke tests and the upgrade from 1.0.0 then run against the served package.
+   corrections. The consumer smoke tests and the upgrade from 1.0.0 then run against the served package,
+   with a Native AOT application when `--native-aot` is given.
 
 **The symbol package cannot be downloaded back.** nuget.org offers no address for a `.snupkg`: the one a
 package has returns "not found" for it. Nothing here claims otherwise. What is done:
@@ -644,12 +662,148 @@ two public packages that have symbols: with the identifier and the header the se
 of the assembly; without the header it refused; for a symbol file that was never published it answered "not
 found". Steps 1, 4 and 5 run against this package for the first time after it is published.
 
+## Publication to nuget.org
+
+Set up on 2026-11-28 and **not run**
+([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand),
+[D-89](decisions.md#d-89-the-workflow-publishes-one-approved-release-and-its-facts-are-in-the-repository),
+[D-90](decisions.md#d-90-the-environment-allows-the-default-branch-asks-its-reviewer-and-holds-no-secret)).
+Three things exist, and each names the others:
+
+| | Where | What it is |
+|---|---|---|
+| The workflow | `.github/workflows/publish-nuget.yml` | Publishes the package and the symbol package of 2.0.1. Started by hand, and by nothing else |
+| The environment | GitHub: `nuget-production` | What the job that publishes must be let into ([development.md](development.md#the-environment-nuget-production)) |
+| The policy | nuget.org: Trusted Publishing, account `ShaunHathaway` | Gives that workflow, in that environment, a temporary key for new versions of this package |
+
+**Starting the workflow is a publication.** It needs Shaun's separate, explicit approval, each time
+([Release boundaries](#release-boundaries)). That the workflow exists is not that approval, and neither is the
+review its environment asks for, which comes after the start. It is started for `master`, with its four
+inputs as they are. **A run of it is never run again:** if a run fails, what happens next is decided first.
+
+**There is no key.** nuget.org's Trusted Publishing gives the job a key that lasts an hour, in exchange for
+the identity token GitHub issues to that job. nuget.org compares the token with the policy: the repository and
+its owner, by their permanent ids, the workflow file and the environment. No API key was created on nuget.org
+and nothing is stored on GitHub: the repository and the environment have no secret. The environment has one
+variable, `NUGET_USER`, the nuget.org user name `ShaunHathaway`, which is public. The action that logs in
+needs the user name of whoever created the policy; it is a user name, not an e-mail address.
+
+**The policy on nuget.org,** as it was read back after it was created:
+
+| Field | Value |
+|---|---|
+| Name | ConsoleCalendarGenerator publish-nuget.yml |
+| Package owner | `ShaunHathaway`, the individual account that owns the package |
+| Publisher | GitHub Actions |
+| Repository owner | `ShaunAnthonyHathaway`, GitHub id 105829169 |
+| Repository | `ConsoleCalendarGenerator`, GitHub id 650463678 |
+| Workflow file | `publish-nuget.yml`: the file name, without its folder |
+| Environment | `nuget-production` |
+| Scope | Push only new package versions. Not new packages, not unlisting or relisting, not staging |
+| Packages | `ConsoleCalendarGenerator`: the exact ID, with no pattern |
+| State | Active |
+
+It is the only policy of the account. nuget.org's documentation says a policy can start out "temporarily
+active" for seven days, until a first publication supplies GitHub's ids; this one showed both ids and "Active"
+as soon as it was created. It is read and changed on nuget.org, on the account's Trusted Publishing page, by
+Shaun. The policy names the workflow file and the environment, so renaming either breaks the match. If
+nuget.org ever shows the policy as inactive, **do not create a second one:** that is for Shaun to look at.
+
+**What can be published** is one release, stated once, in `eng/publication.sh`: version 2.0.1, the tag
+`v2.0.1` with its tag object, GitHub release 461246889, the release commit, and the SHA-256 of the four files.
+The workflow's inputs (`version`, `tag`, `release_id`, `release_commit`) must repeat those values. They are
+asked for so that whoever starts the publication says what is published; they select nothing, and any other
+value is refused before anything else is looked at. There is no input that turns a check off and no dry-run
+mode of the workflow.
+
+**Three jobs,** each needing the one before it:
+
+| Job | May | Does |
+|---|---|---|
+| `preflight` | read | Every check below, with `eng/publication-preflight.sh`. It shows whether everything holds before anyone is asked to approve |
+| `publish` | read, and ask GitHub for an identity token. It is the only job in the environment `nuget-production` | The same checks again, on the files it downloads; then the login; then the push of exactly those files |
+| `verify` | read | `eng/publication-verify.sh`: gives nuget.org up to 45 minutes, then checks what it serves ([After publication](#after-publication-what-is-checked-and-what-cannot-be)) |
+
+**The checks before the push** (`eng/publication-preflight.sh`), in this order, each before the next:
+
+1. The four values asked for are the approved version, tag, release id and release commit.
+2. The run is a manual run of the publication workflow of this repository, for `master`, in its first
+   attempt. In the job that publishes, the user for nuget.org is the approved one.
+3. nuget.org lists 1.0.0 and nothing else, and has no package file of 2.0.1.
+4. The tag `v2.0.1` is annotated, is the approved tag object, and peels to the release commit: on GitHub, and
+   in the checkout, which must have the release commit in its history.
+5. The GitHub release is the approved one: published, immutable, not a prerelease, the release GitHub has for
+   the tag, with exactly four files of the right names, each uploaded, each recorded by GitHub with the
+   approved checksum.
+6. The four files, downloaded from the release by their ids, have the approved SHA-256, and `SHA256SUMS.txt`
+   verifies the other three.
+7. `eng/verify-release-bundle.sh` passes on them: the package and the symbol package as
+   `eng/verify-package.sh` expects, the archive, and each symbol file the one its assembly records.
+8. The package is `ConsoleCalendarGenerator` 2.0.1, names the release commit, has no dependency, and holds both
+   builds, with assembly version `2.0.0.0`, file version `2.0.1.0` and the informational version of the
+   release.
+9. Both assemblies have exactly the public API of `eng/public-api.txt`.
+10. nuget.org still does not have the version. The checksums of the four files are compared once more.
+
+All ten pass before the login: the login is the next step of the same job and has no condition, and a step
+runs only when every step before it succeeded. The checks build three small tools of their own (`eng/tools/`).
+Nothing of the library is built, packed or changed.
+
+**The push.** One command, the only one in the repository that publishes: `dotnet nuget push` of
+`ConsoleCalendarGenerator.2.0.1.nupkg`, from the folder the checks downloaded into, to
+`https://api.nuget.org/v3/index.json`, with the temporary key. The symbol package of the same name beside it
+is pushed with it. In the same step, directly before it, `eng/publication-checksums.sh` compares the four
+files with the approved checksums again. The key reaches that one step, as an environment variable. It is not
+printed, not written to a file and not handed to another step or job, and the output of the push is kept
+only after it was searched for the key. There is no `--skip-duplicate`: that the version is not on nuget.org
+is checked, not assumed.
+
+**When something fails.** The workflow stops; it never repairs.
+
+- **Before the push:** nothing is published.
+- **nuget.org already lists the version:** the checks say so and stop. No login is made and nothing is pushed.
+- **The push fails,** as a whole or after the package and before the symbols: the job fails. Its summary has
+  the output of the push, which says what nuget.org accepted, and what nuget.org lists. Nothing is tried
+  again, and the verification does not run.
+- **The verification fails:** the version is on nuget.org as it was pushed. Nothing is pushed again,
+  replaced, unlisted or deprecated.
+- **In each of these cases what happens next is Shaun's decision,** and starting the workflow again is not a
+  repair. A run started after a push finds the version on nuget.org and stops before the login.
+
+**Without publishing.** What can be shown before the day:
+
+```bash
+# The checks, against the real release: reads GitHub and nuget.org, downloads and compares. Needs gh and jq.
+bash eng/publication-preflight.sh --version 2.0.1 --tag v2.0.1 --release-id 461246889 \
+  --release-commit bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd
+# The same, on files that are already there, such as the kept candidate:
+bash eng/publication-preflight.sh --version 2.0.1 --tag v2.0.1 --release-id 461246889 \
+  --release-commit bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd --bundle <folder with the four files>
+# That the checks refuse what they must: recorded answers stand for GitHub and nuget.org. No network.
+bash eng/publication-preflight-selftest.sh [<folder with the four files>]
+```
+
+Outside a workflow the first two are a dry run: they pass when everything is ready, and they have no way to
+publish. The self-test makes one thing wrong at a time, 45 things without the files and 46 with them, and
+requires each to be refused for its own reason; with the files it also requires the right answers to pass. A
+simulation is refused inside a workflow. The tests read the workflow itself: its one trigger, its
+permissions, its pins, that it builds nothing, where the key goes, and which steps would run after a failure
+of each step ([testing.md](testing.md#the-release-checks)).
+
+**A later version.** After that version's GitHub release exists: change the stated facts in
+`eng/publication.sh`, the defaults of the workflow's inputs and the file name in the push, in one reviewed
+pull request. The tests compare them with each other and with the project file. The policy on nuget.org
+needs no change as long as the workflow file, the environment and the package keep their names.
+
 ## Planned 2.0 publication sequence
 
-Planned, **not authorized**. See [decisions.md](decisions.md#d-20-20-is-to-be-published-and-verified-on-nuget),
-[D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated) and
-[D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget). Every step is a phase
-or an action that Shaun scopes and approves by itself; finishing one does not start the next.
+The plan of the release, with what is done. See
+[decisions.md](decisions.md#d-20-20-is-to-be-published-and-verified-on-nuget),
+[D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated),
+[D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget) and
+[D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand).
+Every step is a phase or an action that Shaun scopes and approves by itself; finishing one does not start the
+next. **The publication to NuGet is not authorized.**
 
 Done:
 
@@ -659,80 +813,37 @@ Done:
 - **2.0.0:** release preparation, the candidate, the repository settings, the tag `v2.0.0` and the GitHub
   release, which is published and immutable. Its NuGet publication was stopped before it began and does not
   happen.
-- **2.0.1:** a final editorial review of everything public, with ten wording improvements, and before it the
-  public presentation rewritten ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)),
-  and release preparation: `master` is the source of 2.0.1.
+- **2.0.1:** the public presentation rewritten
+  ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)), release preparation, and
+  a final editorial review of everything public, with ten wording improvements. Then the candidate, designated
+  from the first push run for the merge commit of those improvements; the tag `v2.0.1` on that commit; and the
+  GitHub release "ConsoleCalendarGenerator 2.0.1", created as a draft with the written notes and the
+  candidate's four files, checked, and published. It is immutable and marked Latest in place of 2.0.0.
+- **The setup of the NuGet publication:** the workflow, the environment and the policy on nuget.org
+  ([Publication to nuget.org](#publication-to-nugetorg)). Nothing was published.
 
 To come for 2.0.1, in this order:
 
-1. **The candidate is designated** ([The candidate](#the-candidate)), from the first push run for the merge
-   commit of the wording changes that followed the final editorial review. Its record is kept outside the
-   repository, in a folder of its own beside the folder of 2.0.0 and the folder of the superseded candidate.
-2. **The tag** `v2.0.1`, on the release commit of 2.0.1, which is the commit the candidate's package names.
-   The tag ruleset lets it be created and then keeps it from being moved or deleted. Separate approval. From
-   then on the three links of the README resolve.
-3. **The GitHub release** "ConsoleCalendarGenerator 2.0.1", for the existing tag: created as a draft, with the
-   notes of `RELEASE-NOTES.md` and exactly the candidate's four files attached, checked against
-   `SHA256SUMS.txt`, and then published. Releases are immutable, so the tag and the files can no longer be
-   changed once it is published and no file can be added: everything is attached while it is a draft. It
-   becomes the Latest release in place of 2.0.0. Separate approval.
-4. **NuGet publication:** a push of the candidate's package, with its symbol package, the same bytes
-   ([The publication procedure](#the-publication-procedure-prepared-not-run)). Separate approval, and a
-   credential that reaches the session without passing through the chat
-   ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)).
-5. **Verification:** `eng/verify-published-package.sh` on the candidate
+1. **The NuGet publication:** one manual run of the publication workflow. It pushes the candidate's package,
+   with its symbol package, the same bytes that are attached to the GitHub release. Separate approval.
+2. **Verification:** the last job of that run, `eng/publication-verify.sh` on the files of the release
    ([After publication](#after-publication-what-is-checked-and-what-cannot-be)).
-6. **Finalizing on `master`:** the date in the changelog and the table in `SECURITY.md`
+3. **Finalizing on `master`:** the date in the changelog and the table in `SECURITY.md`
    ([What is finalized after publication](#what-is-finalized-after-publication)).
-7. **Deprecation of 1.0.0,** if Shaun decides it
+4. **Deprecation of 1.0.0,** if Shaun decides it
    ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). Separate approval, after
-   verification. Until then 1.0.0 stays published and supported.
-8. A factual handoff for the separate Campertron project and chat.
+   verification. Until then 1.0.0 stays published and supported. Nothing in the repository deprecates,
+   unlists or deletes a version.
+5. A factual handoff for the separate Campertron project and chat.
 
 **A released version is never changed or replaced.** 2.0.0 is the example: its documentation was rejected
 after its GitHub release was published, the release stayed as it is, and the correction is a new version. If
-anything is wrong after step 4, the correction is again a new version, made and approved the same way. A
-partial publication, for example the package pushed and the symbols refused, is recovered only with Shaun's
-approval ([Release boundaries](#release-boundaries)). nuget.org's own editing of a published package's
+anything is wrong after the publication, the correction is again a new version, made and approved the same
+way. A partial publication, for example the package pushed and the symbols refused, is recovered only with
+Shaun's approval ([Release boundaries](#release-boundaries)). nuget.org's own editing of a published package's
 metadata is not part of this plan: nothing in the package needs editing after publication.
 
 `AssemblyVersion` is `2.0.0.0`. The package-validation baseline stays 1.0.0: 2.x differs from 1.0.0 in
 behavior only ([D-66](decisions.md#d-66-package-validation-stays-against-100-with-no-suppression)). No 1.x
 version and no prerelease was published
 ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
-
-### The publication procedure (prepared, not run)
-
-Written down so that it is not made up on the day. **None of it has been run, and none of it is authorized.**
-Nothing in the repository can run it: these are commands for a person or a session with Shaun's approval for
-that step, and a test fails if a script or a workflow gains one of them.
-
-Before the push, in the folder that holds the candidate:
-
-```bash
-cd <the candidate folder>/release-bundle
-sha256sum -c SHA256SUMS.txt                      # the files are still the candidate, immediately before the push
-curl -s https://api.nuget.org/v3-flatcontainer/consolecalendargenerator/index.json     # 2.0.1 must not be listed, and neither must 2.0.0
-```
-
-- **Ownership.** The package belongs to the nuget.org account `ShaunHathaway`. The key has to be that
-  account's, scoped to push new versions of `ConsoleCalendarGenerator` and nothing else, with a short life.
-- **The key never appears.** `dotnet nuget push` reads it from the environment variable `NUGET_API_KEY` when
-  no key is given on the command line (checked on the SDK this repository uses). It is set outside the chat,
-  for the one session, and is never typed into a command, printed, logged, committed or put in a NuGet
-  configuration file. If no key can reach the session that way, the fallback is the upload page of
-  nuget.org, used by Shaun, which shows the readme before it publishes.
-
-The push, of the exact files and nothing built:
-
-```bash
-dotnet nuget push ConsoleCalendarGenerator.2.0.1.nupkg --source https://api.nuget.org/v3/index.json
-```
-
-The symbol package of the same name in the same folder is pushed with it; the output says so, and is kept.
-Then nuget.org validates and indexes, usually within minutes. The version is published when the list of
-versions has it; after that:
-
-```bash
-bash eng/verify-published-package.sh <the candidate folder>/release-bundle
-```

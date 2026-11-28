@@ -6,15 +6,21 @@ namespace ConsoleCalendarGenerator.Tests.Infrastructure;
 /// <summary>
 /// The scripts that put a release together and check it, read as text, and the state of the repository around
 /// them. The scripts themselves run on every build, in the workflow. What is checked here is what must stay
-/// true about them: nothing in the repository can publish, no file of a release is kept in it, and the two
-/// reports the upgrade test compares differ in the five corrections and in nothing else.
+/// true about them: no script can publish, and of the two workflows only the one made for it can; no file of a
+/// release is kept in the repository; and the two reports the upgrade test compares differ in the five
+/// corrections and in nothing else.
 /// </summary>
 [TestFixture]
 public class ReleaseToolingTests
 {
+    /// <summary>The one file of the repository that can publish. <see cref="PublishWorkflowTests"/> holds it to its rules.</summary>
+    private const string PublicationWorkflow = ".github/workflows/publish-nuget.yml";
+
     private static readonly string[] ScriptsAndWorkflows = Repository.FilesWithExtension(".sh", ".yml", ".yaml", ".ps1", ".cmd", ".bat")
         .Where(file => file.StartsWith("eng/", StringComparison.Ordinal) || file.StartsWith(".github/", StringComparison.Ordinal))
         .ToArray();
+
+    private static readonly string[] EverythingButThePublicationWorkflow = ScriptsAndWorkflows.Where(file => file != PublicationWorkflow).ToArray();
 
     [Test]
     public void TheScriptsOfARelease_AreThere()
@@ -24,23 +30,38 @@ public class ReleaseToolingTests
             "eng/common.sh", "eng/release-bundle.sh", "eng/verify-release-bundle.sh", "eng/release-bundle-tamper-test.sh", "eng/direct-reference-smoke.sh",
             "eng/upgrade-smoke.sh", "eng/release-links.sh", "eng/release-state.sh", "eng/verify-package.sh", "eng/consumer-smoke.sh",
             "eng/verify-published-package.sh", "eng/verify-published-package-selftest.sh", "eng/designate-candidate.sh", "eng/release-notes.sh",
+            "eng/publication.sh", "eng/publication-preflight.sh", "eng/publication-checksums.sh", "eng/publication-verify.sh",
+            "eng/publication-preflight-selftest.sh", PublicationWorkflow,
         }));
     }
 
     /// <summary>
-    /// No script and no workflow pushes a package, creates or uploads to a release, creates or pushes a tag,
-    /// pushes commits, or creates an attestation. Publishing is done by a person's explicit action, once, and
-    /// is not something a file of this repository can do by being run.
+    /// No script, and no workflow but the one made for it, pushes a package, logs in to nuget.org, creates or
+    /// uploads to a release, creates or pushes a tag, pushes commits, creates an attestation, or starts a
+    /// workflow. The publication workflow is the one exception: it holds the one command that publishes, runs
+    /// only when it is started by hand, and starting it is a person's explicit decision, every time.
     /// </summary>
-    [TestCaseSource(nameof(ScriptsAndWorkflows))]
-    public void NothingCanPublish(string file)
+    [TestCaseSource(nameof(EverythingButThePublicationWorkflow))]
+    public void NothingButThePublicationWorkflowCanPublish(string file)
     {
         string commands = string.Join("\n", Repository.Read(file).Split('\n').Where(line => !line.TrimStart().StartsWith('#')));
 
         Assert.That(Regex.Matches(commands,
                 @"\bnuget(\.exe)?\s+push\b|\bdotnet\s+nuget\s+push\b|\bgh\s+release\s+(create|upload|edit|delete)\b|\bgh\s+attestation\b|actions/attest|"
-                + @"\bgit\s+(-C\s+\S+\s+)?(push|commit|tag\s+(?!--list))|softprops/|NuGet/login|nuget/setup-nuget|\bcurl\b[^\n]*\s-X\s*(POST|PUT|DELETE)",
+                + @"\bgit\s+(-C\s+\S+\s+)?(push|commit|tag\s+(?!--list))|softprops/|NuGet/login|nuget/setup-nuget|\bcurl\b[^\n]*\s-X\s*(POST|PUT|DELETE)|"
+                + @"\bgh\s+workflow\s+run\b|\bgh\s+run\s+rerun\b|\bgh\s+api\b[^\n]*\s(-X|--method)\b|workflow_dispatch:|id-token",
                 RegexOptions.IgnoreCase).Select(match => match.Value), Is.Empty);
+    }
+
+    /// <summary>
+    /// The exception is exactly one file, and it is there: were the publication workflow renamed, the test above
+    /// would start to refuse it, and the policy on nuget.org, which names the file, would no longer match.
+    /// </summary>
+    [Test]
+    public void ThePublicationWorkflow_IsTheOneFileThatCanPublish()
+    {
+        Assert.That(ScriptsAndWorkflows, Has.Member(PublicationWorkflow));
+        Assert.That(ScriptsAndWorkflows.Where(file => Regex.IsMatch(Repository.Read(file), @"(?m)^[^#\n]*\bdotnet\s+nuget\s+push\b")), Is.EqualTo(new[] { PublicationWorkflow }));
     }
 
     /// <summary>

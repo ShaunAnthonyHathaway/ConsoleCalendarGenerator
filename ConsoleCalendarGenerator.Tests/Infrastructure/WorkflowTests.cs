@@ -4,9 +4,11 @@ using ConsoleCalendarGenerator.Tests.Support;
 namespace ConsoleCalendarGenerator.Tests.Infrastructure;
 
 /// <summary>
-/// The workflow that builds and checks the repository on GitHub, read as text. What these tests protect is
-/// what makes it safe to run on every pull request: it runs only code that was reviewed, it can write nothing,
-/// it knows no secret, and nobody can start it by hand.
+/// The workflows of the repository, read as text. There are two. ci.yml builds and checks the repository on
+/// every pull request and every push; what these tests protect is what makes that safe: it runs only code that
+/// was reviewed, it can write nothing, it knows no secret, and nobody can start it by hand. publish-nuget.yml
+/// publishes, is started by hand only, and has tests of its own in <see cref="PublishWorkflowTests"/>. What
+/// holds for both is here: every action is pinned, and an action both use is the same commit in both.
 ///
 /// <para>
 /// An action referenced by a tag or a branch runs whatever that name points at on the day of the run. Only the
@@ -18,6 +20,8 @@ namespace ConsoleCalendarGenerator.Tests.Infrastructure;
 public class WorkflowTests
 {
     private const string Folder = ".github/workflows/";
+    private const string Ci = Folder + "ci.yml";
+    private const string Publication = Folder + "publish-nuget.yml";
 
     private static readonly string[] Workflows =
         Repository.FilesWithExtension(".yml", ".yaml").Where(file => file.StartsWith(Folder, StringComparison.Ordinal)).ToArray();
@@ -33,9 +37,9 @@ public class WorkflowTests
         Lines(workflow).Where(line => Regex.IsMatch(line, @"^\s*(-\s+)?uses:")).Select(line => line.Trim()).ToArray();
 
     [Test]
-    public void ThereIsOneWorkflow()
+    public void ThereAreTwoWorkflows_TheOneThatChecksAndTheOneThatPublishes()
     {
-        Assert.That(Workflows, Is.EqualTo(new[] { Folder + "ci.yml" }), "a second workflow, such as one that publishes, is a decision of its own");
+        Assert.That(Workflows, Is.EqualTo(new[] { Ci, Publication }), "another workflow is a decision of its own");
     }
 
     [TestCaseSource(nameof(Workflows))]
@@ -52,15 +56,25 @@ public class WorkflowTests
     }
 
     /// <summary>The actions that were reviewed. Another one is added here in the change that adds it.</summary>
-    [TestCaseSource(nameof(Workflows))]
-    public void TheActionsUsed_AreTheOnesThatWereReviewed(string workflow)
+    [TestCase(Ci, "actions/checkout", "actions/setup-dotnet", "actions/upload-artifact")]
+    [TestCase(Publication, "actions/checkout", "actions/setup-dotnet", "NuGet/login")]
+    public void TheActionsUsed_AreTheOnesThatWereReviewed(string workflow, params string[] reviewed)
     {
         IEnumerable<string> actions = Uses(workflow).Select(reference => Regex.Match(reference, @"uses: ([^@\s]+)").Groups[1].Value).Distinct();
 
-        Assert.That(actions, Is.EquivalentTo(new[] { "actions/checkout", "actions/setup-dotnet", "actions/upload-artifact" }));
+        Assert.That(actions, Is.EquivalentTo(reviewed));
     }
 
-    [TestCaseSource(nameof(Workflows))]
+    /// <summary>An action that both workflows use is one commit, so that a pin is moved in both or in neither.</summary>
+    [Test]
+    public void AnActionBothWorkflowsUse_IsTheSameCommitInBoth()
+    {
+        string[] pins = Workflows.SelectMany(Uses).Select(reference => Regex.Match(reference, @"uses: (\S+ # v\S+)$").Groups[1].Value).Distinct().ToArray();
+
+        Assert.That(pins.Select(pin => pin.Split('@')[0]), Is.Unique, "one commit and one version for each action: " + string.Join(", ", pins));
+    }
+
+    [TestCase(Ci)]
     public void TheOnlyPermission_IsToReadTheRepository(string workflow)
     {
         string text = WithoutComments(workflow);
@@ -70,7 +84,7 @@ public class WorkflowTests
         Assert.That(Regex.Matches(text, @"(?m):\s*write\b|write-all|id-token|attestations:").Select(match => match.Value), Is.Empty);
     }
 
-    [TestCaseSource(nameof(Workflows))]
+    [TestCase(Ci)]
     public void ItRunsOnPullRequestsAndOnPushesToMaster_AndCannotBeStartedByHand(string workflow)
     {
         string text = WithoutComments(workflow);
@@ -79,7 +93,7 @@ public class WorkflowTests
         Assert.That(Regex.Matches(text, @"workflow_dispatch|workflow_call|workflow_run|pull_request_target|repository_dispatch|schedule:|release:|\btags:").Select(match => match.Value), Is.Empty);
     }
 
-    [TestCaseSource(nameof(Workflows))]
+    [TestCase(Ci)]
     public void ItUsesNoSecret_AndKeepsNoCredential(string workflow)
     {
         string text = WithoutComments(workflow);
@@ -91,7 +105,7 @@ public class WorkflowTests
     [Test]
     public void ItBuildsOnTheThreeOperatingSystems_AndStillRunsEveryCheck()
     {
-        string text = WithoutComments(Folder + "ci.yml");
+        string text = WithoutComments(Ci);
 
         Assert.That(text, Ordinal.Contains("os: [ubuntu-latest, windows-latest, macos-latest]"));
         Assert.That(text, Ordinal.Contains("--native-aot --published-sample"), "the sample of 1.0.0 is run with the published 1.0.0 on Linux");

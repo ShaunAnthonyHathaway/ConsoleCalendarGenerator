@@ -16,8 +16,9 @@ described here as it is. What is still planned is the release, which is not arch
 | `docs/images/` | The images the README shows. One at present. |
 | `docs/ai-context/` | These maintenance notes. Not user documentation. |
 | `ConsoleCalendarGenerator.Tests/` | NUnit tests. See [testing.md](testing.md). Its `Historical/Published100/ConsoleCalendar.cs` is the frozen source of 1.0.0, which is never edited. |
-| `eng/` | The scripts that check a package and put a release together: `verify-package.sh`, `consumer-smoke.sh`, the release scripts ([packaging-and-releases.md](packaging-and-releases.md#the-release-bundle)), the small projects they build in `consumer-smoke/`, and two tools in `tools/`. None of it is in the solution or in the package. |
-| `.github/workflows/ci.yml` | The only workflow. |
+| `eng/` | The scripts that check a package and put a release together: `verify-package.sh`, `consumer-smoke.sh`, the release scripts ([packaging-and-releases.md](packaging-and-releases.md#the-release-bundle)), the scripts that check a publication before and after it (`publication-*.sh`, [packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg)), the small projects they build in `consumer-smoke/`, three tools in `tools/`, and `public-api.txt`, the public API as a listing a script can compare an assembly with. None of it is in the solution or in the package, and no script publishes. |
+| `.github/workflows/ci.yml` | The workflow that builds and checks, on every pull request and every push to `master`. |
+| `.github/workflows/publish-nuget.yml` | The workflow that publishes to NuGet. It runs only when it is started by hand, which needs Shaun's approval each time. |
 | `Directory.Build.props`, `.editorconfig`, `global.json` | Shared build settings, formatting rules, SDK pin. See [development.md](development.md). |
 | `docs/ai-context/`, `CLAUDE.md` | This documentation. |
 
@@ -386,6 +387,9 @@ the public API. The project can be built against either library build. Details: 
   with every warning as an error, tests, terminal tests (Linux), tests against the `netstandard2.1` build, pack,
   package verification, consumer smoke tests, and upload of the two packages as a seven-day CI artifact (Linux).
   Its only permission is `contents: read`. It publishes nothing.
+- `publish-nuget.yml` builds nothing. Started by hand, it downloads the four files of the GitHub release,
+  checks them, and pushes the package and the symbol package to nuget.org with a temporary key from NuGet
+  Trusted Publishing. Details: [packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg).
 
 ### Consumer smoke infrastructure
 

@@ -5,10 +5,10 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-Two questions are open: Q-14 and Q-15. Both belong to the steps of the release that come after
-the candidate. The implementation, the documentation, the release infrastructure and release preparation are
-complete and depend on none of them. The version they are about is 2.0.1, the 2.x version that goes to NuGet
-([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)); where a
+One question is open: Q-15. It belongs to what follows the NuGet publication. The implementation, the
+documentation, the release infrastructure, release preparation and the setup of the publication are complete
+and do not depend on it. The version it is about is 2.0.1, the 2.x version that goes to NuGet
+([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)); where the
 question says 2.0, that is the version meant.
 
 Q-01 (the modern API's public types and signatures) is settled for every planned layer: layout in D-25 to
@@ -58,24 +58,9 @@ Q-13 (whether `netstandard2.1` stays a target in 2.0) is settled: it stays
 when the 2.0 scope was decided and was never a section of this file, where it had been one of the candidates
 of Q-08.
 
-## Q-14: How is the publication authenticated?
-
-- **Why it matters:** 2.0 is to be published by a push of the exact validated files
-  ([D-69](decisions.md#d-69-20-is-published-by-hand-from-the-validated-artifacts),
-  [D-72](decisions.md#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated)), which
-  Claude is expected to perform once Shaun has approved it and a secure credential is available. The push needs
-  a credential for nuget.org, and which kind, how narrowly it is scoped, how long it lives and how it reaches
-  the session decide what a leaked one could do.
-- **Evidence needed:** What nuget.org offers at the time, how the package's account is set up, and that the
-  credential works, which has not been verified. No key exists in the repository or in the environment the
-  candidate was designated in.
-- **What is prepared:** the procedure, in
-  [packaging-and-releases.md](packaging-and-releases.md#the-publication-procedure-prepared-not-run). The key is
-  read from the environment variable `NUGET_API_KEY` and never appears in a command, a log or the chat. The
-  fallback is the upload page of nuget.org, used by Shaun.
-- **Decide in:** the release phase. Nothing in the repository depends on it, and no secret is stored here.
-  The candidate was designated without it.
-- **Recommendation:** None yet.
+Q-14 (how the publication is authenticated) is settled: by NuGet Trusted Publishing, from a workflow that is
+started by hand. No API key is created and no secret is stored
+([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 
 ## Q-15: Is 1.0.0 deprecated on nuget.org after 2.0?
 

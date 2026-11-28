@@ -134,7 +134,9 @@ public class CurrentStateTests
     /// <summary>
     /// Sentences that were true once and said how things are. Each is something an earlier state of the
     /// repository wrote about itself: that the old behavior holds in every 1.x version, that a correction is
-    /// still to come, that the modern layers are not built, that the release version is undecided.
+    /// still to come, that the modern layers are not built, that the release version is undecided; and, since
+    /// 2.0.1 was tagged and released on GitHub and its publication to NuGet was set up, that it has no tag,
+    /// that it is not released, and that the repository has one workflow and nothing that can publish.
     /// </summary>
     private static readonly string[] RetiredClaims =
     {
@@ -152,6 +154,12 @@ public class CurrentStateTests
         @"builds an? (unpublished )?development (version|package)",
         @"\[Unreleased\]",
         @"version suffix is removed only",
+        @"no tag .v2\.0\.1.",
+        @"It is not released",
+        @"Nothing of 2\.0\.1 is released",
+        @"(is|was) the only workflow",
+        @"There is (still )?no publication workflow",
+        @"Nothing in the repository can (publish|push)",
     };
 
     private static IEnumerable<TestCaseData> ActiveDocumentsAndRetiredClaims() =>

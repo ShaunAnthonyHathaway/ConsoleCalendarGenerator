@@ -65,4 +65,13 @@
                       GlobalPropertiesToRemove="LibraryTargetFramework" />
   </ItemGroup>
 
+  <!--
+    The code that writes out a public API, for Infrastructure/PublicApiFileTests. It is the source of the tool
+    eng/tools/PublicApi, which the publication scripts run on the assemblies of a package; compiled in here, it
+    holds the library the tests run against to the same file, eng/public-api.txt.
+  -->
+  <ItemGroup>
+    <Compile Include="..\eng\tools\PublicApi\PublicApiListing.cs" Link="Infrastructure\PublicApiListing.cs" />
+  </ItemGroup>
+
 </Project>

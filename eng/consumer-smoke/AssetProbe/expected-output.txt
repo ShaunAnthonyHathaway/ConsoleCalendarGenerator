@@ -1,5 +1,5 @@
 library build: {LIBRARY_BUILD}
-library version: {PACKAGE_VERSION}, assembly 2.0.0.0, file 2.0.0.0
+library version: {PACKAGE_VERSION}, assembly 2.0.0.0, file {PACKAGE_VERSION}.0
 layout: 5 weeks, first week . . . 1 2 3 4
 rendered: 7 lines, 28 days, 3 empty cells, first day on a Wednesday
    February 2023 (rendered)

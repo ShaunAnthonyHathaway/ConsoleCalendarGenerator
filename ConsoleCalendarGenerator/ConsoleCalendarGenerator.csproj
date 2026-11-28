@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- netstandard2.1 is what 1.0.0 shipped and stays for existing consumers. net10.0 is the current asset. -->
+    <!-- netstandard2.1 is the build 1.0.0 had and stays for existing consumers. net10.0 is the current asset. -->
     <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
     <ImplicitUsings>disable</ImplicitUsings>
 
@@ -13,8 +13,7 @@
 
     <!--
       The XML documentation file ships in the package. A public member without an XML comment is a build
-      warning (CS1591), which is not turned off anywhere: every public type and member is documented, the
-      legacy class included.
+      warning (CS1591), which is not turned off anywhere: every public type and member is documented.
     -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -24,17 +23,17 @@
     <PackageId>ConsoleCalendarGenerator</PackageId>
 
     <!--
-      Version 2.0.0, with no suffix: this is the source of the release. Every build of it identifies itself as
-      2.0.0, wherever it is made, but only one build is the release: the candidate, which is designated once
-      and never built again (docs/ai-context/packaging-and-releases.md). A published version is never changed;
-      after 2.0.0 the next change of this number is a new version, with a development suffix until it is
-      released. Nothing built from this repository may be numbered 1.0.0, which is published.
+      Version 2.0.1, with no suffix: this is the source of the release. Every build of it identifies itself as
+      2.0.1, wherever it is made, but only one build is the release: the candidate, which is designated once
+      and never built again (docs/ai-context/packaging-and-releases.md). A released version is never changed:
+      2.0.0 is released on GitHub and 1.0.0 is published on NuGet, and nothing built from this repository may
+      carry either number.
     -->
-    <VersionPrefix>2.0.0</VersionPrefix>
+    <VersionPrefix>2.0.1</VersionPrefix>
     <!--
       The assembly version is the major version of the package and nothing more: 2.0.0.0 for every 2.x version,
-      as it was 1.0.0.0 in 1.0.0. The file version follows the version prefix. The informational version is the
-      package version with the commit, which the SDK adds.
+      as it was 1.0.0.0 in 1.0.0. The file version follows the version prefix: 2.0.1.0. The informational
+      version is the package version with the commit, which the SDK adds.
     -->
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>$(VersionPrefix).0</FileVersion>
@@ -42,11 +41,11 @@
     <Authors>Shaun Hathaway</Authors>
     <Copyright>Copyright (c) 2023 Shaun Hathaway</Copyright>
     <!--
-      The description and the tags are what nuget.org shows and searches. They describe the modern API first,
-      because that is what the package is for from 2.0 on, and say that the 1.0 class is still there.
+      The description and the tags are what nuget.org shows and searches: what the package lets an application
+      do, and that the original ConsoleCalendar API is part of it.
     -->
-    <Description>Lays out and renders month calendars for .NET console applications: as plain text, as structured segments you can style yourself, or straight to the console in color. Marked dates show in the text itself, in any culture and with any first day of the week. Includes the ConsoleCalendar class of version 1.0 for existing code.</Description>
-    <PackageTags>console;calendar;month;terminal;cli;date;text;layout</PackageTags>
+    <Description>Create month calendars for .NET applications with deterministic text rendering, structured semantic output, configurable culture and layout, visible date markers, themes, and console support. The original ConsoleCalendar API remains available for existing applications.</Description>
+    <PackageTags>calendar;console;terminal;cli;month;date;layout;rendering</PackageTags>
     <!--
       Where the changes of a version are listed: the changelog on the default branch, for the release as well.
       The changelog is a document of current policy, like the other documents the readme links on that branch;

@@ -16,33 +16,18 @@ namespace CalendarGenerator
     // differently: they format the title, restore the caller's colors, write whole lines, and reject invalid
     // colors early.
     /// <summary>
-    /// The calendar API of version 1.0.0, kept and supported in version 2.0. It draws a month, or the twelve
-    /// months of a year, directly on the console, in four colors.
+    /// Draws a month, or the twelve months of a year, directly on the console, in four configurable colors. This
+    /// is the original API of the package.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This class is kept so that programs written for version 1.0.0 keep working. Every constructor, method and
-    /// parameter name is the one 1.0.0 had, so such a program compiles against version 2.0, and runs with it,
-    /// without being changed. For new code, use the types of the <c>ConsoleCalendarGenerator</c> namespace
-    /// instead: <see cref="MonthRenderer"/> renders a month as text without using the console, and
-    /// <see cref="ConsoleMonthWriter"/> writes it in color.
-    /// </para>
-    /// <para>
-    /// Version 2.0 corrects five things this class did in 1.0.0, each described on the member it concerns: which
-    /// element an argument of a constructor colors; the exception for a list of dates that is
-    /// <see langword="null"/>; the line end of the last row of a month; the empty line after a month; and the
-    /// month the title names under a culture whose own calendar is not the Gregorian one. Everything else it
-    /// writes, how it uses the console and which exceptions it throws are as in 1.0.0, including the behavior
-    /// described here that a new design would not choose.
-    /// </para>
-    /// <para>
     /// A month is drawn as a title with the name of the month and the year, the weekday row
     /// <c>Mo Tu We Th Fr Sa Su</c>, and one line for each week. Weeks start on Monday. The title, the weekday row,
-    /// the days and the selected days each have a color. A selected day differs from the other days by its color
-    /// only; the text is the same.
+    /// the days and the selected days each have a color. A selected day is shown in its own color; the text is the
+    /// same.
     /// </para>
     /// <para>
-    /// Only the name of the month follows a culture: it is the name <see cref="CultureInfo.CurrentCulture"/> has for
+    /// The name of the month follows the culture: it is the name <see cref="CultureInfo.CurrentCulture"/> has for
     /// the month of the Gregorian calendar, read each time a month is drawn. The weekday row is always in English.
     /// </para>
     /// <para>
@@ -51,6 +36,18 @@ namespace CalendarGenerator
     /// </para>
     /// <para>
     /// Drawing is not synchronized. Drawing from several threads at the same time mixes their output.
+    /// </para>
+    /// <para>
+    /// The constructors, methods and parameter names are those of version 1.0.0, so code written for that version
+    /// compiles and runs without being changed. Version 2 updates five observable behaviors: which element a
+    /// constructor argument colors, the exception for a list of dates that is <see langword="null"/>, line ends,
+    /// the empty line after a month, and the month title under a culture whose default calendar is not Gregorian.
+    /// The members describe the current behavior, and the README of the package lists the differences.
+    /// </para>
+    /// <para>
+    /// The types of the <c>ConsoleCalendarGenerator</c> namespace provide layout data, text that does not depend
+    /// on the console, visible date markers and custom output: see <see cref="MonthRenderer"/> and
+    /// <see cref="ConsoleMonthWriter"/>.
     /// </para>
     /// </remarks>
     public class ConsoleCalendar
@@ -96,8 +93,7 @@ namespace CalendarGenerator
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
-        /// <paramref name="Year"/> is invalid as well, and nothing is written. Version 1.0.0 threw
-        /// <see cref="NullReferenceException"/> here; version 2.0 corrects that.
+        /// <paramref name="Year"/> is invalid as well, and nothing is written.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Year"/> is less than 1 or greater than 9999. Nothing is written.
@@ -144,37 +140,30 @@ namespace CalendarGenerator
         /// <b>What is written.</b> The title is the name of the month, a space and the year as given, after three to
         /// five spaces: fewer for a longer name. The weekday row follows, then one line for each week, with the days
         /// right-aligned in columns two characters wide and one space between columns. No line ends with spaces. The
-        /// month is followed by exactly one empty line. Version 1.0.0 wrote two after a month whose last day is a
-        /// Sunday; version 2.0 corrects that.
+        /// month is followed by exactly one empty line.
         /// </para>
         /// <para>
         /// <b>Culture.</b> The days are always those of the Gregorian month, and the title names that month: it is the
         /// name <see cref="CultureInfo.CurrentCulture"/> has for the month of the Gregorian calendar, also when the
-        /// culture's own calendar is another one. Version 1.0.0 wrote the culture's name for month number
-        /// <paramref name="Month"/> of its own calendar instead, and so named a different month than the one drawn
-        /// under such a culture, for example <c>fa-IR</c> with the Persian calendar; version 2.0 corrects that. The
-        /// culture is only read, and <see cref="CultureInfo.CurrentUICulture"/> is not used. The weekday row is the
-        /// English one and weeks start on Monday whatever the culture is. The year is written as given and is never
-        /// converted.
+        /// culture's default calendar is another one. The culture is only read, and
+        /// <see cref="CultureInfo.CurrentUICulture"/> is not used. The weekday row is the English one and weeks start
+        /// on Monday whatever the culture is. The year is written as given and is never converted.
         /// </para>
         /// <para>
         /// <b>The console.</b> Text is written to <see cref="Console.Out"/> piece by piece, and the color of each piece
         /// is set through <see cref="Console.ForegroundColor"/>. A selected day is written in the color for selected
         /// days, together with the space before it. <see cref="Console.ResetColor"/> is called after the title, after
-        /// the weekday row and at the end, so the colors the caller had set are reset, not put back. Colors are set
+        /// the weekday row and at the end, so the console's colors are reset when the month is drawn. Colors are set
         /// even when <see cref="Console.Out"/> has been replaced or redirected.
         /// </para>
         /// <para>
         /// <b>Line ends.</b> Every line, the last line of days and the empty line after it included, ends with the
-        /// line terminator of <see cref="Console.Out"/>. Version 1.0.0 ended the last line of days with a line feed
-        /// whatever the terminator was, so that on Windows its output had two kinds of line end; version 2.0 corrects
-        /// that.
+        /// line terminator of <see cref="Console.Out"/>.
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="dates"/> is <see langword="null"/>. This is checked first, also when
-        /// <paramref name="Month"/> or <paramref name="Year"/> is invalid as well, and nothing is written. Version 1.0.0
-        /// threw <see cref="NullReferenceException"/> here; version 2.0 corrects that.
+        /// <paramref name="Month"/> or <paramref name="Year"/> is invalid as well, and nothing is written.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="Month"/> is less than 1 or greater than 12, or <paramref name="Year"/> is less than 1 or
@@ -216,8 +205,7 @@ namespace CalendarGenerator
         }
         /// <summary>Sets the color of the weekday row, for the months drawn after this call.</summary>
         /// <param name="TitleColor">
-        /// The color of the weekday row. The parameter has this name on all four <c>Set</c> methods; here it has
-        /// nothing to do with the title.
+        /// The color of the weekday row. All four <c>Set</c> methods name their parameter <c>TitleColor</c>.
         /// </param>
         public void SetDayOfWeekColor(ConsoleColor TitleColor)
         {
@@ -231,8 +219,7 @@ namespace CalendarGenerator
         }
         /// <summary>Sets the color of the days that are not selected, for the months drawn after this call.</summary>
         /// <param name="TitleColor">
-        /// The color of the days. The parameter has this name on all four <c>Set</c> methods; here it has nothing to
-        /// do with the title.
+        /// The color of the days. All four <c>Set</c> methods name their parameter <c>TitleColor</c>.
         /// </param>
         public void SetDateColor(ConsoleColor TitleColor)
         {
@@ -246,8 +233,7 @@ namespace CalendarGenerator
         }
         /// <summary>Sets the color of the selected days, for the months drawn after this call.</summary>
         /// <param name="TitleColor">
-        /// The color of the selected days. The parameter has this name on all four <c>Set</c> methods; here it has
-        /// nothing to do with the title.
+        /// The color of the selected days. All four <c>Set</c> methods name their parameter <c>TitleColor</c>.
         /// </param>
         public void SetSelectedDateColor(ConsoleColor TitleColor)
         {
@@ -270,9 +256,9 @@ namespace CalendarGenerator
         /// selected days.
         /// </summary>
         /// <remarks>
-        /// This is the constructor to prefer. Change a color afterwards with <see cref="SetTitleColor(ConsoleColor)"/>,
+        /// Change a color afterwards with <see cref="SetTitleColor(ConsoleColor)"/>,
         /// <see cref="SetDayOfWeekColor(ConsoleColor)"/>, <see cref="SetDateColor(ConsoleColor)"/> or
-        /// <see cref="SetSelectedDateColor(ConsoleColor)"/>, each of which sets the color it is named for.
+        /// <see cref="SetSelectedDateColor(ConsoleColor)"/>.
         /// </remarks>
         public ConsoleCalendar()
         {
@@ -288,9 +274,7 @@ namespace CalendarGenerator
         /// <summary>Creates a calendar with a color for the title and the default colors for everything else.</summary>
         /// <param name="TitleColor">The color of the title.</param>
         /// <remarks>
-        /// Version 1.0.0 gave this color to the weekday row and left the title yellow. Version 2.0 corrects that:
-        /// the argument colors the title, and the weekday row is cyan. For a program that must draw the same with
-        /// both versions, use the parameterless constructor and the <c>Set</c> methods.
+        /// The weekday row keeps its default color, cyan. In version 1.0.0 this argument applied to the weekday row.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor)
         {
@@ -306,9 +290,8 @@ namespace CalendarGenerator
         /// <param name="TitleColor">The color of the title.</param>
         /// <param name="DateColor">The color of the days that are not selected.</param>
         /// <remarks>
-        /// Version 1.0.0 gave the first color to the weekday row and left the title yellow. Version 2.0 corrects
-        /// that: the first argument colors the title, and the weekday row is cyan. For a program that must draw the
-        /// same with both versions, use the parameterless constructor and the <c>Set</c> methods.
+        /// The weekday row keeps its default color, cyan. In version 1.0.0 the first argument applied to the weekday
+        /// row.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor)
         {
@@ -325,9 +308,8 @@ namespace CalendarGenerator
         /// <param name="DateColor">The color of the days that are not selected.</param>
         /// <param name="SelectedDateColor">The color of the selected days.</param>
         /// <remarks>
-        /// Version 1.0.0 gave the first color to the weekday row and left the title yellow. Version 2.0 corrects
-        /// that: the first argument colors the title, and the weekday row is cyan. For a program that must draw the
-        /// same with both versions, use the parameterless constructor and the <c>Set</c> methods.
+        /// The weekday row keeps its default color, cyan. In version 1.0.0 the first argument applied to the weekday
+        /// row.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor)
         {
@@ -342,10 +324,8 @@ namespace CalendarGenerator
         /// <param name="SelectedDateColor">The color of the selected days.</param>
         /// <param name="DayOfWeekColor">The color of the weekday row.</param>
         /// <remarks>
-        /// Version 1.0.0 gave the first color to the weekday row and the last to the title. Version 2.0 corrects
-        /// that: each argument colors what it is named for. A program written for 1.0.0 keeps its appearance by
-        /// passing its first and its last color in each other's place, or, to draw the same with both versions, by
-        /// using the parameterless constructor and the <c>Set</c> methods.
+        /// Each argument applies to the element it is named for. In version 1.0.0 the first argument applied to the
+        /// weekday row and the fourth to the title.
         /// </remarks>
         public ConsoleCalendar(ConsoleColor TitleColor, ConsoleColor DateColor, ConsoleColor SelectedDateColor, ConsoleColor DayOfWeekColor)
         {

@@ -5,7 +5,7 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 
 /// <summary>
 /// The documents describe the repository as it is now: all five corrections of version 2.0 made, the modern API
-/// built, and the version 2.0.0 with no suffix: the source of the release. These tests look for what went stale
+/// built, and the version 2.0.1 with no suffix: the source of the release. These tests look for what went stale
 /// when each of those became true.
 ///
 /// <para>
@@ -74,7 +74,7 @@ public class CurrentStateTests
     [Test]
     public void TheReleaseVersion_IsNamedWhereAMaintainerLooksForIt()
     {
-        Assert.That(ReleaseVersion(), Is.EqualTo("2.0.0"));
+        Assert.That(ReleaseVersion(), Is.EqualTo("2.0.1"));
         foreach (string document in new[] { "CLAUDE.md", "CHANGELOG.md", "README.md", "docs/ai-context/packaging-and-releases.md", "docs/ai-context/compatibility.md" })
         {
             Assert.That(Repository.Read(document), Ordinal.Contains(ReleaseVersion()), document);

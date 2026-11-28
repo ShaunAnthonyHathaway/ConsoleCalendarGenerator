@@ -6,7 +6,7 @@ namespace ConsoleCalendarGenerator;
 /// <summary>Writes a rendered month to the console, in the colors of a theme.</summary>
 /// <remarks>
 /// <para>
-/// This is the only part of the modern API that uses the console. Text goes to <see cref="Console.Out"/> and
+/// This is the only type of this namespace that uses the console. Text goes to <see cref="Console.Out"/> and
 /// colors are set through <see cref="Console.ForegroundColor"/>; no escape sequences are written by this
 /// library. Whether a color reaches the screen is decided by the runtime and the terminal: when output is
 /// redirected, for example, the runtime does not turn colors into escape sequences, and the text arrives plain.

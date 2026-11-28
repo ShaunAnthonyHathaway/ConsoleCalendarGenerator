@@ -8,8 +8,9 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 
 /// <summary>
 /// The XML documentation file that is built with the library and ships in the package documents every public
-/// type and member, the legacy class included, and nothing turns the compiler's check for it off. The tests
-/// read the file built beside the library build under test, so both builds are covered.
+/// type and member, and nothing turns the compiler's check for it off. It describes what the library does
+/// now; what an earlier version did is mentioned only where it matters to someone moving from it (D-84). The
+/// tests read the file built beside the library build under test, so both builds are covered.
 /// </summary>
 [TestFixture]
 public class XmlDocumentationTests
@@ -135,10 +136,10 @@ public class XmlDocumentationTests
         });
     }
 
-    // ---- the legacy class ----
+    // ---- CalendarGenerator.ConsoleCalendar, the original API ----
 
     [Test]
-    public void TheLegacyClass_HasAll18OfItsPublicMembersDocumented()
+    public void TheClass_HasAll18OfItsPublicMembersDocumented()
     {
         string[] legacy = PublicApi().Where(id => id.Substring(2).StartsWith("CalendarGenerator.ConsoleCalendar", StringComparison.Ordinal)).ToArray();
 
@@ -147,7 +148,7 @@ public class XmlDocumentationTests
     }
 
     [Test]
-    public void TheLegacyClass_SaysItIsKeptForCompatibility_AndPointsToTheModernApi()
+    public void TheClass_NamesTheVersionItComesFrom_AndPointsToTheStructuredApi()
     {
         XElement type = Documentation.Value["T:" + typeof(ConsoleCalendar).FullName];
 
@@ -157,12 +158,12 @@ public class XmlDocumentationTests
     }
 
     /// <summary>
-    /// The constructors that take colors: every argument is documented as coloring the element it is named for,
-    /// which is what version 2.0 does (D-57). Each of them also says that 1.0.0 did otherwise and points to the
-    /// parameterless constructor, and none describes the old assignment as what happens now.
+    /// The constructors that take colors: every argument is documented as the color of the element it is named
+    /// for, which is what version 2 does (D-57). Each says in one sentence what 1.0.0 did with the first
+    /// argument, because that is where someone moving from 1.0.0 looks when a color is not where it was.
     /// </summary>
     [Test]
-    public void TheLegacyConstructorsThatTakeColors_DocumentEachArgumentAsColoringWhatItIsNamedFor_AndSayThat100DidOtherwise()
+    public void TheConstructorsThatTakeColors_DocumentEachArgumentAsTheColorOfWhatItIsNamedFor()
     {
         var colored = new Dictionary<string, string>
         {
@@ -180,19 +181,16 @@ public class XmlDocumentationTests
             foreach (ParameterInfo parameter in constructor.GetParameters())
             {
                 string text = TextOf(member.Elements("param").Single(element => (string?)element.Attribute("name") == parameter.Name));
-
                 Assert.That(text, Is.EqualTo(colored[parameter.Name!]), IdOf(constructor) + " " + parameter.Name);
             }
             string remarks = TextOf(member.Element("remarks"));
-            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 gave"), IdOf(constructor));
-            Assert.That(remarks, Ordinal.Contains("Version 2.0 corrects that"), IdOf(constructor));
-            Assert.That(remarks, Ordinal.Contains("parameterless constructor"), IdOf(constructor));
-            Assert.That(TextOf(member), Does.Not.Match("Despite its name|does not set"), IdOf(constructor));
+            Assert.That(remarks, Ordinal.Contains("In version 1.0.0"), IdOf(constructor));
+            Assert.That(remarks, Ordinal.Contains("applied to the weekday row"), IdOf(constructor));
         }
     }
 
     [Test]
-    public void TheLegacyMethodsThatDraw_DocumentTheirExceptions()
+    public void TheMethodsThatDraw_DocumentTheirExceptions()
     {
         MethodInfo[] drawing = typeof(ConsoleCalendar).GetMethods(Declared).Where(method => method.Name.StartsWith("Generate", StringComparison.Ordinal)).ToArray();
 
@@ -202,7 +200,7 @@ public class XmlDocumentationTests
             string?[] exceptions = Documentation.Value[IdOf(method)].Elements("exception").Select(element => (string?)element.Attribute("cref")).ToArray();
 
             Assert.That(exceptions, Has.Member("T:System.ArgumentOutOfRangeException"), IdOf(method));
-            Assert.That(exceptions, Has.No.Member("T:System.NullReferenceException"), IdOf(method) + ": that was 1.0.0");
+            Assert.That(exceptions, Has.No.Member("T:System.NullReferenceException"), IdOf(method));
             if (method.GetParameters().Any(parameter => parameter.Name == "dates"))
             {
                 Assert.That(exceptions, Has.Member("T:System.ArgumentNullException"), IdOf(method));
@@ -212,11 +210,10 @@ public class XmlDocumentationTests
 
     /// <summary>
     /// The two methods that take a list: a null list is documented as refused with ArgumentNullException, first
-    /// and before anything is written, which is what version 2.0 does (D-58). The comment also says what 1.0.0
-    /// threw, and the parameter itself is documented as not to be null.
+    /// and before anything is written (D-58), and the parameter itself is documented as not to be null.
     /// </summary>
     [Test]
-    public void TheLegacyMethodsThatTakeAList_DocumentThatANullListIsRefused_AndSayWhat100Threw()
+    public void TheMethodsThatTakeAList_DocumentThatANullListIsRefused()
     {
         MethodInfo[] withAList = typeof(ConsoleCalendar).GetMethods(Declared)
             .Where(method => method.GetParameters().Any(parameter => parameter.Name == "dates"))
@@ -234,20 +231,17 @@ public class XmlDocumentationTests
                 Assert.That(refused.Elements("paramref").Select(reference => (string?)reference.Attribute("name")), Has.Member("dates"), IdOf(method));
                 Assert.That(TextOf(refused), Ordinal.Contains("checked first"), IdOf(method));
                 Assert.That(TextOf(refused), Ordinal.Contains("nothing is written"), IdOf(method));
-                Assert.That(TextOf(refused), Ordinal.Contains("Version 1.0.0 threw"), IdOf(method));
-                Assert.That(refused.Elements("see").Select(see => (string?)see.Attribute("cref")), Has.Member("T:System.NullReferenceException"), IdOf(method));
                 Assert.That(parameter, Ordinal.Contains("must not be"), IdOf(method));
             }
         }
     }
 
     /// <summary>
-    /// How a month ends is documented as version 2.0 does it (D-59 and D-60): every line ends with the console
-    /// writer's line terminator, and exactly one empty line follows a month. The comments say what 1.0.0 did,
-    /// and no longer describe it as what happens.
+    /// How a month ends is documented as version 2 does it (D-59 and D-60): every line ends with the console
+    /// writer's line terminator, and exactly one empty line follows a month.
     /// </summary>
     [Test]
-    public void TheLegacyMethodsThatDraw_DocumentHowAMonthEnds_AndSayWhat100Did()
+    public void TheMethodsThatDraw_DocumentHowAMonthEnds()
     {
         MethodInfo month = typeof(ConsoleCalendar).GetMethod("GenerateMonth", new[] { typeof(int), typeof(int), typeof(List<DateTime>) })!;
         string remarks = TextOf(Documentation.Value[IdOf(month)].Element("remarks"));
@@ -256,9 +250,7 @@ public class XmlDocumentationTests
         {
             Assert.That(remarks, Ordinal.Contains("followed by exactly one empty line"));
             Assert.That(remarks, Ordinal.Contains("Every line, the last line of days and the empty line after it included, ends with the line terminator"));
-            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 wrote two after a month whose last day is a Sunday"));
-            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 ended the last line of days with a line feed"));
-            Assert.That(remarks, Does.Not.Match("or by two when|except the last line of days|contains both forms"), "the old behavior is not described as current");
+            Assert.That(remarks, Does.Not.Match("or by two when|except the last line of days|contains both forms"), "what 1.0.0 did is not described as current");
         }
 
         foreach (MethodInfo year in typeof(ConsoleCalendar).GetMethods(Declared).Where(method => method.Name == "GenerateYear"))
@@ -268,12 +260,12 @@ public class XmlDocumentationTests
     }
 
     /// <summary>
-    /// The title is documented as version 2.0 writes it (D-61): the current culture's name for the Gregorian
-    /// month. The comments say what 1.0.0 did, and no longer describe the other month as what happens. What the
-    /// culture does not decide is still documented: the English weekday row, weeks from Monday, the year.
+    /// The title is documented as version 2 writes it (D-61): the current culture's name for the Gregorian
+    /// month. What the culture does not decide is documented as well: the English weekday row, weeks from
+    /// Monday, the year.
     /// </summary>
     [Test]
-    public void TheLegacyMethodsThatDraw_DocumentTheGregorianTitle_AndSayWhat100Did()
+    public void TheMethodsThatDraw_DocumentTheGregorianTitle()
     {
         MethodInfo month = typeof(ConsoleCalendar).GetMethod("GenerateMonth", new[] { typeof(int), typeof(int), typeof(List<DateTime>) })!;
         string remarks = TextOf(Documentation.Value[IdOf(month)].Element("remarks"));
@@ -282,12 +274,10 @@ public class XmlDocumentationTests
         {
             Assert.That(remarks, Ordinal.Contains("the title names that month"));
             Assert.That(remarks, Ordinal.Contains("has for the month of the Gregorian calendar"));
-            Assert.That(remarks, Ordinal.Contains("Version 1.0.0 wrote the culture's name for month number"));
-            Assert.That(remarks, Ordinal.Contains("version 2.0 corrects that"));
             Assert.That(remarks, Ordinal.Contains("weeks start on Monday"));
             Assert.That(remarks, Ordinal.Contains("The weekday row is the English one"));
             Assert.That(remarks, Ordinal.Contains("never converted"));
-            Assert.That(remarks, Does.Not.Match("can therefore name a different month|what the calendar of"), "the old behavior is not described as current");
+            Assert.That(remarks, Does.Not.Match("can therefore name a different month|what the calendar of"), "what 1.0.0 did is not described as current");
         }
 
         foreach (MethodInfo year in typeof(ConsoleCalendar).GetMethods(Declared).Where(method => method.Name == "GenerateYear"))
@@ -297,12 +287,11 @@ public class XmlDocumentationTests
     }
 
     /// <summary>
-    /// The remarks of the legacy class describe it as it is in version 2.0: kept, supported, with the API of
-    /// 1.0.0 and five corrected behaviors. Nothing in the documentation file speaks of a 1.x line, which was
-    /// never published.
+    /// The class is documented as what it is: the original API of the package, with what it draws and how it
+    /// uses the console, and one paragraph for someone moving from 1.0.0 that names the five updated behaviors.
     /// </summary>
     [Test]
-    public void TheLegacyClass_IsDocumentedAsItIsInVersion20()
+    public void TheClass_IsDocumentedAsTheOriginalApi_WithOneParagraphAboutMovingFrom100()
     {
         XElement type = Documentation.Value["T:CalendarGenerator.ConsoleCalendar"];
         string summary = TextOf(type.Element("summary"));
@@ -310,14 +299,38 @@ public class XmlDocumentationTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(summary, Ordinal.Contains("supported in version 2.0"));
-            Assert.That(remarks, Ordinal.Contains("Version 2.0 corrects five things"));
-            Assert.That(remarks, Ordinal.Contains("without being changed"), "a program written for 1.0.0 compiles and runs");
+            Assert.That(summary, Ordinal.Contains("original API"));
+            Assert.That(remarks, Ordinal.Contains("five observable behaviors"));
+            Assert.That(remarks, Ordinal.Contains("without being changed"), "code written for 1.0.0 compiles and runs");
             Assert.That(remarks, Ordinal.Contains("Gregorian"), "which month the title names");
             Assert.That(remarks, Ordinal.Contains("The weekday row is always in English"));
             Assert.That(remarks, Ordinal.Contains("Weeks start on Monday"));
             Assert.That(remarks, Ordinal.Contains("Drawing is not synchronized"));
-            Assert.That(string.Concat(Documentation.Value.Values.Select(member => member.ToString())), Does.Not.Match(@"1\.x\b"));
+            Assert.That(type.Element("remarks")!.Elements("para").Count(para => para.Value.Contains("1.0.0", StringComparison.Ordinal)), Is.EqualTo(1));
+        }
+    }
+
+    /// <summary>
+    /// IntelliSense describes what the library does now. An earlier version is mentioned in exactly five
+    /// places, where it matters to someone moving from it: the class, and the four constructors that take
+    /// colors. Nothing in the file uses a phrase the project does not use in public (D-84).
+    /// </summary>
+    [Test]
+    public void TheDocumentation_DescribesTheLibraryAsItIs_AndUsesNoRejectedWording()
+    {
+        string[] mentionAnEarlierVersion = Documentation.Value
+            .Where(member => Regex.IsMatch(member.Value.Value, @"\b1\.0(\.0)?\b"))
+            .Select(member => member.Key)
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .ToArray();
+        string everything = string.Concat(Documentation.Value.Values.Select(member => member.ToString()));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(mentionAnEarlierVersion, Has.Length.EqualTo(5));
+            Assert.That(mentionAnEarlierVersion, Is.All.StartsWith("M:CalendarGenerator.ConsoleCalendar.#ctor(").Or.EqualTo("T:CalendarGenerator.ConsoleCalendar"));
+            Assert.That(Regex.Matches(everything, @"(?i)\blegacy\b|\bmodern API\b|\bcorrects?\b|\bcorrected\b|got wrong|\bbroken\b|\bflawed\b|\bdefective\b|\b1\.x\b|\b2\.0\.\d\b")
+                .Select(match => match.Value).Distinct(), Is.Empty);
         }
     }
 
@@ -326,7 +339,7 @@ public class XmlDocumentationTests
     /// and where it is written. Rendering/SuppliedTextTests.cs shows that it is true.
     /// </summary>
     [Test]
-    public void TheModernApi_DocumentsThatSuppliedTextIsWrittenAsItIs()
+    public void TheStructuredApi_DocumentsThatSuppliedTextIsWrittenAsItIs()
     {
         string options = TextOf(Documentation.Value["T:ConsoleCalendarGenerator.MonthRenderOptions"].Element("remarks"));
         string consoleWriter = TextOf(Documentation.Value["T:ConsoleCalendarGenerator.ConsoleMonthWriter"].Element("remarks"));

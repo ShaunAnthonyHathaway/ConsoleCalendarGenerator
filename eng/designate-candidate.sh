@@ -25,7 +25,7 @@
 #
 # Only when all of it passes does it write, beside the bundle and not inside it:
 #   CANDIDATE-RECORD.txt   where the files come from, their checksums, and what was checked
-#   RELEASE-NOTES.md       the notes of the release, taken from the changelog
+#   RELEASE-NOTES.md       the notes of the release, as docs/release-notes/<version>.md has them at the release commit
 # and it makes the kept files read-only. The record is not committed: the release commit is the commit the
 # candidate was built from, and nothing is added after it for the candidate's sake.
 
@@ -179,7 +179,7 @@ record="$keep/CANDIDATE-RECORD.txt"
   echo "Not in these files, and not done"
   echo "  No tag, no GitHub release and no publication to nuget.org existed when this record was written."
   echo "  The intended tag is v$version on the release commit; the intended title is \"ConsoleCalendarGenerator $version\";"
-  echo "  the notes are in RELEASE-NOTES.md beside this record, taken from the changelog."
+  echo "  the notes are in RELEASE-NOTES.md beside this record, as docs/release-notes/$version.md has them at the release commit."
 } > "$record"
 chmod a-w "$bundle"/* "$record" "$notes"
 cat "$record"

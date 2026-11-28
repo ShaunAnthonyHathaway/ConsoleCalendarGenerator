@@ -1,48 +1,17 @@
 # ConsoleCalendarGenerator
 
-A .NET library that lays out and renders month calendars for console applications: as plain text, as
-structured segments you can style yourself, or straight to the console in color.
+Month calendars for .NET applications: deterministic text, structured output you can style yourself, and color
+output for the console.
 
-## Status
-
-This page describes **version 2.0.0**.
-
-- **Version 2.0.0** adds the modern API that most of this page describes. It keeps the legacy API
-  (`CalendarGenerator.ConsoleCalendar`), with every signature unchanged, and corrects five things that API got
-  wrong; see [Migrating from 1.0.0 to 2.0](#migrating-from-100-to-20).
-- **Version 1.0.0** has the legacy API only.
-
-Which versions are published is shown on the
-[package's page on nuget.org](https://www.nuget.org/packages/ConsoleCalendarGenerator). Until 2.0.0 is listed
-there, the newest published version is 1.0.0, and the modern API is used by building this repository; see
-[Building and testing](#building-and-testing).
-
-## Features
-
-- A month as text that depends only on the options you pass: nothing is read from the current culture, the
-  console or the clock.
-- Titles and weekday labels in any culture you choose, or weekday labels of your own; any first day of the
-  week.
-- Marked dates that show in the text itself, with a marker such as `*`, so they never depend on color alone.
-- Optional console colors through a theme.
-- Output to any `TextWriter`, or to the console with the caller's colors put back afterwards.
-- A structured result: every piece of text says what it is (title, weekday label, day, marked day), so you can
-  render it your own way without parsing text.
-- The layout on its own, if all you need is which day falls in which week and column.
-- The 1.0.0 API, kept for existing code.
+This documentation covers ConsoleCalendarGenerator 2.0.1.
 
 ## Installation
 
 ```text
-dotnet add package ConsoleCalendarGenerator
+dotnet add package ConsoleCalendarGenerator --version 2.0.1
 ```
 
-This installs the newest published version. Everything on this page is in version 2.0.0; version 1.0.0 has the
-[legacy API](#legacy-api) only. If the command gives you 1.0.0, then 2.0.0 is not on nuget.org yet.
-
 ## Quick start
-
-The examples assume a console project with implicit usings, plus these two:
 
 ```csharp
 using System.Globalization;
@@ -67,21 +36,28 @@ Mo Tu We Th Fr Sa Su
 29 30 31
 ```
 
-Options are immutable. Start from `MonthRenderOptions.Default` and chain `With` methods; each returns a new
-instance.
+The examples on this page are from a console project with implicit usings. Options are immutable: start from
+`MonthRenderOptions.Default` and chain `With` methods, each of which returns a new instance.
 
-**Choose a culture.** The default culture is the invariant culture, so that the output does not depend on the
-machine. Under it the title above would read `2027 March`. Pass the culture you want, as the example does.
+## Features
 
-**Supply the weekday labels** when the text has to be the same on every operating system, as the example does.
-There are always seven, Sunday first, whichever day the week starts on. Without them the labels are the
-culture's own day names, which differ between systems; see
-[The culture's own day names](#the-cultures-own-day-names).
+- **Gregorian month layout** for any month, with any first day of the week.
+- **Deterministic text rendering.** The text depends only on the options you pass. Nothing is read from the
+  current culture, the console or the clock.
+- **Semantic lines and segments.** Every piece of text identifies itself as a title, a weekday label, a day
+  and so on, with its date and state, so you can style or draw a month without parsing text.
+- **Culture and first-day configuration.** Titles and weekday labels in the culture you choose, or labels of
+  your own.
+- **Visible date markers.** Marked dates show in the text itself, so they never depend on color alone.
+- **Optional `ConsoleColor` themes** for the title, the weekday labels, the days and each kind of marked date.
+- **`TextWriter` output** to any destination.
+- **Direct console output** that puts the caller's colors back when it is done.
+- **`CalendarGenerator.ConsoleCalendar`,** the original API, for existing applications.
 
-## Culture and first day of week
+## Culture and first day of the week
 
-The culture decides the language of the title. The first day of the week is a separate choice: weeks start on
-Monday unless you say otherwise, whatever the culture. Starting from the `options` of the quick start:
+The culture sets the language of the title. The first day of the week is a separate option: weeks start on
+Monday unless you choose another day. Starting from the `options` of the quick start:
 
 ```csharp
 MonthRenderOptions sundayFirst = options.WithFirstDayOfWeek(DayOfWeek.Sunday);
@@ -101,21 +77,15 @@ Su Mo Tu We Th Fr Sa
 
 To follow a culture's own convention, pass `culture.DateTimeFormat.FirstDayOfWeek`.
 
-The grid is always the Gregorian calendar, and the title always names the Gregorian month and year it shows,
-also for cultures whose own calendar is a different one.
-
-### The culture's own day names
-
-If you supply no labels, the culture supplies them as well as the title:
+Weekday labels are always seven, Sunday first, whichever day the week starts on:
 
 ```csharp
 MonthRenderOptions french = MonthRenderOptions.Default
-    .WithCulture(CultureInfo.GetCultureInfo("fr-FR"));
+    .WithCulture(CultureInfo.GetCultureInfo("fr-FR"))
+    .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
 
 Console.WriteLine(MonthRenderer.Render(2027, 3, french).ToText());
 ```
-
-On Linux and macOS this prints:
 
 ```text
      mars 2027
@@ -127,27 +97,17 @@ lu ma me je ve sa di
 29 30 31
 ```
 
-On Windows the weekday row is ` L  M  M  J  V  S  D`. Both are right. The labels are the culture's shortest day
-names as .NET reports them, and .NET takes them from the globalization data of the operating system, which
-differs between systems and can change with their versions. For English the same happens: two letters on
-Linux and macOS, one letter on Windows. Culture-derived labels are therefore not guaranteed to be identical
-everywhere.
+- **The default culture is the invariant culture,** which keeps the output independent of the machine. Pass the
+  culture you want for the title, as both examples do.
+- **Labels you supply are identical on every operating system.** Without them, the labels are the culture's
+  day names as .NET provides them, and those vary between operating systems: for English, two letters on Linux
+  and macOS and one letter on Windows.
+- **The calendar is Gregorian.** The title names the Gregorian month and year shown, in the language of the
+  culture.
 
-When they have to be, supply them:
+## Marking dates
 
-```csharp
-MonthRenderOptions frenchWithLabels = french
-    .WithWeekdayLabels(new[] { "di", "lu", "ma", "me", "je", "ve", "sa" });
-
-Console.WriteLine(MonthRenderer.Render(2027, 3, frenchWithLabels).ToText());
-```
-
-This prints the text shown above on every system.
-
-## Marked dates
-
-A `DayState` is a name and a marker. Days in that state show the marker directly before the day number.
-Again starting from the `options` of the quick start:
+A `DayState` is a name and a marker. Days in that state show the marker directly before the day number:
 
 ```csharp
 var holiday = new DayState("holiday", "*");
@@ -172,17 +132,17 @@ Console.WriteLine(month.ToText());
  29  30  31
 ```
 
-- **The marker must fit in the cell** beside a two-digit day. The default cell is two wide and holds no marker;
-  a one-character marker needs `WithCellWidth(3)`. A marker that does not fit is an error, never cut off.
-- **Say what the marker means.** There is no built-in legend; `WithTitleSuffix` is a simple place for one.
-- A date selects a day by its year, month and day. The time of day is ignored, and dates in other months are
-  ignored.
-- For several states, pass dates with their states, for example a `Dictionary<DateTime, DayState>`. A day has
-  one state; when several entries name the same day, the first one decides.
+- **Give the marker room.** A marker has to fit in the cell beside a two-digit day, so a one-character marker
+  needs `WithCellWidth(3)`. A marker that does not fit is reported as an error.
+- **Add a legend.** `WithTitleSuffix` is a simple place to say what a marker means.
+- **Dates match by year, month and day.** The time of day is ignored, and dates in other months are skipped.
+- **Use several states** by passing dates with their states, for example a `Dictionary<DateTime, DayState>`.
+  Each day has one state.
 
-## Colors
+## Styling and console output
 
-A `CalendarTheme` maps what is drawn to console colors. Colors add to the markers; they do not replace them.
+A `CalendarTheme` assigns console colors to the parts of a month, and `ConsoleMonthWriter` writes the month in
+those colors. Colors add to the markers; the text stays the same.
 
 ```csharp
 CalendarTheme theme = CalendarTheme.None
@@ -193,22 +153,17 @@ CalendarTheme theme = CalendarTheme.None
 ConsoleMonthWriter.Write(month, theme);
 ```
 
-![March 2027 as the example draws it on a terminal: a yellow title, cyan weekday labels, and the 5th, 17th and 26th in green, each with a star before the number](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/v2.0.0/docs/images/month-with-theme.png)
+![March 2027 on a terminal: a yellow title, cyan weekday labels, and the 5th, 17th and 26th in green, each with a star before the number](https://raw.githubusercontent.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/v2.0.1/docs/images/month-with-theme.png)
 
 - A theme has an optional color for the title, the title suffix, the weekday labels, the days, and each state
-  by name. Anything without a color is written in the color the console already has.
-- State names are matched exactly, including case. Calling `WithStateColor` again for the same name replaces
-  the earlier color.
-- A day whose state has no color uses the color of ordinary days.
-- Only foreground colors are set.
+  by name. Text without a color uses the color the console already has.
+- State names are matched exactly, including case.
+- Colors are `ConsoleColor` foreground colors. `CalendarTheme.None` writes without colors.
+- `ConsoleMonthWriter` writes through `Console.Out` and, before it returns, puts back the colors the console
+  had when it started. When output is redirected to a file or a pipe, the text arrives plain.
 
-## Output
-
-**As a string.** `ToText()` joins the lines with `"\n"` on every platform and adds nothing after the last line.
-`ToText("\r\n")` uses that terminator instead.
-
-**To any `TextWriter`.** `MonthWriter` writes each line followed by the writer's own `NewLine`, including the
-last line. It never touches the console.
+To write anywhere else, use `MonthWriter` with any `TextWriter`. It writes each line followed by the writer's
+own line terminator and never uses the console:
 
 ```csharp
 using var writer = new StringWriter();
@@ -218,18 +173,14 @@ MonthWriter.Write(month, writer);
 string text = writer.ToString();
 ```
 
-**To the console.** `ConsoleMonthWriter`, shown under [Colors](#colors), is the only modern type that uses the
-console. It writes through `Console.Out`, sets only the foreground color, and before it returns puts back the
-colors the console reported when it started, also when writing fails. Pass `CalendarTheme.None` to write
-without colors.
+`ToText()` returns the month as a string with `"\n"` between the lines on every platform; `ToText("\r\n")`
+uses the terminator you pass.
 
-Whether colors appear is up to the .NET runtime and the terminal. When output is redirected to a file or a
-pipe, the text arrives plain.
+## Structured rendering
 
-## What each piece of text is
-
-A rendered month is lines, and a line is segments. Each segment has its text, a kind, and for day cells the
-date, the weekday and the state. To find the marked days, read the segments rather than the text:
+A rendered month is a list of lines, and each line is a list of segments. A segment has its text, a kind, and
+for day cells the date, the weekday and the state. Read the segments to work with a month without parsing its
+text:
 
 ```csharp
 foreach (RenderedSegment segment in month.Lines.SelectMany(line => line.Segments))
@@ -248,12 +199,13 @@ Friday 26: holiday, drawn as "*26"
 ```
 
 The kinds are `Indent`, `Padding`, `Title`, `TitleSuffix`, `WeekdayLabel`, `Gap`, `EmptyDay` and `Day`. The
-segments of a line, joined in order, are exactly the line. `CalendarTheme.GetColor(segment)` gives the color a
-theme assigns to a segment, which is all you need to draw a month in a user interface of your own.
+segments of a line, joined in order, are exactly the text of the line. `CalendarTheme.GetColor(segment)`
+returns the color a theme assigns to a segment, which is what you need to draw a month in a user interface of
+your own.
 
-## Layout only
+## Layout API
 
-`MonthLayout` answers where the days of a month go, with no text involved:
+`MonthLayout` places the days of a month in weeks and weekday columns, with no text involved:
 
 ```csharp
 MonthLayout layout = MonthLayout.Create(2027, 4, DayOfWeek.Monday);
@@ -276,16 +228,16 @@ April 2027 needs 5 weeks. Its first week:
   Sunday: the 4
 ```
 
-`MonthRenderer` uses the same layout; use `MonthLayout` directly when you draw the month yourself.
+`MonthRenderer` uses the same layout. Use `MonthLayout` directly when you draw the month yourself.
 
-## More options
+## Options
 
 | Option | Default | Notes |
 |---|---|---|
-| `WithCulture` | invariant culture | Language of the title and the labels |
-| `WithFirstDayOfWeek` | Monday | Never taken from the culture |
-| `WithWeekdayLabelStyle` | `Shortest` | Or `Abbreviated`; the culture's day names, as the system has them |
-| `WithWeekdayLabels` | none | Seven labels of your own, Sunday first; the same on every system |
+| `WithCulture` | invariant culture | Language of the title and of culture-provided labels |
+| `WithFirstDayOfWeek` | Monday | Independent of the culture |
+| `WithWeekdayLabels` | none | Seven labels of your own, Sunday first |
+| `WithWeekdayLabelStyle` | `Shortest` | Or `Abbreviated`; applies to culture-provided labels |
 | `WithCellWidth` | 2 | 2 to 100; days and labels are right-aligned |
 | `WithColumnGap` | 1 | 0 to 100 spaces between columns |
 | `WithIndent` | none | Text before every line |
@@ -293,18 +245,18 @@ April 2027 needs 5 weeks. Its first week:
 | `WithTitleSuffix` | none | Text directly after the title |
 | `WithTitleAlignment` | `Center` | Or `Left` |
 
-A label longer than its cell is cut to fit, so the grid keeps its shape in every language. Widths are counted
-in text elements (user-perceived characters); how many columns a terminal uses for a character is outside what
-the library can know.
+A label longer than its cell is shortened to fit, so the grid keeps its shape in every language. Widths are
+counted in text elements (user-perceived characters). `MonthRenderer` renders one month per call.
 
-## Legacy API
+## Using ConsoleCalendar
 
-`CalendarGenerator.ConsoleCalendar` is the API of version 1.0.0. Version 2.0.0 keeps it and supports it. It
-is not obsolete: every constructor, method and parameter name is unchanged, and a program compiled against
-1.0.0 loads the new assembly without being rebuilt. For new code, use the modern API above.
+`CalendarGenerator.ConsoleCalendar` is the original API of the package, and it remains available with the same
+constructors, methods and parameter names. Existing applications can continue using it. It generates
+individual months and full years, writes directly to the console, and supports configurable colors and
+selected dates.
 
 ```csharp
-// The legacy class takes the month name from the current culture of the process.
+// ConsoleCalendar takes the month name from the current culture.
 CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
 var calendar = new CalendarGenerator.ConsoleCalendar();
@@ -324,101 +276,60 @@ Mo Tu We Th Fr Sa Su
 29 30 31
 ```
 
-What to know about it:
+- `GenerateMonth` draws one month, and `GenerateYear` draws the twelve months of a year.
+- The title, the weekday row, the dates and the selected dates each have a color, set through the
+  constructors or the four `Set` methods.
+- Weeks start on Monday, and the weekday row is `Mo Tu We Th Fr Sa Su`.
+- The console's colors are reset after each month is drawn.
 
-- It writes straight to the console and returns nothing. A selected date differs by color only.
-- Weeks start on Monday and the weekday row is always English.
-- It resets the console's colors when it is done; it does not put the caller's colors back.
-- `GenerateYear` draws the twelve months of a year one after the other.
-- Prefer the parameterless constructor and the four `Set` methods, as in the example. They set the color they
-  are named for in every version.
+The structured rendering API described above is there when you need layout data, semantic segments,
+deterministic text, markers or your own output handling. Both can be used in the same application.
 
-The XML documentation of the class describes the rest. In five places it behaves differently from 1.0.0; the
-next section lists them.
+## Moving from 1.0.0 to 2.x
 
-## Migrating from 1.0.0 to 2.0
+Version 2 keeps the original public signatures and updates five observable behaviors of
+`CalendarGenerator.ConsoleCalendar`. Code written for 1.0.0 compiles as it is, and an application compiled
+against 1.0.0 runs with version 2 without being rebuilt.
 
-Version 2.0 is a major version because it makes five corrections to what `CalendarGenerator.ConsoleCalendar`
-did in 1.0.0. The public API of that class does not change, so a program written for 1.0.0 compiles and loads
-as before; what can change is what it draws or throws in the five cases below. A program that none of them
-touches needs no change. The modern API is new and has nothing to migrate.
+1. **Constructor colors.** Constructor color arguments now apply to the elements named by those arguments:
+   `TitleColor` to the title, `DateColor` to the dates, `SelectedDateColor` to the selected dates and
+   `DayOfWeekColor` to the weekday row. In 1.0.0, `TitleColor` applied to the weekday row and, with four
+   arguments, `DayOfWeekColor` applied to the title. An application that chose its four arguments for that
+   assignment keeps its appearance by swapping the first and fourth values; with fewer arguments,
+   `SetDayOfWeekColor` and `SetTitleColor` give the same result. The parameterless constructor and the `Set`
+   methods behave the same in both versions.
+2. **Null date lists.** `GenerateMonth` and `GenerateYear` throw `ArgumentNullException` with the parameter
+   name `dates` when the list is `null`. In 1.0.0 they threw `NullReferenceException`. Catch
+   `ArgumentNullException`, or pass an empty list to select no dates.
+3. **Line endings.** Console output uses consistent line endings: every line ends with the console's line
+   terminator. In 1.0.0 the last row of a month ended with a line feed. Output on Linux and macOS is the same
+   as before; on Windows every line now ends with CRLF.
+4. **Spacing after a month.** Each generated month ends with one blank line. In 1.0.0 a month whose last day
+   is a Sunday was followed by two.
+5. **Month titles.** Localized month titles correspond to the Gregorian grid: the title is the current
+   culture's name for the Gregorian month shown. This affects cultures whose default calendar is not
+   Gregorian, such as `fa-IR`, where 1.0.0 took the name from the culture's default calendar.
 
-### What changed
-
-1. **Constructor colors.** In the constructors that take colors, each argument now colors what it is named
-   for: `TitleColor` the title, `DateColor` the days, `SelectedDateColor` the selected days and
-   `DayOfWeekColor` the weekday row. In 1.0.0, `TitleColor` colored the weekday row, the title stayed yellow,
-   and with four arguments `DayOfWeekColor` colored the title.
-   - **One, two or three arguments:** the title is now drawn in the first color, where it was yellow, and the
-     weekday row in cyan, where it had the first color.
-   - **Four arguments:** the first and the fourth color trade places. To keep what the program drew, pass
-     those two in each other's place.
-   - **The parameterless constructor and the `Set` methods are unchanged.** A program that uses them draws the
-     same with both versions.
-   - A value that is not a defined `ConsoleColor` is still accepted and still fails only when its element is
-     first drawn. For the first and the fourth argument that is now another element, so the failure comes at
-     another point.
-2. **A null list of dates.** `GenerateMonth` and `GenerateYear` now throw `ArgumentNullException`, naming the
-   parameter `dates`, when the list is `null`. In 1.0.0 they threw `NullReferenceException`. The list is
-   checked before the month and the year, and before anything is written. Catch the new exception, or pass an
-   empty list, which selects no dates.
-3. **Line endings.** Every line now ends with the line terminator of the console's writer, the last row of
-   days of a month included. In 1.0.0 that row ended with a bare line feed whatever the terminator was. On
-   Windows the output therefore no longer mixes LF and CRLF. Where the terminator is a line feed, as on Linux
-   and macOS, the text is the same as before.
-4. **One blank line after every month.** Every month is now followed by exactly one blank line. In 1.0.0 a
-   month whose last day is a Sunday was followed by two. Such a month is one line shorter, and so is a year
-   for each such month in it.
-5. **The title names the Gregorian month.** The title is now the current culture's name for the Gregorian
-   month that is drawn. In 1.0.0 it was the culture's name for the month of the same number in the culture's
-   own calendar. Under nearly every culture that is the same name and nothing changes. Under a culture whose
-   calendar is another one, such as `fa-IR` where the system gives it the Persian calendar, the title named a
-   different month than the days below it. The language still comes from `CultureInfo.CurrentCulture`, and the
-   year in the title is still the number you pass. The title is indented by the length of the name as before,
-   so it can start a column or two further left or right where the two names differ in length.
-
-A program that counts lines, or compares the output with stored text, has to allow for points 3 to 5.
-
-### What did not change
-
-- Every public signature and every parameter name, the namespace `CalendarGenerator` and the type name
-  `ConsoleCalendar`. Nothing is removed, and nothing is marked obsolete.
-- `GenerateYear`, and the four `Get` and four `Set` methods.
-- Which dates are selected: a date selects the day with the same year, month and day.
-- The weekday row, `Mo Tu We Th Fr Sa Su` in English, and weeks that start on Monday.
-- Writing directly to the console, resetting its colors afterwards instead of putting the caller's colors
-  back, and taking no lock: drawing from several threads at once still mixes their output.
-- The modern API. It is new in this version, so no earlier program depends on it.
+Snapshot tests and code that counts output lines may need updates for items 3 to 5. Everything else stays as
+it was: `GenerateYear`, the `Get` and `Set` methods, date selection by year, month and day, Monday-first
+weeks, the weekday row and direct console output.
 
 ## Supported frameworks
 
-The package contains two builds of the library, and NuGet picks the right one for your project:
+The package contains two builds of the library, and NuGet selects the right one for your project:
 
 | Build | Used by |
 |---|---|
 | `net10.0` | Projects that target .NET 10 or later |
 | `netstandard2.1` | Projects that target another framework implementing .NET Standard 2.1, such as .NET 8 |
 
-The two builds have the same API and the same behavior. The library has no dependencies. It is built and
-tested on Linux, Windows and macOS.
-
-## Limitations
-
-- One month at a time. The modern API has no year view; the legacy `GenerateYear` still exists.
-- Day names taken from a culture are what the system's globalization data says, so they are not guaranteed
-  to be identical on every operating system. Labels you supply are. See
-  [The culture's own day names](#the-cultures-own-day-names).
-- A day has at most one state.
-- The Gregorian calendar only.
-- Colors are the sixteen `ConsoleColor` values, foreground only. The library writes no escape sequences of its
-  own.
-- That the console's colors are put back after writing is verified by tests on Linux and macOS. On Windows the
-  same code runs, but the test environment cannot read console colors, so it is not verified there.
+Both builds have the same API and the same behavior. The library has no dependencies, supports trimming and
+Native AOT in its `net10.0` build, and is built and tested on Linux, Windows and macOS.
 
 ## Building and testing
 
-You need the .NET SDK named in
-[global.json](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/v2.0.0/global.json).
+Building requires the .NET SDK named in
+[global.json](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/v2.0.1/global.json).
 
 ```text
 dotnet build ConsoleCalendarGenerator.sln --configuration Release
@@ -427,16 +338,16 @@ dotnet run --project ConsoleCalendarGeneratorExample
 ```
 
 The last command runs the
-[example program](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/v2.0.0/ConsoleCalendarGeneratorExample),
-which is where every example on this page comes from. More, including how to pack and check the package, is in
-[CONTRIBUTING.md](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md).
+[example program](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/tree/v2.0.1/ConsoleCalendarGeneratorExample),
+the source of every example on this page.
+[CONTRIBUTING.md](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md)
+covers packaging and the contribution workflow.
 
-## Project
+## Support and security
 
-- [Changelog](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md)
-- [Contributing](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CONTRIBUTING.md)
-- [Security](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/SECURITY.md)
 - Questions and bug reports: [GitHub issues](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/issues)
+- Security reports: [SECURITY.md](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/SECURITY.md)
+- Release history: [CHANGELOG.md](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/blob/master/CHANGELOG.md)
 
 ## License
 

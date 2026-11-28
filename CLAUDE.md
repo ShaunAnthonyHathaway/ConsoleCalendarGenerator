@@ -9,16 +9,21 @@ console applications. It is .NET only.
 
 ## Current state
 
-- **Published:** only `ConsoleCalendarGenerator` 1.0.0 (June 2023). Nothing newer has been released.
-- **`master` is the source of the release `2.0.0`,** with assembly and file version `2.0.0.0` and no version
-  suffix. Every build of it says it is 2.0.0. **It is not published:** no tag, no GitHub release and no package
-  on nuget.org exists for it. Only one build of it is the release, the **candidate**: the bundle the Linux job
-  of the first push run for the release commit uploaded. **The release commit is
-  `117df06e5b6d684da6891cd3ac0310e5aa81ec98` and the candidate is designated** (run 46083727520, first attempt;
-  D-83). `master` has moved on from that commit and will again: **the tag `v2.0.0` belongs on the release
-  commit, never on a later one,** and a bundle CI makes of a later commit is not the candidate, although it
-  also says 2.0.0. The candidate's record and its checksums are **not in the repository**. Never build, name
-  or substitute another, and do not run `eng/designate-candidate.sh` again.
+- **Released:** `ConsoleCalendarGenerator` 1.0.0 on NuGet (June 2023), and 2.0.0 on GitHub Releases only
+  (2026-11-27). **2.0.0 is not on NuGet and is never pushed there:** its public documentation was rejected
+  after the GitHub release was published, so its package is not authorized for NuGet (D-85). No runtime or API
+  defect was involved. The GitHub release of 2.0.0 is published, immutable and marked Latest, and its tag
+  `v2.0.0` is on `117df06e5b6d684da6891cd3ac0310e5aa81ec98`. **Never edit, replace, delete or recreate that
+  release, its four files or its tag.**
+- **`master` is the source of the release `2.0.1`,** which replaces 2.0.0 as the 2.x version for NuGet: package
+  version `2.0.1`, assembly version `2.0.0.0` as for all of 2.x, file version `2.0.1.0`, no version suffix.
+  Its runtime behavior and public API are those of 2.0.0; what changed is the public presentation. Every build
+  of it says it is 2.0.1. **It is not released:** no tag `v2.0.1`, no GitHub release and no package on
+  nuget.org exists for it. Only one build of it is the release, the **candidate**: the bundle the Linux job of
+  the first push run for the release commit uploaded (D-79). The release commit of 2.0.1 is the merge commit
+  of the pull request that set the version to 2.0.1, and the tag `v2.0.1` belongs on that commit, whatever the
+  head of `master` is by then. Whether the candidate has been designated, its record and its checksums are
+  **not in the repository**. Never build, name or substitute another.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
@@ -49,33 +54,42 @@ console applications. It is .NET only.
   changelog, the XML comments and the package's description. The release infrastructure is done too: CI's
   actions are pinned to commits, and every build makes and checks the four files of a release, uses the
   assemblies directly, upgrades a program from the published 1.0.0, rehearses the check that follows
-  publication, and checks that the repository agrees with itself about its version. Release preparation is
-  done: the version, the README's links at the tag `v2.0.0`, the changelog's section. **No tag, no release
-  and no publication exists,** and nothing in the repository can publish.
+  publication, and checks that the repository agrees with itself about its version. Release preparation for
+  2.0.1 is done: the version, the README's links at the tag `v2.0.1`, the changelog's sections and the notes
+  of the release. Nothing in the repository can publish.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
   `ConsoleCalendarGenerator.Tests/Migration/` run the library and that source side by side and require the
   library to do what 1.0.0 did, apart from the five corrections.
 - **Public documents:** `README.md` (also the readme of the package), `CHANGELOG.md`, `CONTRIBUTING.md` and
-  `SECURITY.md`, all at the root, and one image in `docs/images/`. Every public type and member has XML
-  documentation, the legacy class included, and no warning is suppressed. The code in the README is copied from
-  `ConsoleCalendarGeneratorExample/Examples.cs` and its output from `expected-output.txt` beside it; the tests in
-  `ConsoleCalendarGenerator.Tests/Documentation/` compare them, so change them together. The README's section
-  "Migrating from 1.0.0 to 2.0" is the one place that tells what 1.0.0 did. **The README is packed into the
-  package and can never be edited there,** so it names version 2.0.0 and says nothing that publication would
-  make false: it never says by itself that 2.0.0 is or is not published (D-78). Three of its links are at the
-  tag `v2.0.0` and answer "not found" until the tag exists, which is expected. The changelog's heading says
-  "not yet published" until the date of publication is known; that and the few other things to finalize
-  afterwards are in
+  `SECURITY.md` at the root, the notes of the release in `docs/release-notes/2.0.1.md`, and one image in
+  `docs/images/`. Every public type and member has XML documentation, and no warning is suppressed. The code
+  in the README is copied from `ConsoleCalendarGeneratorExample/Examples.cs` and its output from
+  `expected-output.txt` beside it; the tests in `ConsoleCalendarGenerator.Tests/Documentation/` compare them,
+  so change them together. **The README is packed into the package and can never be edited there.** It says
+  which version it documents, gives the installation command with that version, and says nothing about whether
+  the version is published. Three of its links are at the tag `v2.0.1` and answer "not found" until the tag
+  exists, which is expected. The changelog's heading for 2.0.1 says "Unreleased" until the date of publication
+  is known; that and the few other things to finalize afterwards are in
   [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#what-is-finalized-after-publication).
+- **How public text is written (D-84).** Shaun rejected the public wording of 2.0.0 and set the rule: positive,
+  direct, concise, confident, about what the library does for its user. In public,
+  `CalendarGenerator.ConsoleCalendar` is "the original API", never "legacy", and nothing judges it or version
+  1.0.0: no "got wrong", "corrects", "broken", "flawed"; version 2 "updates five observable behaviors". The
+  types of the `ConsoleCalendarGenerator` namespace are "the structured rendering API". Nothing public
+  narrates how the project is run: no release state ("not yet published", "if the command gives you"), no
+  candidate, approval, audit, decision or pull request number, test count, tooling, Campertron or Python.
+  `PublicDocumentationTests` checks the exact rejected phrases; the tone is judged by reading. These notes
+  keep "legacy class" and "modern API" as internal names, and nothing in them is public text.
 - **Weekday labels and operating systems (decided, D-54):** labels taken from a culture are the day names .NET
   has on the machine, and they differ: for `en-US`, two letters on Linux and macOS, one letter on Windows. That
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
-  start and the example supply theirs, so they print the same text on all three systems. One example keeps the
-  culture's own labels on purpose. Do not add a label mode or change `WeekdayLabelStyle` for this.
-- **Publication (decided, D-55 and D-69):** nothing is published before 2.0, and nothing before its final
-  approval. No 1.x release, no prerelease, no tag and no release is authorized.
+  start and every example supply theirs, so they print the same text on all three systems. Do not add a label
+  mode or change `WeekdayLabelStyle` for this.
+- **Publication (decided, D-55, D-69 and D-85):** no 1.x release and no prerelease exists or is authorized.
+  The next publication is 2.0.1, on GitHub and on NuGet, each step with Shaun's approval. 1.0.0 stays on NuGet
+  and supported until 2.0.1 is published and verified; deprecating it afterwards is a separate decision.
 - **Repository settings (made 2026-11-27, D-82):** a published release is immutable; private vulnerability
   reporting is on, and `SECURITY.md` sends reports there (D-81); secret scanning and push protection are on;
   Actions must be pinned to full commit SHAs; a ruleset on `master` requires the three CI checks by their
@@ -84,10 +98,11 @@ console applications. It is .NET only.
   `master` through a pull request with the three checks green, and renaming a CI job stops every merge until
   the ruleset is changed. The record is in
   [development.md](docs/ai-context/development.md#repository-settings).
-- **`SECURITY.md` states the present,** unlike the README: that 1.0.0 is the only published package and that
-  2.0.0 has a candidate and is not yet published. It is on `master` only and is edited when that changes.
-- **Next phase:** the separately approved steps of the release itself: the tag on the release commit, the
-  GitHub release, the NuGet publication, verification. See [roadmap.md](docs/ai-context/roadmap.md). Each
+- **`SECURITY.md` states the present,** unlike the README: 1.0.0 is the current version on NuGet and supported
+  until 2.0.1 is published there, 2.0.0 is on GitHub Releases, and 2.0.1 is the next release. It is on
+  `master` only and is edited when that changes.
+- **Next phase:** the separately approved steps of releasing 2.0.1: the tag `v2.0.1` on its release commit,
+  the GitHub release, the NuGet publication, verification. See [roadmap.md](docs/ai-context/roadmap.md). Each
   needs its own approval; start none unprompted.
 
 | Project | Path | Target frameworks |
@@ -155,7 +170,8 @@ The build must finish with 0 warnings. None of these commands publishes anything
    never rebuild the candidate, and never use a local, pull-request, Windows or macOS build in its place; if
    it is not good, there is no candidate until a new reviewed commit has its own first push run. The workflow
    keeps read-only permission, no secret and no manual trigger, and every action stays pinned to a full commit
-   SHA (D-75). A repository setting or a ruleset is changed, and a ruleset's bypass used, only with that
+   SHA (D-75). The GitHub release of 2.0.0, its files and the tag `v2.0.0` are never edited, replaced or
+   deleted, and the package of 2.0.0 is never pushed to NuGet (D-85). A repository setting or a ruleset is changed, and a ruleset's bypass used, only with that
    approval (D-82). See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
    done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
@@ -164,9 +180,9 @@ The build must finish with 0 warnings. None of these commands publishes anything
 8. **One focused phase per pull request,** scoped by Shaun beforehand. Do not start the next phase unprompted.
 9. **Keep these documents true.** A change that makes any of them wrong updates them in the same pull request.
    The same goes for the public documents: a change users can see is added to `CHANGELOG.md`, and no
-   document says that a version is published, tagged or released before it is. After 2.0.0, a change users
-   can see belongs to a later version and goes under a new heading of the changelog; the section of 2.0.0 is
-   closed apart from its date.
+   document says that a version is published, tagged or released before it is. The sections of released
+   versions in the changelog are closed; after 2.0.1 a change users can see belongs to a later version and
+   goes under a new heading. Public text follows D-84.
 
 ## What to read first
 

@@ -5,8 +5,8 @@ namespace ConsoleCalendarGenerator.Tests.Documentation;
 
 /// <summary>
 /// What the package says about itself on nuget.org: its description, its tags and where its release notes are.
-/// These are read from the project file. They have to describe the package that is built, which from 2.0 on is
-/// the modern API with the 1.0 class beside it, and they must not say that anything unpublished is published.
+/// These are read from the project file. They describe what the package lets an application do, name the
+/// original ConsoleCalendar API as part of it, and say nothing about the state of a release.
 /// The version identity is checked in VersionIdentityTests, and the packed result by eng/verify-package.sh.
 /// </summary>
 [TestFixture]
@@ -24,17 +24,18 @@ public class PackageMetadataTests
     }
 
     [Test]
-    public void TheDescription_IsAboutTheModernApi_AndSaysTheOldClassIsStillThere()
+    public void TheDescription_SaysWhatThePackageDoes_AndNamesTheOriginalApi()
     {
         string description = Property("Description");
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(description, Does.Match("(?i)renders?"), "what the modern API does");
-            Assert.That(description, Ordinal.Contains("segments"), "the structured result");
-            Assert.That(description, Ordinal.Contains("ConsoleCalendar"), "the class of 1.0, by name");
-            Assert.That(description, Does.Not.Match("(?i)year calendars"), "the modern API renders months; a description that promises years describes 1.0 only");
-            Assert.That(description, Does.Not.Match(@"(?i)published|released|preview|beta|\d+\.\d+\.\d+"), "nothing about the state of a release");
+            Assert.That(description, Does.Match("(?i)month calendars"), "what the package is for");
+            Assert.That(description, Does.Match("(?i)render"), "text rendering");
+            Assert.That(description, Does.Match("(?i)structured"), "the structured result");
+            Assert.That(description, Ordinal.Contains("ConsoleCalendar"), "the original API, by name");
+            Assert.That(description, Does.Not.Match("(?i)year calendars"), "the structured API renders months");
+            Assert.That(description, Does.Not.Match(@"(?i)published|released|preview|beta|\d+\.\d+"), "nothing about a version or the state of a release");
             Assert.That(description, Has.Length.InRange(80, 400), "one short paragraph");
             Assert.That(description, Does.Not.Contain("\n"));
         }

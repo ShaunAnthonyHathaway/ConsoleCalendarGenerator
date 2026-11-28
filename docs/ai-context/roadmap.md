@@ -35,35 +35,34 @@ phase's pull request is #2.
 | Release preparation | Made `master` the source of the release 2.0.0: removed the version suffix; moved the three links of the README that are part of the version to the tag `v2.0.0` with the one command made for it; rewrote the README's status so that it stays true after publication; turned the changelog's section into the section of 2.0.0, with "not yet published" where the date will go; added the check of a published package, which allows for nuget.org's signature and fetches the symbols from nuget.org's symbol server, and the script that designates the candidate. No runtime code and no public API changed. Nothing was tagged, released or published. The candidate is designated after the merge, outside the repository. | #20 | see `git log` |
 | Candidate designation | Downloaded the Linux `release-bundle` of the first push run for the release commit `117df06` (run 46083727520, first attempt), ran every check of a release on those files and kept them, read-only, with their record, outside the repository ([D-83](decisions.md#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)). Nothing was built, tagged, released or published. | none | none |
 | Repository settings and security policy | Turned on, with Shaun's approval and through GitHub's API: immutable releases, private vulnerability reporting, secret scanning with push protection, and the requirement that Actions are pinned to full commit SHAs; created a ruleset for `master` (the three CI checks, no force push, no deletion) and one for tags `v*` (no move, no deletion) ([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases)). `SECURITY.md` now sends reports to private vulnerability reporting and states where the release stands ([D-81](decisions.md#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)). No runtime code, package, workflow, tag, release or publication changed; the candidate is untouched. | #21 | see `git log` |
+| Tag `v2.0.0` | Created the annotated, unsigned tag `v2.0.0` on the release commit `117df06` and pushed that one ref, with Shaun's approval. Nothing else changed. | none | none |
+| GitHub release 2.0.0 | Created a draft release for the tag with the candidate's four files, verified the downloaded files byte for byte, and published it. It is immutable and marked Latest, and GitHub's release attestation verifies. Nothing was pushed to NuGet. | none | none |
+| Public presentation and 2.0.1 | Shaun rejected the public wording of 2.0.0 after its GitHub release, before any NuGet publication. The release stays as it is and 2.0.0 is not pushed to NuGet ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)). This phase rewrote everything a user reads, from scratch: the README, the changelog, `SECURITY.md`, `CONTRIBUTING.md`, the package description and tags, the XML comments of `ConsoleCalendar`, the example program and the notes of the release ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library), [D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version)). It set the version to 2.0.1 with assembly version 2.0.0.0 and file version 2.0.1.0, and redesigned the documentation tests to check facts and the rejected phrases. No runtime code and no public API changed. | #22 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 behavior of the legacy class was unchanged in every phase before the constructor colors. With the Gregorian
-title, **all five approved runtime corrections are made**; no other runtime change is approved. With the final
-documentation, the work on 2.0 that is not about releasing it is done, and with the release infrastructure the
-tools for releasing it are in place and run on every build.
+title, **all five approved runtime corrections are made**; no other runtime change is approved. Version 2.0.0
+holds that work and is released on GitHub. Version 2.0.1 is the same library with its public presentation
+rewritten, and is the version that goes to NuGet.
 
 ## Remaining sequence
 
-The implementation of 2.0, its documentation, the machinery of its release and its preparation are complete:
-`master` is the source of 2.0.0. What is left is the release itself. Each item is an action of its own and
-needs Shaun's separate approval before it starts.
+`master` is the source of 2.0.1. What is left is its release. Each item is an action of its own and needs
+Shaun's separate approval before it starts.
 
-1. **Done: the candidate is designated.** It is the Linux `release-bundle` artifact of the first push run
-   for the release commit, checked, and recorded outside the repository
-   ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit),
-   [D-83](decisions.md#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)).
-2. **Done: the repository settings.** Immutable releases, private vulnerability reporting with `SECURITY.md`,
-   secret scanning with push protection, the requirement of SHA pins, and rulesets for `master` and for tags
-   `v*` ([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases)).
-3. **The tag** `v2.0.0` on the release commit, `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, which is no
-   longer the head of `master`.
-4. **The GitHub release,** as a draft with the candidate's four files and the notes, then published.
-5. **The NuGet publication** of the candidate's package and symbol package
+1. **The candidate of 2.0.1 is designated,** right after the pull request that set the version to 2.0.1 is
+   merged: the Linux `release-bundle` artifact of the first push run for its merge commit, checked, and
+   recorded outside the repository ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)).
+   Whether that has happened is in the report of that phase, not in this repository.
+2. **The tag** `v2.0.1` on that merge commit, the release commit of 2.0.1.
+3. **The GitHub release** of 2.0.1, as a draft with the candidate's four files and the notes, then published.
+   It becomes the Latest release.
+4. **The NuGet publication** of the candidate's package and symbol package
    ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)).
-6. **Verification** with `eng/verify-published-package.sh`
+5. **Verification** with `eng/verify-published-package.sh`
    ([D-80](decisions.md#d-80-after-publication-the-served-package-is-compared-by-its-entries-and-the-symbols-through-the-symbol-server)),
-   and the date in the changelog.
-7. If Shaun decides it, the **deprecation of 1.0.0**
+   then on `master` the date in the changelog and the table in `SECURITY.md`.
+6. If Shaun decides it, the **deprecation of 1.0.0**
    ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)), and a factual handoff for the
    Campertron project.
 
@@ -72,54 +71,55 @@ The steps in full are in
 
 What this sequence does and does not say:
 
-- **Nothing is published.** No tag, release or publication is authorized. No 1.x release and no prerelease was
-  ever published ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
-- **Only the candidate may be released.** Every build calls itself 2.0.0; one is the release. It is never
+- **2.0.0 is released on GitHub and stays exactly as it is.** Its release, its four files and its tag are
+  never edited, replaced, deleted or recreated, and its package is never pushed to NuGet
+  ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
+- **Nothing of 2.0.1 is released.** No tag, release or publication of it is authorized. No 1.x release and no
+  prerelease was ever published ([D-55](decisions.md#d-55-the-next-published-version-is-20)).
+- **Only the candidate may be released.** Every build calls itself 2.0.1; one is the release. It is never
   rebuilt and its workflow run is never run again.
-- A published version is never changed. A mistake after publication means a new version.
-- Changing Campertron is not part of this roadmap. After a published 2.0 package has been verified, Campertron's
-  adoption of it is handled in Shaun's separate Campertron project and chat.
+- A released version is never changed. A mistake after a release means a new version, as with 2.0.0.
+- 1.0.0 stays on NuGet and supported until 2.0.1 is published and verified.
+- Changing Campertron is not part of this roadmap. After a published 2.x package has been verified,
+  Campertron's adoption of it is handled in Shaun's separate Campertron project and chat.
 - Nothing is added to the modern API on the way, and no whole-year rendering
   ([D-63](decisions.md#d-63-the-modern-api-is-unchanged-for-20-and-renders-single-months)).
 
 ## Next action
 
-**The tag `v2.0.0` on the release commit `117df06`** (item 3), and only on Shaun's separate approval. Read
-[packaging-and-releases.md](packaging-and-releases.md) first: [The candidate](packaging-and-releases.md#the-candidate),
+**The designation of the candidate of 2.0.1, and then the tag `v2.0.1`** (items 1 and 2), each only on Shaun's
+approval. Read [packaging-and-releases.md](packaging-and-releases.md) first:
+[The candidate](packaging-and-releases.md#the-candidate),
 [Planned 2.0 publication sequence](packaging-and-releases.md#planned-20-publication-sequence) and
 [Release boundaries](packaging-and-releases.md#release-boundaries).
 
 What that starts from:
 
-- `master` is the source of 2.0.0, and `bash eng/release-state.sh` passes on it.
-- The candidate is designated. The release commit is `117df06e5b6d684da6891cd3ac0310e5aa81ec98` and the run
-  is 46083727520 ([D-83](decisions.md#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)).
-  Its record and its checksums are outside the repository: in the report of the phase that designated it and
-  in the folder that phase names. Do not look for them here, and do not take any checksum from a CI log as
-  the release's without that record.
+- `master` is the source of 2.0.1, and `bash eng/release-state.sh` passes on it.
+- The release commit of 2.0.1 is the merge commit of the pull request that set the version to 2.0.1. The
+  candidate's record and its checksums are outside the repository: in the report of the phase that designated
+  it and in the folder that phase names, beside the folder of 2.0.0. Do not look for them here, and do not
+  take any checksum from a CI log as the release's without that record.
 - The repository settings of a release are made and recorded in
   [development.md](development.md#repository-settings): a published release is immutable, `master` takes
   changes only through a pull request with the three checks green, and a tag `v*` cannot be moved or deleted.
 - There is one workflow, `ci.yml`, with every action pinned to a commit. It has read-only permission, no
   secrets and no manual trigger, and it publishes nothing. Nothing in the repository can push a package,
-  create a tag or create a release. **The workflow run that made the candidate must never be run again.**
-- `master` is past the release commit, and that does not change the release: the tag belongs on the release
-  commit. The commit that did it changed `SECURITY.md` when private reporting was turned on. Another is
-  expected for the date in the changelog.
+  create a tag or create a release. **A workflow run that made a candidate must never be run again.**
 - Two questions are open, both about the steps to come:
   [Q-14](open-questions.md#q-14-how-is-the-publication-authenticated) and
   [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20).
 
 Known and not yet dealt with:
 
-- **`SECURITY.md` says that 2.0.0 is not yet published.** That is true now and is edited on `master` when
-  2.0.0 is on nuget.org, with the date in the changelog.
-- No tag was created to try the tag ruleset, and no force push was tried on `master`: both rulesets are known
-  from what GitHub's API returns for them, and the required checks from pull requests.
+- **`SECURITY.md` and the changelog state the present.** They are edited on `master` when 2.0.1 is on
+  nuget.org: the rows of the table, and the date in the heading.
+- No force push was tried on `master` and no tag was moved or deleted to try the tag ruleset: both rulesets
+  are known from what GitHub's API returns for them, and the required checks from pull requests.
 - The repository's description on GitHub still reads as it did for 1.0.0. It is a repository setting.
 - That the console writer puts the caller's colors back is not verified on Windows
-  ([D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes)); the
-  README says so.
+  ([D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes)). The
+  README no longer says so; it is a fact about the tests, recorded here.
 - How the publication is authenticated and whether 1.0.0 is deprecated afterwards are open.
 
 Settled and not to be reopened: the five corrections and nothing else; no renamed setter parameters, no

@@ -7,7 +7,7 @@ point to its replacement rather than deleting it.
 Only decisions belong here. Things that are still undecided are in [open-questions.md](open-questions.md).
 
 All decisions below date from 2026-11-27, the day the modernization was planned and its phases up to the 2.0
-groundwork were merged.
+groundwork were merged, unless a decision gives another date.
 
 ## Scope and compatibility
 
@@ -190,8 +190,9 @@ groundwork were merged.
   reruns, publication recovery and repository-setting changes each need Shaun's separate, explicit approval.
 - **Reason:** These are outward-facing and hard or impossible to undo.
 - **Consequences:** An approval for one does not cover another, and approval of a phase does not cover any of
-  them. There is no publication workflow in the repository. See
-  [packaging-and-releases.md](packaging-and-releases.md#release-boundaries).
+  them. There is no publication workflow in the repository. (Later: there is one, for NuGet, which runs only
+  when it is started by hand ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)). Starting it is a publication, and so is one of the actions this
+  decision covers.) See [packaging-and-releases.md](packaging-and-releases.md#release-boundaries).
 
 ### D-19: Campertron adoption happens elsewhere
 
@@ -1041,8 +1042,9 @@ the repository, and recorded here in the 2.0 groundwork. The policy is set out i
 - **Reason:** What is published should be, bit for bit, what was checked.
 - **Consequences:** There is still no publication workflow, and none is added without a phase scoped for it.
   How the push is authenticated, and whether 1.0.0 is deprecated afterwards, are decisions of the release
-  phase ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated),
-  [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
+  phase (the former Q-14, and [Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)).
+  (Later: Shaun scoped that phase. The workflow exists, the push is made by it and not by hand, and what it
+  pushes is still the validated artifacts, unchanged ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).)
 
 ### D-70: The original sample is compared in one defined scenario, by its text
 
@@ -1118,9 +1120,10 @@ Decided by Shaun when he reviewed the last correction and scoped the final 2.0 d
   that can be verified at every later step.
 - **Consequences:** Each step is still approved separately
   ([D-18](#d-18-publication-requires-explicit-approval-every-time)). The candidate is not a CI artifact that
-  happens to be recent: it is built for the purpose, once. How the push is authenticated is open
-  ([Q-14](open-questions.md#q-14-how-is-the-publication-authenticated)), and so is whether 1.0.0 is deprecated
-  afterwards ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). No prerelease is
+  happens to be recent: it is built for the purpose, once. How the push is authenticated was open then and is
+  settled ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand): there
+  is no credential to make available). Whether 1.0.0 is deprecated afterwards is open
+  ([Q-15](open-questions.md#q-15-is-100-deprecated-on-nugetorg-after-20)). No prerelease is
   published on the way ([D-55](#d-55-the-next-published-version-is-20)). The sequence is in
   [packaging-and-releases.md](packaging-and-releases.md#planned-20-publication-sequence).
 
@@ -1166,7 +1169,8 @@ Settled in the release infrastructure phase, within the scope Shaun gave it.
 
 ### D-75: Actions are pinned to the full SHA of a commit
 
-- **Status:** Approved. Implemented.
+- **Status:** Approved. Implemented. A fourth action, `NuGet/login` v1.2.0, is pinned the same way in the
+  publication workflow ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 - **Decision:** Every action a workflow uses is referenced by the 40 hexadecimal digits of a commit, with the
   version that commit is released as in a comment on the same line. The three in use are `actions/checkout`
   v7.0.1, `actions/setup-dotnet` v6.1.0 and `actions/upload-artifact` v7.0.2, each the latest release of its
@@ -1205,7 +1209,9 @@ Settled in the release infrastructure phase, within the scope Shaun gave it.
 
 ### D-77: No artifact attestations for now
 
-- **Status:** Decided for this phase, on the evidence. Shaun may decide otherwise for the release.
+- **Status:** Decided for this phase, on the evidence. Shaun may decide otherwise for the release. (Later: the
+  job that publishes to NuGet has `id-token: write`, for Trusted Publishing and for nothing else
+  ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)). No attestation is created, and nothing has `attestations: write`.)
 - **Decision:** No GitHub artifact attestation is created for the package, the symbol package, the archive or
   the checksums, and the workflow gets neither `id-token: write` nor `attestations: write`.
 - **Reason:** The permissions would have to be given to a job of the only workflow, which today can read and
@@ -1272,12 +1278,16 @@ phase where he left the choice to it.
   is not in its first attempt, is not the first push run for the commit, or has a job that failed. The
   candidate's record (run, job, artifact, checksums, checks) is kept outside the repository and is not
   committed: the release commit is the commit the candidate was built from, and the tag belongs on it. See
-  [packaging-and-releases.md](packaging-and-releases.md#the-candidate).
+  [packaging-and-releases.md](packaging-and-releases.md#the-candidate). (Later: the checksums of the four
+  files of 2.0.1, once it was tagged and released on GitHub, are stated in `eng/publication.sh`, where the
+  publication checks them ([D-89](#d-89-the-workflow-publishes-one-approved-release-and-its-facts-are-in-the-repository)). The record stays outside.)
 
 ### D-80: After publication, the served package is compared by its entries, and the symbols through the symbol server
 
 - **Status:** Approved by Shaun. The tooling is implemented and tested as far as it can be before a
-  publication; it has not been run on a published 2.0.0, which does not exist.
+  publication; it has not been run on a published 2.x version, which does not exist. The last job of the
+  publication workflow runs it, through `eng/publication-verify.sh`, with a limited wait for nuget.org
+  ([D-88](#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 - **Decision:** nuget.org signs every package it serves by adding the entry `.signature.p7s`. The package
   downloaded after publication is therefore not expected to have the candidate's SHA-256, and nothing claims
   it does. Verification compares the entries: the served package must have that one added entry, every entry
@@ -1323,7 +1333,8 @@ phase where he left the choice to it.
 ### D-82: Repository settings protect master, release tags and published releases
 
 - **Status:** Approved by Shaun. Made on 2026-11-27 through GitHub's API; the record, with the way to read
-  each setting back, is in [development.md](development.md#repository-settings).
+  each setting back, is in [development.md](development.md#repository-settings). An environment was added on
+  2026-11-28 ([D-90](#d-90-the-environment-allows-the-default-branch-asks-its-reviewer-and-holds-no-secret)).
 - **Decision:** For this repository:
   - **Immutable releases** are on. A release published from now on cannot have a file changed or removed and
     its tag cannot be moved, or deleted while the release exists.
@@ -1465,6 +1476,9 @@ phase where he left the choice to it.
 ### D-87: The release commit of 2.0.1 is the merge of the final wording changes
 
 - **Status:** Approved by Shaun on 2026-11-27, after a final editorial review of the first candidate of 2.0.1.
+  Carried out for GitHub the same day, each step with his approval: the release commit is
+  `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`, its candidate was designated from run 46097347304, the tag
+  `v2.0.1` was put on that commit, and the GitHub release was published with the candidate's four files.
 - **Decision:** Everything public in the first candidate of 2.0.1 was read once more, in full, before any tag.
   The review approved the public presentation and named ten passages that could be better; Shaun approved
   all ten. Four are in the README, which is inside the package, so they needed a new commit and a new
@@ -1497,3 +1511,102 @@ phase where he left the choice to it.
   from a public document. How public text is written is unchanged
   ([D-84](#d-84-public-text-is-positive-direct-and-about-the-library)): positive, direct, concise, respectful, and
   neutral about what an earlier version did.
+
+## Publication to NuGet
+
+Decided by Shaun on 2026-11-28, when he scoped the setup of the NuGet publication, and settled in that phase
+where he left the choice to it.
+
+### D-88: 2.0.1 goes to NuGet through Trusted Publishing, from a workflow that is started by hand
+
+- **Status:** Approved by Shaun on 2026-11-28. **Set up, and not run:** the workflow, the environment and the
+  policy on nuget.org exist, and nothing has been published. Resolves the former open question Q-14. Changes
+  how [D-69](#d-69-20-is-published-by-hand-from-the-validated-artifacts) and
+  [D-72](#d-72-the-release-is-200-built-once-and-published-as-the-files-that-were-validated) are carried out:
+  the push is made by a workflow and not by hand. What is pushed is unchanged: the exact files that were
+  validated.
+- **Decision:** The package and the symbol package of 2.0.1 are published by
+  `.github/workflows/publish-nuget.yml`, which runs when it is started by hand (`workflow_dispatch`) and at no
+  other time. It authenticates with NuGet Trusted Publishing: the job that publishes presents GitHub's
+  identity token for that job to nuget.org, through the action `NuGet/login` pinned to the commit of v1.2.0,
+  and receives a key that lasts an hour. No API key is created on nuget.org, no secret is stored on GitHub or
+  anywhere else, and no credential passes through a chat or through anyone's hands. The workflow downloads the
+  files from the immutable GitHub release and pushes them as they are; it builds nothing. **Starting the
+  workflow is a publication:** it needs Shaun's separate, explicit approval each time, and neither the
+  existence of the workflow nor the review of its environment is that approval.
+- **Reason:** A long-lived key is the thing that leaks: it has to be made, carried to where the push happens
+  and kept out of every log. Trusted Publishing has no such thing. What nuget.org trusts instead is a fact
+  GitHub signs for each job: which repository, which workflow file and which environment the job runs in.
+  Publishing from a workflow also makes the publication something that is written down, reviewed and tested
+  before it happens, with a public log afterwards.
+- **Consequences:**
+  - On nuget.org the account `ShaunHathaway`, which owns the package, has one Trusted Publishing policy,
+    created on 2026-11-28: repository owner `ShaunAnthonyHathaway`, repository `ConsoleCalendarGenerator`,
+    workflow file `publish-nuget.yml`, environment `nuget-production`, scope "Push only new package versions",
+    package pattern `ConsoleCalendarGenerator`. It cannot create a package ID and it cannot unlist. nuget.org
+    shows it as active and bound to GitHub's permanent ids of the owner and the repository.
+  - On GitHub the repository has one environment, `nuget-production`
+    ([D-90](#d-90-the-environment-allows-the-default-branch-asks-its-reviewer-and-holds-no-secret)). The job
+    that publishes is the only job that uses it and the only one with `id-token: write`. The workflow's
+    default permission, which its other two jobs keep, is to read.
+  - The repository can publish: one file, with one command, when it is started by hand. The tests that said
+    nothing can now say exactly that, and the publication workflow has tests of its own.
+  - The earlier plan, a push by hand with a key in `NUGET_API_KEY` and the upload page as its fallback, is
+    superseded and is not used.
+  - The policy names the workflow file and the environment. Renaming either breaks the match: the names
+    are changed together with the policy, which is a setting on nuget.org and needs Shaun.
+  - The details are in [packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg).
+
+### D-89: The workflow publishes one approved release, and its facts are in the repository
+
+- **Status:** Approved by Shaun on 2026-11-28. Implemented.
+- **Decision:** The workflow can publish one thing: version 2.0.1, with the tag `v2.0.1` and its tag object,
+  GitHub release 461246889, the release commit `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd` and four files with
+  fixed SHA-256 values. Those facts are stated once, in `eng/publication.sh`. The workflow asks whoever starts
+  it for the version, the tag, the release id and the release commit, and refuses every value that is not the
+  stated one: the inputs say what is to be published and select nothing. No input turns a check off, and the
+  workflow has no dry-run mode. Every check runs before the login to nuget.org, in the job that publishes, on
+  the files that job downloads and then pushes. The same checks run in a job before it, which has no way to
+  publish, so that the result is known before the environment asks for its review. A later version is
+  published by changing the stated facts and the workflow's defaults in a reviewed pull request.
+- **Reason:** A workflow that publishes "the version in the input" publishes whatever someone types. The
+  release that is approved is one tag, one immutable GitHub release and four files. A workflow that knows them
+  by their checksums cannot publish anything else, whoever starts it and whatever they enter.
+- **Consequences:** The checksums of the four files of 2.0.1 are in the repository. That narrows
+  [D-79](#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit): the candidate's
+  record stays outside the repository, as before. Its checksums were kept out so that no commit after the
+  release commit could blur which commit the release is; that is settled, because the tag and the immutable
+  release exist and state the same checksums in public. The checks are `eng/publication-preflight.sh`, before
+  the push, and `eng/publication-verify.sh`, after it. Both read and compare and neither can publish; on a
+  maintainer's machine the first is a dry run. `eng/publication-preflight-selftest.sh` shows, with recorded
+  answers in place of GitHub and nuget.org, that each wrong fact is refused. The public API of both
+  assemblies is compared with `eng/public-api.txt`, a listing the tests hold to the source. If nuget.org
+  already lists the version, nothing is pushed and no login is made. After a push the workflow pushes nothing
+  again and replaces, unlists and deprecates nothing, whatever fails: what happens then is Shaun's decision.
+
+### D-90: The environment allows the default branch, asks its reviewer, and holds no secret
+
+- **Status:** Settled in the setup phase on the evidence, within the scope Shaun gave it, and reported to him.
+  He had named a restriction to protected tags `v*` as his preference; this records why the restriction is to
+  `master` instead. He may decide otherwise, and the environment is his to change.
+- **Decision:** The environment `nuget-production`, created on 2026-11-28 through GitHub's API:
+  - **Only `master` may deploy to it.** One rule, for the branch `master`, and no rule for a tag.
+  - **Shaun is its required reviewer.** The job that publishes waits until he approves it.
+  - **Self-review is not prevented.** The person who starts a publication may approve it.
+  - **Administrators cannot bypass** its rules.
+  - **It holds no secret.** It has one variable, `NUGET_USER`: the nuget.org user name `ShaunHathaway`, which
+    is public and which the checks compare with the name they expect.
+- **Reason:** GitHub matches an environment's rule against the ref a run is for, and a run uses the workflow
+  file of the commit it runs for. The tag `v2.0.1` is on the release commit, which is older than the
+  publication workflow, and the tag can never move. A run for that tag would have no publication workflow to
+  run, so a rule of tags `v*` alone would have made the publication of 2.0.1 impossible. `master` is also the
+  stricter rule: anyone who can write to the repository can put a tag on any commit, while `master` takes a
+  commit only through a pull request whose three checks passed
+  ([D-82](#d-82-repository-settings-protect-master-release-tags-and-published-releases)), so the workflow
+  that reaches the environment is always one that was reviewed and tested. Preventing self-review would lock
+  out the only maintainer, who both starts a publication and reviews it.
+- **Consequences:** A publication is started for `master`, and the checks refuse a run for any other ref. The
+  review of the environment is a second confirmation in GitHub's own interface; it does not replace the
+  approval [D-18](#d-18-publication-requires-explicit-approval-every-time) asks for before the workflow is
+  started. The environment is recorded in [development.md](development.md#the-environment-nuget-production).
+  Changing it is changing a repository setting.

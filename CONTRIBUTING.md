@@ -84,5 +84,5 @@ bash eng/consumer-smoke.sh artifacts/package
 ## Releases
 
 The maintainer publishes packages, creates tags and makes releases. A released version is never changed; a
-correction is a new version. Pull requests keep the workflow at read access, reference actions by the full SHA
-of a commit, and add nothing that publishes.
+correction is a new version. Pull requests keep the build workflow at read access, reference actions by the
+full SHA of a commit, and add nothing that publishes.

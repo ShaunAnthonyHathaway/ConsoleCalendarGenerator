@@ -1,8 +1,8 @@
 # Shared by the release scripts in this folder: release-bundle.sh, verify-release-bundle.sh,
 # release-bundle-tamper-test.sh, direct-reference-smoke.sh, upgrade-smoke.sh, release-links.sh,
-# release-state.sh, release-notes.sh, verify-published-package.sh with its self-test, and
-# designate-candidate.sh. It is sourced, not run. None of those scripts publishes, uploads, tags or pushes
-# anything, and nothing here can.
+# release-state.sh, release-notes.sh, verify-published-package.sh with its self-test,
+# designate-candidate.sh, and the scripts of the publication, which also source publication.sh. It is sourced,
+# not run. None of those scripts publishes, uploads, tags or pushes anything, and nothing here can.
 #
 # The variables below are used by the scripts that source this file.
 # shellcheck disable=SC2034

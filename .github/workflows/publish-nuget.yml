@@ -1,0 +1,275 @@
+# Publishes ConsoleCalendarGenerator 2.0.1 to nuget.org: the package and the symbol package that are attached
+# to the immutable GitHub release v2.0.1, as they are. Nothing is built, packed or changed here, and nothing
+# but that one version can be published: the four inputs must repeat the approved values, which
+# eng/publication.sh states, and every other value is refused. A later version is published by changing that
+# file and the defaults below in a reviewed pull request.
+#
+# It runs only when someone starts it by hand, and STARTING IT NEEDS SHAUN'S EXPLICIT APPROVAL, EVERY TIME.
+# That this file exists is not that approval. No push, pull request, tag, release or schedule starts it.
+#
+# There is no key. The job that publishes asks nuget.org for a temporary one through Trusted Publishing: GitHub
+# says which repository, workflow and environment the job belongs to, and nuget.org gives a key that lasts an
+# hour to the one workflow and environment its policy names. The key is asked for after every check has
+# passed, is given to the one step that pushes, and is never printed or kept. No secret is stored anywhere.
+#
+# Three jobs, each needing the one before it:
+#   preflight   reads and compares, with read access only. It shows whether everything holds before anyone is
+#               asked to approve.
+#   publish     waits for the environment nuget-production, which only the default branch may use and which
+#               asks its reviewer. It checks everything again on the files it downloads, logs in, and pushes
+#               those files. It is the only job that may ask for an identity token.
+#   verify      with read access only: waits for nuget.org to index the version and checks what it serves
+#               against the files of the release.
+#
+# If something fails before the push, nothing is published. If something fails after it, nothing is pushed
+# again, replaced or unlisted: the run stops, says what it found, and what happens next is Shaun's decision.
+# Do not start this workflow again to repair a publication.
+#
+# Every action is pinned to the full SHA of a commit, as in ci.yml; see docs/ai-context/development.md.
+name: Publish to NuGet
+
+run-name: Publish ConsoleCalendarGenerator ${{ inputs.version }} to nuget.org
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to publish. Only 2.0.1 is accepted."
+        required: true
+        default: "2.0.1"
+        type: string
+      tag:
+        description: "The tag of its GitHub release. Only v2.0.1 is accepted."
+        required: true
+        default: "v2.0.1"
+        type: string
+      release_id:
+        description: "The id of that GitHub release. Only 461246889 is accepted."
+        required: true
+        default: "461246889"
+        type: string
+      release_commit:
+        description: "The commit the release was built from. Only the approved commit is accepted."
+        required: true
+        default: "bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd"
+        type: string
+
+permissions:
+  contents: read
+
+# One publication at a time, and a second one waits: it is never cancelled half way.
+concurrency:
+  group: publish-nuget
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # The whole history and the tags: the checks compare the release commit and the tag with the checkout.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      # The checks build two small tools of their own. Nothing of the library is built.
+      - name: Set up the .NET SDK from global.json
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # Every check of a publication, with nothing published. The token reads the release and nothing more.
+      - name: Check everything before the publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.tag }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RELEASE_COMMIT: ${{ inputs.release_commit }}
+        run: >-
+          bash eng/publication-preflight.sh
+          --version "$VERSION"
+          --tag "$TAG"
+          --release-id "$RELEASE_ID"
+          --release-commit "$RELEASE_COMMIT"
+          2>&1 | tee "$RUNNER_TEMP/preflight.log"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Preflight"
+            echo
+            echo "This job reads and compares. It publishes nothing and asks nuget.org for no key."
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/preflight.log" 2> /dev/null || echo "The checks did not start."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish to nuget.org
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: nuget-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up the .NET SDK from global.json
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # The same checks again, in the job that publishes, on the files this job downloads and then pushes.
+      # Every one of them has passed before the next step asks nuget.org for anything.
+      - name: Check everything again, on the files that will be pushed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.tag }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RELEASE_COMMIT: ${{ inputs.release_commit }}
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: >-
+          bash eng/publication-preflight.sh
+          --version "$VERSION"
+          --tag "$TAG"
+          --release-id "$RELEASE_ID"
+          --release-commit "$RELEASE_COMMIT"
+          --nuget-user "$NUGET_USER"
+          --into "$RUNNER_TEMP/release"
+          2>&1 | tee "$RUNNER_TEMP/preflight.log"
+
+      # Trusted Publishing: GitHub's identity token for this job is exchanged for a key of nuget.org that
+      # lasts an hour. The action masks it in the log. The user is the nuget.org user name, not an address.
+      - name: Log in to nuget.org
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      # The only step that has the key, and the only command in the repository that publishes. The files are
+      # the ones the checks above downloaded; their checksums are compared once more, and then the package is
+      # pushed. The symbol package of the same name beside it is pushed with it. The key is passed as the
+      # documentation of Trusted Publishing shows, is never written out, and the output is kept only if the
+      # key is not in it.
+      - name: Push the package and the symbol package
+        id: push
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          [ -n "$NUGET_API_KEY" ] || { echo "error: the login returned no key" >&2; exit 1; }
+          bash eng/publication-checksums.sh "$RUNNER_TEMP/release"
+          status=0
+          dotnet nuget push "$RUNNER_TEMP/release/ConsoleCalendarGenerator.2.0.1.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" > "$RUNNER_TEMP/push.log" 2>&1 || status=$?
+          if grep -q -F -f <(printf '%s\n' "$NUGET_API_KEY") "$RUNNER_TEMP/push.log"; then
+            rm -f "$RUNNER_TEMP/push.log"
+            echo "The output of the push is neither shown nor kept: the key was in it."
+          else
+            cat "$RUNNER_TEMP/push.log"
+          fi
+          exit "$status"
+
+      # What happened, whatever happened. After a push that did not complete nothing is tried again here.
+      - name: Summary
+        if: always()
+        env:
+          LOGIN: ${{ steps.login.outcome }}
+          PUSH: ${{ steps.push.outcome }}
+        run: |
+          {
+            echo "### Publication"
+            echo
+            echo "- Login to nuget.org: ${LOGIN:-not reached}"
+            echo "- Push of the package and the symbol package: ${PUSH:-not reached}"
+            echo "- nuget.org lists now: $(curl -s https://api.nuget.org/v3-flatcontainer/consolecalendargenerator/index.json | tr -d ' \n' || true) (a version appears there some minutes after it is pushed)"
+            echo
+            if [ "$PUSH" = "success" ]; then
+              echo "The push completed. The next job checks what nuget.org serves."
+            elif [ "$LOGIN" = "success" ]; then
+              echo "**The push did not complete.** The output below says what nuget.org accepted: the package and the symbol package are pushed one after the other. Nothing was tried again. Do not start this workflow again: what happens next is a decision that needs Shaun's approval."
+            else
+              echo "Nothing was pushed: the run stopped before the push."
+            fi
+            echo
+            echo "Output of the push:"
+            echo '```text'
+            cat "$RUNNER_TEMP/push.log" 2> /dev/null || echo "none"
+            echo '```'
+            echo "The checks before the login:"
+            echo '```text'
+            cat "$RUNNER_TEMP/preflight.log" 2> /dev/null || echo "The checks did not start."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    name: Verify what nuget.org serves
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up the .NET SDK from global.json
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # Waits for nuget.org to index the version and to validate the symbols, for a limited time, and then
+      # compares what it serves with the files of the release and installs it into new programs. It pushes
+      # nothing. If it fails, the version stays on nuget.org as it was pushed, and nothing here repairs it.
+      - name: Check what nuget.org serves against the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.tag }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RELEASE_COMMIT: ${{ inputs.release_commit }}
+        run: >-
+          bash eng/publication-verify.sh
+          --version "$VERSION"
+          --tag "$TAG"
+          --release-id "$RELEASE_ID"
+          --release-commit "$RELEASE_COMMIT"
+          --wait 45
+          --native-aot
+          2>&1 | tee "$RUNNER_TEMP/verify.log"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Verification of what nuget.org serves"
+            echo
+            echo "If this job failed, the version is on nuget.org as it was pushed. Nothing was pushed again, replaced or unlisted, and what happens next is a decision that needs Shaun's approval."
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/verify.log" 2> /dev/null || echo "The checks did not start."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

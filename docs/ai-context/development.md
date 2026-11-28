@@ -10,6 +10,8 @@ How to build, test and change this repository today. Every command here is run f
 - **bash** for the scripts in `eng/`. On Windows, Git Bash works; `.gitattributes` keeps `*.sh` files on LF
   line endings for that reason.
 - **unzip** and **git,** used by `eng/verify-package.sh` and the release scripts.
+- **jq** and the GitHub CLI, **gh,** for the scripts of the publication (`eng/publication-*.sh`), which read
+  GitHub and nuget.org. The self-test of those scripts needs jq and no network.
 - Optional: a native toolchain (for example clang on Linux) for the Native AOT part of the consumer smoke tests,
   and the util-linux `script` program for the terminal tests and for running the original sample in the
   consumer smoke tests.
@@ -92,6 +94,17 @@ release: the release is the one candidate, which is never built again
 ([packaging-and-releases.md](packaging-and-releases.md#the-candidate)). Do not publish, attach or hand on what
 these commands make. None of them publishes anything, and no command that needs a credential belongs in this
 file.
+
+The checks of the NuGet publication can be run without publishing. The first is a dry run against the real
+release; the second shows that the checks refuse every wrong case, and uses no network:
+
+```bash
+bash eng/publication-preflight.sh --version 2.0.1 --tag v2.0.1 --release-id 461246889 --release-commit bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd
+bash eng/publication-preflight-selftest.sh
+```
+
+Neither can publish. The command that starts the publication workflow is deliberately not in this file: it is
+a publication ([packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg)).
 
 ## Generated output and cleaning
 
@@ -192,8 +205,11 @@ What to do when one of them changes:
 
 ## CI
 
-`.github/workflows/ci.yml` is the only workflow. It runs on every pull request and on every push to `master`,
-once per operating system:
+There are two workflows. `.github/workflows/ci.yml` builds and checks, and this section is about it.
+`.github/workflows/publish-nuget.yml` publishes to NuGet, runs only when it is started by hand, and is
+described in [packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg).
+
+`ci.yml` runs on every pull request and on every push to `master`, once per operating system:
 
 1. Check out, install the SDK from `global.json`
 2. Restore
@@ -219,9 +235,10 @@ once per operating system:
 again and leaves the run with a second attempt, after which its artifact can no longer be designated
 ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)).
 
-It has read-only repository permission, uses no secrets, has no manual trigger and publishes nothing. Keep it
-that way; see [packaging-and-releases.md](packaging-and-releases.md#release-boundaries). `WorkflowTests` and
-`ReleaseToolingTests` fail on a change that would give it more.
+`ci.yml` has read-only repository permission, uses no secrets, has no manual trigger and publishes nothing.
+Keep it that way; see [packaging-and-releases.md](packaging-and-releases.md#release-boundaries).
+`WorkflowTests` and `ReleaseToolingTests` fail on a change that would give it more. Nothing was changed in it
+for the publication workflow: its triggers, its permission and its jobs are as they were.
 
 ### Updating a pinned action
 
@@ -252,8 +269,16 @@ A pin never moves by itself. To move one, deliberately and as its own small chan
 5. **Let CI run on all three systems,** and check in the log's "Download action repository" line that the SHA
    it fetched is the one written.
 
-The three pins were made this way. Each is the latest release of its major version at the time, and the
-commit that CI was already running under the major tag, so pinning changed nothing about what runs.
+The three pins of `ci.yml` were made this way. Each is the latest release of its major version at the time,
+and the commit that CI was already running under the major tag, so pinning changed nothing about what runs.
+
+The publication workflow uses `actions/checkout` and `actions/setup-dotnet` at the same commits, and one more
+action, `NuGet/login`, which exchanges the job's identity token for a temporary key of nuget.org. It was
+pinned on 2026-11-28 to `8d196754b4036150537f80ac539e15c2f1028841`, the commit of its release v1.2.0 and the
+commit its `v1` tag pointed at that day. The tag `v1.2.0` there is not annotated, so the SHA GitHub gives for
+it is the commit. Read at that commit before it was pinned: `action.yml`, `src/index.ts` and the notes of the
+release. An action both workflows use is one commit in both: move a pin in both or in neither, and a test
+fails otherwise.
 
 ## Repository settings
 
@@ -272,6 +297,8 @@ ruleset or using a bypass needs Shaun's separate approval**
 | Actions pinned to a full commit SHA | required | `gh api repos/{owner}/{repo}/actions/permissions` |
 | Permission of the workflow's token | read, as before | `gh api repos/{owner}/{repo}/actions/permissions/workflow` |
 | Rulesets | two, both active | `gh api repos/{owner}/{repo}/rulesets`, then `.../rulesets/<id>` |
+| Environments | one, `nuget-production`, since 2026-11-28 | `gh api repos/{owner}/{repo}/environments` |
+| Secrets and variables of the repository | none | `gh api repos/{owner}/{repo}/actions/secrets`, `.../actions/variables` |
 
 Left as they were: the secret-scanning options for patterns that are not a provider's and for validity checks
 (off), Dependabot (off), the merge methods and the topics.
@@ -332,6 +359,42 @@ arrives under the repository's **Security** tab, visible to the reporter and the
 `master`: creating a tag needs its own approval, and a test of a protection on the real branch is a risk the
 protection is meant to remove. Both are known from what the API returns for the rulesets. The required
 checks are seen at work on every pull request.
+
+### The environment `nuget-production`
+
+Created on 2026-11-28 with Shaun's approval, through GitHub's API
+([D-90](decisions.md#d-90-the-environment-allows-the-default-branch-asks-its-reviewer-and-holds-no-secret)).
+It is what the job that publishes to NuGet must be let into, and it is the environment the Trusted Publishing
+policy on nuget.org names. Changing it is changing a repository setting.
+
+| | State | Read it back with |
+|---|---|---|
+| Deployment branches and tags | selected ones: one rule, the branch `master` | `gh api repos/{owner}/{repo}/environments/nuget-production/deployment-branch-policies` |
+| Required reviewers | `ShaunAnthonyHathaway` | `gh api repos/{owner}/{repo}/environments/nuget-production` |
+| Prevent self-review | off | the same |
+| Administrators may bypass its rules | no | the same (`can_admins_bypass`) |
+| Wait timer | none | the same |
+| Secrets | none | `gh api repos/{owner}/{repo}/environments/nuget-production/secrets` |
+| Variables | one: `NUGET_USER`, with the value `ShaunHathaway` | `gh api repos/{owner}/{repo}/environments/nuget-production/variables` |
+
+- **Why `master` and not the tags `v*`.** GitHub compares the rule with the ref a run is for, and a run uses
+  the workflow file of its own commit. The publication workflow is not in the commit `v2.0.1` is on, and that
+  tag never moves, so a run for the tag could not exist. `master` is also the stricter rule: a tag can be put
+  on any commit, and `master` takes only what came through a pull request with the three checks green. The
+  checks of the publication refuse a run for any other ref as well.
+- **Why self-review is allowed.** The project has one maintainer, who starts a publication and reviews it.
+  Preventing self-review would make the publication impossible.
+- **Required reviewers cost nothing here:** GitHub offers them for a public repository on every plan. No plan
+  was changed and no trial started.
+- **No secret anywhere.** The job gets a temporary key from nuget.org when it runs
+  ([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)). The
+  variable is the nuget.org user name, which is public; the checks compare it with the name they expect, so a
+  changed variable stops the publication and cannot redirect it.
+- **What was not tried.** No run has entered the environment: that would be a publication. Its rules are
+  known from what the API returns for them.
+
+The policy on nuget.org is not a setting of GitHub. Its record is in
+[packaging-and-releases.md](packaging-and-releases.md#publication-to-nugetorg).
 
 ## Working practice
 

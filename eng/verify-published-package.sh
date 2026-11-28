@@ -3,7 +3,7 @@
 # After a version is published: checks what nuget.org serves against the candidate that was pushed. It reads
 # nuget.org and needs no credential. It publishes nothing.
 #
-#   eng/verify-published-package.sh <folder with the candidate bundle>
+#   eng/verify-published-package.sh <folder with the candidate bundle> [--wait <minutes>] [--native-aot]
 #
 # The candidate is the authority. Its four files must still pass eng/verify-release-bundle.sh, checksums
 # included. Then:
@@ -16,13 +16,22 @@
 #      byte for byte, the manifest included, and has no other entry.
 #   3. The served package passes the checks of a published package (eng/verify-package.sh --published):
 #      identity, version, metadata, license, no dependency, both builds with their documentation, the readme,
-#      the commit, the versions the assemblies carry.
+#      the commit, the versions the assemblies carry. Both assemblies have the public API of eng/public-api.txt.
 #   4. The symbol package cannot be downloaded back from nuget.org, and nothing here pretends it can. What
 #      nuget.org does serve is each symbol file, from its symbol server, to anyone who has the assembly. Each
 #      is fetched with the identity its assembly records and must be the candidate's symbol file, byte for
 #      byte. The symbol package itself stays protected by SHA256SUMS.txt and by the release it is attached to.
 #   5. A program installs the version from nuget.org alone, builds, uses both APIs and reports the behavior of
 #      the release; and the consumer smoke tests and the upgrade from 1.0.0 run against the served package.
+#
+# nuget.org needs time after a push: it validates and indexes the package, and validates the symbols after
+# that. With --wait <minutes> the two things that depend on it, the package being served and listed (step 1)
+# and the symbol server having the symbol files (step 4), are asked for again every half minute until they
+# hold or the minutes are over. Nothing else is repeated, and nothing is ever pushed: waiting only reads.
+# Without --wait each is asked once.
+#
+# With --native-aot the consumer smoke tests of step 5 also publish and run a Native AOT application, which
+# needs the platform's native build tools.
 #
 # With --served <package file>, that file stands for the one nuget.org serves and nothing is downloaded: steps
 # 1, 4 and 5 are left out. The self-test uses this.
@@ -42,14 +51,43 @@ if [ "${1:-}" = "--compare" ]; then
   exit 0
 fi
 
-bundle="${1:-}"
+usage="usage: eng/verify-published-package.sh <folder with the candidate bundle> [--served <package file>] [--wait <minutes>] [--native-aot]"
+[ "$#" -ge 1 ] || fail "$usage"
+bundle="$1"
+shift
 served_file=""
-if [ "$#" -eq 3 ] && [ "$2" = "--served" ]; then
-  served_file="$3"
-elif [ "$#" -ne 1 ]; then
-  fail "usage: eng/verify-published-package.sh <folder with the candidate bundle> [--served <package file>]"
-fi
+wait_minutes=0
+smoke_options=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --served)
+      [ "$#" -ge 2 ] || fail "$usage"
+      served_file="$2"
+      shift 2
+      ;;
+    --wait)
+      [ "$#" -ge 2 ] || fail "$usage"
+      wait_minutes="$2"
+      shift 2
+      ;;
+    --native-aot)
+      smoke_options+=(--native-aot)
+      shift
+      ;;
+    *) fail "$usage" ;;
+  esac
+done
+grep -q -E '^[0-9]+$' <<< "$wait_minutes" || fail "--wait takes a number of minutes"
 [ -d "$bundle" ] || fail "there is no folder $bundle"
+
+# again <what does not hold yet> -> waits half a minute and succeeds, while there is time left
+deadline=$(( $(date +%s) + wait_minutes * 60 ))
+again() {
+  local left=$(( deadline - $(date +%s) ))
+  [ "$left" -gt 0 ] || return 1
+  echo "Waiting:        $1. Asking again for up to $(( (left + 59) / 60 )) more minutes."
+  sleep 30
+}
 
 echo "== The candidate"
 bash "$repository/eng/verify-release-bundle.sh" "$bundle" > /dev/null || fail "the bundle in $bundle does not pass its own check, so it is not the candidate"
@@ -69,10 +107,21 @@ if [ -z "$served_file" ]; then
   echo "== 1. What nuget.org serves, and its record of it"
   served="$work/served/$(package_name "$version")"
   mkdir "$work/served"
-  status="$(curl -s -L -o "$served" -w '%{http_code}' "$nuget_packages/consolecalendargenerator/$version/consolecalendargenerator.$version.nupkg")"
-  [ "$status" = "200" ] || fail "nuget.org does not serve ConsoleCalendarGenerator $version (HTTP $status). It is not published, or not indexed yet."
-  leaf="$(curl -s -L --compressed "$nuget_registration/consolecalendargenerator/$version.json" | tr -d '\r\n')"
-  grep -q '"listed": *true' <<< "$leaf" || fail "nuget.org does not list ConsoleCalendarGenerator $version"
+  while :; do
+    status="$(curl -s -L -o "$served" -w '%{http_code}' "$nuget_packages/consolecalendargenerator/$version/consolecalendargenerator.$version.nupkg")"
+    if [ "$status" != "200" ]; then
+      again "nuget.org does not serve ConsoleCalendarGenerator $version yet (HTTP $status)" \
+        || fail "nuget.org does not serve ConsoleCalendarGenerator $version (HTTP $status). It is not published, or not indexed yet."
+      continue
+    fi
+    leaf="$(curl -s -L --compressed "$nuget_registration/consolecalendargenerator/$version.json" | tr -d '\r\n')"
+    if ! grep -q '"listed": *true' <<< "$leaf"; then
+      again "nuget.org serves ConsoleCalendarGenerator $version and does not list it yet" \
+        || fail "nuget.org does not list ConsoleCalendarGenerator $version"
+      continue
+    fi
+    break
+  done
   catalog="$(grep -o '"catalogEntry": *"[^"]*"' <<< "$leaf" | sed -E 's/.*"(https[^"]*)"/\1/')"
   [ -n "$catalog" ] || fail "nuget.org's record of the version names no catalog entry"
   record="$(curl -s -L --compressed "$catalog" | tr -d '\r\n')"
@@ -104,6 +153,14 @@ candidate_commit="$(unzip -p "$candidate" ConsoleCalendarGenerator.nuspec | tr -
 served_commit="$(unzip -p "$served" ConsoleCalendarGenerator.nuspec | tr -d '\r' | sed -n -E 's:.*<repository [^>]*commit="([0-9a-f]{40})".*:\1:p')"
 [ -n "$candidate_commit" ] && [ "$served_commit" = "$candidate_commit" ] || fail "the served package names commit '$served_commit', and the candidate was built from $candidate_commit"
 echo "Commit:         $served_commit, the commit the candidate was built from"
+api_tool="$(build_tool PublicApi "$work/api-tool")"
+for framework in $library_builds; do
+  mkdir -p "$work/served-api/$framework"
+  unzip -p "$served" "lib/$framework/ConsoleCalendarGenerator.dll" > "$work/served-api/$framework/ConsoleCalendarGenerator.dll"
+  entries="$(dotnet "$api_tool" "$work/served-api/$framework/ConsoleCalendarGenerator.dll" "$repository/eng/public-api.txt" | tr -d '\r')" \
+    || fail "the public API of the served $framework assembly is not the one eng/public-api.txt states"
+  echo "Public API:     $framework: exactly the ${entries#entries=} entries of eng/public-api.txt"
+done
 
 if [ -n "$served_file" ]; then
   echo
@@ -122,8 +179,12 @@ for framework in $library_builds; do
     || fail "the $framework symbol file of the candidate is not the one the served $framework assembly was built with"
   server_path="$(sed -n 's/^server-path=//p' <<< "$identity" | tr -d '\r')"
   checksum="$(sed -n 's/^checksum=//p' <<< "$identity" | tr -d '\r')"
-  status="$(curl -s -L -o "$work/served-$framework.pdb" -w '%{http_code}' -H "SymbolChecksum: $checksum" "$nuget_symbols/$server_path")"
-  [ "$status" = "200" ] || fail "nuget.org's symbol server does not have the $framework symbol file (HTTP $status). The symbol package was not pushed, was refused, or is not validated yet; its page on nuget.org says which."
+  while :; do
+    status="$(curl -s -L -o "$work/served-$framework.pdb" -w '%{http_code}' -H "SymbolChecksum: $checksum" "$nuget_symbols/$server_path")"
+    [ "$status" = "200" ] && break
+    again "nuget.org's symbol server does not have the $framework symbol file yet (HTTP $status)" \
+      || fail "nuget.org's symbol server does not have the $framework symbol file (HTTP $status). The symbol package was not pushed, was refused, or is not validated yet; its page on nuget.org says which."
+  done
   cmp -s "$work/served-$framework.pdb" "$work/candidate-symbols/lib/$framework/ConsoleCalendarGenerator.pdb" \
     || fail "the $framework symbol file nuget.org serves is not the candidate's"
   echo "Symbols:        $framework: nuget.org's symbol server has the candidate's symbol file, byte for byte"
@@ -169,7 +230,7 @@ CONFIG
 }
 from_nuget_org net8.0 netstandard2.1 ".NETStandard,Version=v2.1"
 from_nuget_org net10.0 net10.0 ".NETCoreApp,Version=v10.0"
-bash "$repository/eng/consumer-smoke.sh" "$work/served" > "$work/consumer-smoke.log" 2>&1 || { cat "$work/consumer-smoke.log"; fail "the consumer smoke tests fail against the served package"; }
+bash "$repository/eng/consumer-smoke.sh" "$work/served" ${smoke_options[@]+"${smoke_options[@]}"} > "$work/consumer-smoke.log" 2>&1 || { cat "$work/consumer-smoke.log"; fail "the consumer smoke tests fail against the served package"; }
 echo "Consumers:      $(tail -1 "$work/consumer-smoke.log")"
 bash "$repository/eng/upgrade-smoke.sh" "$work/served" > "$work/upgrade-smoke.log" 2>&1 || { cat "$work/upgrade-smoke.log"; fail "the upgrade from 1.0.0 fails against the served package"; }
 echo "Upgrade:        $(tail -1 "$work/upgrade-smoke.log")"

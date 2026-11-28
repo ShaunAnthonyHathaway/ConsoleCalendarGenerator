@@ -35,7 +35,8 @@ such version was ever published, so that rule protected nothing and is gone.
   passing. Campertron itself is out of scope
   ([D-19](decisions.md#d-19-campertron-adoption-happens-elsewhere)).
 - **Nothing is published before the final approval of 2.0.** That approval was given for 2.0.1, which is
-  published; 1.0.0 stays on NuGet beside it, listed and supported.
+  published; 1.0.0 stays on NuGet beside it, listed and downloadable, and is deprecated in its favor
+  ([D-92](decisions.md#d-92-100-is-deprecated-on-nuget-stays-listed-and-points-to-201)).
 
 ## The five approved corrections
 

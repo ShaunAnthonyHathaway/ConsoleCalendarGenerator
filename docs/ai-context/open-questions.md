@@ -5,8 +5,9 @@ decision identifier and delete it here; do not renumber the rest.
 
 Recommendations are starting points, not decisions.
 
-One question is open: Q-15. The release of 2.0.1 is complete, on GitHub and on NuGet, and does not depend on
-it. The version the question speaks of as 2.0 is 2.0.1, the 2.x version that is on NuGet
+**No question is open.** The release program of 2.0.1 is complete: the version is on GitHub and on NuGet, and
+1.0.0 is deprecated in its favor. A question that comes up later is added here with the next number. Where
+the settled questions below say 2.0, the version meant is 2.0.1, the 2.x version that is on NuGet
 ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget),
 [D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)).
 
@@ -61,17 +62,9 @@ Q-14 (how the publication is authenticated) is settled, and was carried out for 
 Publishing, from a workflow that is started by hand. No API key was created and no secret is stored
 ([D-88](decisions.md#d-88-201-goes-to-nuget-through-trusted-publishing-from-a-workflow-that-is-started-by-hand)).
 
-## Q-15: Is 1.0.0 deprecated on nuget.org after 2.0?
-
-- **Why it matters:** Deprecating 1.0.0 would show a warning to everyone who still restores it and point them
-  at 2.0. It is an outward-facing action on a published version.
-- **Where it stands:** 2.0.1 is published and verified, so the condition for asking the question holds. 1.0.0
-  is listed, supported and not deprecated, and `SECURITY.md` says so
-  ([D-91](decisions.md#d-91-201-is-published-on-nuget-and-100-stays-listed-and-supported)).
-- **Evidence needed:** Shaun's choice.
-- **Decide in:** a step of its own. It needs his separate, explicit approval, and it is made on nuget.org:
-  nothing in the repository can do it.
-- **Recommendation:** None yet.
+Q-15 (whether 1.0.0 is deprecated on nuget.org after 2.0) is settled, and was carried out: it is deprecated,
+with the reason Legacy and 2.0.1 as its alternate, and it stays listed
+([D-92](decisions.md#d-92-100-is-deprecated-on-nuget-stays-listed-and-points-to-201)).
 
 Q-16 (where the candidate is built) is settled: it is the Linux `release-bundle` artifact of the first push run
 for the release commit, in its first attempt, and nothing else

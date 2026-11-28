@@ -2,10 +2,10 @@
 
 ## Current tests
 
-`ConsoleCalendarGenerator.Tests` holds **2,575 tests**: 299 tests of the legacy API, 25 tests of the legacy class
+`ConsoleCalendarGenerator.Tests` holds **2,576 tests**: 299 tests of the legacy API, 25 tests of the legacy class
 as a facade, 109 tests of the frozen source of 1.0.0, 376 migration tests that compare the library with it, 184
 tests of the layout model, 283 tests of text rendering, 98 tests of day states and markers, 52 tests of the
-theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 257
+theme, 58 tests of the writers, 756 Campertron parity tests (most of them one test per recorded case), 258
 tests of the documentation and the example, 59 tests of the workflows, the publication and the release tooling, 2 tests of the modern public surface, 16 tests of the version
 identity and 1 test about the build setup. It targets `net11.0` and uses NUnit 5.0.0 with NUnit3TestAdapter 6.3.1 and
 Microsoft.NET.Test.Sdk 18.12.0.
@@ -119,8 +119,8 @@ say what the modern API must do, and a failure there means the code is wrong.
 | `Documentation/ExampleProgramTerminalTests` | 3 | The example on a pseudo-terminal: the same text with color added, nothing sent but color changes, default colors given back (Terminal category) |
 | `Documentation/ReadmeExamplesTests` | 11 | Every C# block of the README is an example of `Examples.cs` character for character, and every output block is lines of `expected-output.txt` |
 | `Documentation/DocumentationLinkTests` | 24 | Links and images of the four public documents point at files that exist; what nuget.org needs of the README; no image that nothing shows; and that every link of the README into the repository is classified for the release in `eng/release-links.txt`, as approved, the three that are part of the version are at the tag `v2.0.1` and no other link is, and the release checklist names each of them |
-| `Documentation/PublicDocumentationTests` | 89 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0, 2.0.0 and 2.0.1, and the README names only its own and 1.0.0; that the installation command names the version; that no document puts 2.0.0 on NuGet, calls 1.0.0 deprecated or unsupported, or announces 2.0.1; that the changelog has a section for each version, with 2026-11-28 for 2.0.1 and nothing "Unreleased"; that the table of `SECURITY.md` has the 2.x line on GitHub Releases and NuGet and 1.0.0 on NuGet, both supported without a condition, without naming a patch version of 2.x, and that the document sends reports to GitHub's private vulnerability reporting; that each of the five updated behaviors is described in the README's section on moving from 1.0.0 and in the changelog, five and once each; that the README speaks of 1.0.0 in that section only; that every API name the README and the release notes mention in code exists; what the release notes link to and name; and, for every public text including the example and the package description, none of the rejected phrases, nothing about how the project is run, no machine path and nothing about another language or a consumer; and that no public document links to the maintenance notes |
-| `Documentation/CurrentStateTests` | 91 | That the documents describe the repository as it is: no active document names a development version, and the release version is named where a maintainer looks for it; the decision log marks the five corrections implemented and the old rules superseded; the compatibility notes list all five as made; and no active document, a public one, a maintenance note or a source file of the library, still makes a claim about the present that was true before (a 1.x line, a correction still to come, layers not built, an undecided release version, a release without a tag, a version that is not on NuGet, a publication that has not run). That the release is published: the notes give the address of the package on nuget.org and name the run that published it; the only open question is whether 1.0.0 is deprecated, and how the publication is authenticated is settled; the roadmap records the publication and the update after it as done and has the deprecation alone left; no document states that 1.0.0 is deprecated; nothing with the form of a credential is in a document, a workflow or a script; and no note gives a step to carry out in Campertron. Also no machine path and no instruction for another language in the maintenance notes; and that the names of the three checks the ruleset for `master` requires, as the notes record them, are the names the workflow gives its jobs |
+| `Documentation/PublicDocumentationTests` | 89 | Which documents exist; the frameworks, versions and commands they name; that the only versions named are 1.0.0, 2.0.0 and 2.0.1, and the README names only its own and 1.0.0; that the installation command names the version; that no document puts 2.0.0 on NuGet or announces 2.0.1, and that the deprecation of 1.0.0 is stated once in public, in the table of `SECURITY.md`, with nothing that calls 1.0.0 unlisted, deleted or faulty; that the changelog has a section for each version, with 2026-11-28 for 2.0.1 and nothing "Unreleased"; that the table of `SECURITY.md` has the 2.x line on GitHub Releases and NuGet, supported and not deprecated, and 1.0.0 on NuGet, deprecated and not supported, without naming a patch version of 2.x, and that the document sends reports to GitHub's private vulnerability reporting; that each of the five updated behaviors is described in the README's section on moving from 1.0.0 and in the changelog, five and once each; that the README speaks of 1.0.0 in that section only; that every API name the README and the release notes mention in code exists; what the release notes link to and name; and, for every public text including the example and the package description, none of the rejected phrases, nothing about how the project is run, no machine path and nothing about another language or a consumer; and that no public document links to the maintenance notes |
+| `Documentation/CurrentStateTests` | 92 | That the documents describe the repository as it is: no active document names a development version, and the release version is named where a maintainer looks for it; the decision log marks the five corrections implemented and the old rules superseded; the compatibility notes list all five as made; and no active document, a public one, a maintenance note or a source file of the library, still makes a claim about the present that was true before (a 1.x line, a correction still to come, layers not built, an undecided release version, a release without a tag, a version that is not on NuGet, a publication that has not run, a first version that is supported or not deprecated, a question that is open). That the release is published and complete: the notes give the address of the package on nuget.org and name the run that published it; they say that 1.0.0 is deprecated and stays listed, and record the reason, the version recommended and the message as they were entered; no question is open, and the two last ones name the decisions that settled them; the roadmap records every step as done, the deprecation last, says the release program is complete, has no step left and plans no later version; no document says that 1.0.0 is unlisted, deleted or faulty, or that 2.0.1 is deprecated; nothing with the form of a credential is in a document, a workflow or a script; and no note gives a step to carry out in Campertron. Also no machine path and no instruction for another language in the maintenance notes; and that the names of the three checks the ruleset for `master` requires, as the notes record them, are the names the workflow gives its jobs |
 | `Documentation/PackageMetadataTests` | 4 | The package's description (what the package does, naming the original API, saying nothing about a version or a release), its tags, its release notes (the changelog of this repository on the default branch) and that its identity is what it was |
 | `Documentation/XmlDocumentationTests` | 16 | Every public type, member and parameter of the built documentation file has text; the comments of the constructors that take colors say that each argument is the color of what it is named for; the comments of the two methods that take a list say that a null list is refused with `ArgumentNullException`; how a month ends and which month the title names are documented as the library does them; an earlier version is mentioned in five members only, and no comment uses a rejected phrase; no documentation warning is suppressed |
 | `ModernApiTests` | 2 | The modern public surface by reflection, enum values included, and that the assembly exports nothing else |
@@ -201,9 +201,9 @@ The helpers of the migration tests are in `Migration/`, not in `Support/`:
 
 | System | Normal run (`TestCategory!=Terminal`) | Not run there | Terminal run |
 |---|---|---|---|
-| Linux | 2,550 pass | 5 Windows-only | 19 pass |
-| macOS | 2,549 pass | 5 Windows-only, 1 Linux-only | not part of CI |
-| Windows | 2,460 pass | 94 that need Linux or macOS, 1 Linux-only | not part of CI |
+| Linux | 2,551 pass | 5 Windows-only | 19 pass |
+| macOS | 2,550 pass | 5 Windows-only, 1 Linux-only | not part of CI |
+| Windows | 2,461 pass | 94 that need Linux or macOS, 1 Linux-only | not part of CI |
 
 One more test is inconclusive in the normal run on each system, and which one depends on the system's culture
 data: `Legacy/GregorianTitleTests` has a case for `ar-SA` counting in the Gregorian calendar and a case for it
@@ -630,8 +630,9 @@ only run from a build inside a checkout. What they are built on:
   the repository holds a release, and the tests are those of a release: no active document names a development
   version; the documents users read name only 1.0.0, 2.0.0 and 2.0.1; the README names the version it
   documents and gives the installation command with it ([D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version));
-  no line connects 2.0.0 with NuGet except to say that it was not published there; nothing calls 1.0.0
-  deprecated or unsupported; no document announces 2.0.1, which is described and installed by its number; and
+  no line connects 2.0.0 with NuGet except to say that it was not published there; the deprecation of 1.0.0
+  is stated in the table of `SECURITY.md` and nowhere else in public, and nothing calls 1.0.0 unlisted, deleted
+  or faulty; no document announces 2.0.1, which is described and installed by its number; and
   the changelog has a section for each version, the first with the date 2.0.1 was published to NuGet. The
   release identity, and that the changelog's first heading has a date, are checked from the shell by
   `eng/release-state.sh`. `CurrentStateTests` also looks, in every active document, for a short list of claims
@@ -680,7 +681,14 @@ another date; 1.0.0 supported with a condition, and not supported; the 2.x line 
 README announcing the release; `CONTRIBUTING.md` and a note calling 1.0.0 deprecated; a note saying 2.0.1 is
 not on NuGet; the address of the package gone from `CLAUDE.md`; the question of authentication open again; a
 second thing left in the roadmap, and its row for the publication gone; something with the form of a key in a
-note; and a command to run in Campertron.
+note; and a command to run in Campertron. Eighteen more were tried after the deprecation of 1.0.0, each of
+which failed the tests: in the table of `SECURITY.md`, 1.0.0 supported again, not marked deprecated, and
+taken off the listing, and the 2.x line deprecated, and not supported; the README stating the deprecation as
+well; `CONTRIBUTING.md` and a note giving the first version the fault that is nuget.org's other reason; a note
+taking the first version off the listing, one calling the current version deprecated, and one denying the
+deprecation; the question of the deprecation open again; a step left in the roadmap, a later version planned
+there, and its row for the deprecation gone; and another reason, another recommended version and another
+message in the record of the deprecation.
 
 ### The release checks
 
@@ -941,4 +949,7 @@ release that is published. The tests that were to change after the publication h
 they check: the heading of the changelog has its date, the table of `SECURITY.md` has the 2.x line on NuGet
 and 1.0.0 supported, and the test of what the documents say about availability requires that
 ([What is finalized after publication](packaging-and-releases.md#what-is-finalized-after-publication)). The
-row of `SECURITY.md` for 1.0.0, and its test, change only if Shaun decides to deprecate that version.
+row of `SECURITY.md` for 1.0.0, and its test, changed once more when Shaun decided to deprecate that version:
+it is on NuGet, deprecated, and not supported
+([The deprecation of 1.0.0](packaging-and-releases.md#the-deprecation-of-100)). The release program is
+complete, and no test waits for anything.

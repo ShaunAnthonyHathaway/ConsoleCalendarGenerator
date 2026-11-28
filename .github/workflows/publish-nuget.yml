@@ -84,7 +84,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      # The checks build two small tools of their own. Nothing of the library is built.
+      # The checks build three small tools of their own, from eng/tools. Nothing of the library is built.
       - name: Set up the .NET SDK from global.json
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:

@@ -728,7 +728,7 @@ mode of the workflow.
 
 1. The four values asked for are the approved version, tag, release id and release commit.
 2. The run is a manual run of the publication workflow of this repository, for `master`, in its first
-   attempt. The user for nuget.org is the approved one.
+   attempt. In the job that publishes, the user for nuget.org is the approved one.
 3. nuget.org lists 1.0.0 and nothing else, and has no package file of 2.0.1.
 4. The tag `v2.0.1` is annotated, is the approved tag object, and peels to the release commit: on GitHub, and
    in the checkout, which must have the release commit in its history.
@@ -746,7 +746,7 @@ mode of the workflow.
 10. nuget.org still does not have the version. The checksums of the four files are compared once more.
 
 All ten pass before the login: the login is the next step of the same job and has no condition, and a step
-runs only when every step before it succeeded. The checks build two small tools of their own (`eng/tools/`).
+runs only when every step before it succeeded. The checks build three small tools of their own (`eng/tools/`).
 Nothing of the library is built, packed or changed.
 
 **The push.** One command, the only one in the repository that publishes: `dotnet nuget push` of
@@ -784,7 +784,7 @@ bash eng/publication-preflight-selftest.sh [<folder with the four files>]
 ```
 
 Outside a workflow the first two are a dry run: they pass when everything is ready, and they have no way to
-publish. The self-test makes one thing wrong at a time, 45 things without the files and more with them, and
+publish. The self-test makes one thing wrong at a time, 45 things without the files and 46 with them, and
 requires each to be refused for its own reason; with the files it also requires the right answers to pass. A
 simulation is refused inside a workflow. The tests read the workflow itself: its one trigger, its
 permissions, its pins, that it builds nothing, where the key goes, and which steps would run after a failure

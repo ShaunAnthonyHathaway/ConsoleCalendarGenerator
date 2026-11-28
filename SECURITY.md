@@ -4,8 +4,8 @@
 
 | Version | Availability | Supported |
 |---|---|---|
-| 2.x | GitHub Releases | Yes |
-| 1.0.0 | NuGet | Yes, until a 2.x version is published on NuGet |
+| 2.x | GitHub Releases and NuGet | Yes |
+| 1.0.0 | NuGet | Yes |
 
 A fix is released as a new version. Published versions are never changed.
 

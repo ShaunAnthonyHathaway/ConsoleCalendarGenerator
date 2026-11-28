@@ -9,16 +9,21 @@ console applications. It is .NET only.
 
 ## Current state
 
-- **Released:** `ConsoleCalendarGenerator` 1.0.0 on NuGet (June 2023), and 2.0.0 and 2.0.1 on GitHub Releases
-  (both 2026-11-27). **nuget.org has 1.0.0 only.**
+- **Released:** `ConsoleCalendarGenerator` 1.0.0 on NuGet (June 2023); 2.0.0 on GitHub Releases only
+  (2026-11-27); and 2.0.1 on GitHub Releases (2026-11-27) and on NuGet (2026-11-28). **nuget.org has 1.0.0
+  and 2.0.1, both listed, and neither is deprecated.**
   - **2.0.0 is on GitHub only and is never pushed to NuGet:** its public documentation was rejected after the
     GitHub release was published, so its package is not authorized for NuGet (D-85). No runtime or API defect
     was involved. Its release is published and immutable, and its tag `v2.0.0` is on
     `117df06e5b6d684da6891cd3ac0310e5aa81ec98`.
-  - **2.0.1 is released on GitHub and is not on NuGet.** Its release (id 461246889) is published, immutable
-    and marked Latest, with the four files of the candidate, and its tag `v2.0.1` (annotated, tag object
-    `248b5eb0c643e65e3565fd6a01d77d37b84e7868`) is on the release commit
-    `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`.
+  - **2.0.1 is released on GitHub and published on NuGet,** and both are verified. Its GitHub release (id
+    461246889) is published, immutable and marked Latest, with the four files of the candidate, and its tag
+    `v2.0.1` (annotated, tag object `248b5eb0c643e65e3565fd6a01d77d37b84e7868`) is on the release commit
+    `bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd`. Its package is
+    <https://www.nuget.org/packages/ConsoleCalendarGenerator/2.0.1>: the candidate's package, to which
+    nuget.org added its signature and nothing else.
+  - **1.0.0 stays on NuGet, listed and supported.** It is not deprecated. Deprecating it is a separate
+    decision that has not been made (Q-15).
   - **Never edit, replace, delete or recreate either release, its four files or its tag.** From the tag on,
     any change to what the package contains is a new version.
 - **`master` is the source of the release `2.0.1`,** which replaces 2.0.0 as the 2.x version for NuGet: package
@@ -31,14 +36,17 @@ console applications. It is .NET only.
   any tag and is never released. The candidate's record is kept outside the repository. The SHA-256 of its
   four files are in `eng/publication.sh`, as the facts the publication checks (D-89). Never build, name or
   substitute another.
-- **Publication to NuGet is set up and has not run** (D-88). `.github/workflows/publish-nuget.yml` publishes
-  the package and the symbol package of the GitHub release 2.0.1, those exact files, through NuGet Trusted
-  Publishing: no API key exists and no secret is stored. It runs only when it is started by hand. **Starting
-  it is a publication and needs Shaun's explicit approval, each time; that the workflow exists is not that
-  approval. Never start it, and never run a run of it again, without that approval.** Its publishing job uses
-  the GitHub environment `nuget-production`, and nuget.org has one Trusted Publishing policy, which names this
-  repository, that workflow file and that environment and allows new versions of `ConsoleCalendarGenerator`
-  only. See [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#publication-to-nugetorg).
+- **The publication of 2.0.1 to NuGet is done** (D-88, D-91). `.github/workflows/publish-nuget.yml` ran once,
+  on 2026-11-28, with Shaun's approval: run 46137844158, started by hand from `master`, in its first attempt.
+  It published the package and the symbol package of the GitHub release 2.0.1, those exact files, through
+  NuGet Trusted Publishing, and then verified what nuget.org serves. No API key exists and no secret is
+  stored. **That run is never run again, and the workflow is never started again for 2.0.1:** the version is
+  published, and a published version is never pushed twice. The workflow publishes 2.0.1 and nothing else; a
+  later version needs it changed in a reviewed pull request, and then Shaun's explicit approval to start it,
+  which the existence of the workflow never is. Its publishing job uses the GitHub environment
+  `nuget-production`, and nuget.org has one Trusted Publishing policy, which names this repository, that
+  workflow file and that environment and allows new versions of `ConsoleCalendarGenerator` only. See
+  [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#publication-to-nugetorg).
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
   - The legacy class `CalendarGenerator.ConsoleCalendar`, in `ConsoleCalendarGenerator/ConsoleCalendar.cs`. It
@@ -71,9 +79,9 @@ console applications. It is .NET only.
   assemblies directly, upgrades a program from the published 1.0.0, rehearses the check that follows
   publication, and checks that the repository agrees with itself about its version. Release preparation for
   2.0.1 is done: the version, the README's links at the tag `v2.0.1`, the changelog's sections and the notes
-  of the release. The candidate, the tag and the GitHub release of 2.0.1 are done, and so is the setup of the
-  NuGet publication. One file of the repository can publish, the publication workflow, and only when it is
-  started by hand; no script can.
+  of the release. The candidate, the tag, the GitHub release and the NuGet publication of 2.0.1 are done and
+  verified, and the documents were brought up to date afterwards. One file of the repository can publish, the
+  publication workflow, and only when it is started by hand; no script can.
 - **The 1.0.0 reference and the migration tests (test code only):**
   `ConsoleCalendarGenerator.Tests/Historical/Published100/ConsoleCalendar.cs` is the source of 1.0.0, frozen.
   **Never edit it**; a test compares it byte for byte with the original. The tests in
@@ -87,8 +95,8 @@ console applications. It is .NET only.
   so change them together. **The README is packed into the package and can never be edited there.** It says
   which version it documents, gives the installation command with that version, and says nothing about whether
   the version is published. Three of its links are at the tag `v2.0.1`, which exists, and resolve. The
-  changelog's heading for 2.0.1 says "Unreleased" until the date of publication
-  is known; that and the few other things to finalize afterwards are in
+  changelog's heading for 2.0.1 has the date of its publication to NuGet, 2026-11-28, a date in Shaun's time
+  zone like every date of the project. What is finalized after a publication, and was for this one, is in
   [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md#what-is-finalized-after-publication).
 - **How public text is written (D-84).** Shaun rejected the public wording of 2.0.0 and set the rule: positive,
   direct, concise, confident, about what the library does for its user. In public,
@@ -105,10 +113,11 @@ console applications. It is .NET only.
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
   start and every example supply theirs, so they print the same text on all three systems. Do not add a label
   mode or change `WeekdayLabelStyle` for this.
-- **Publication (decided, D-55, D-85 and D-88):** no 1.x release and no prerelease exists or is authorized.
-  The next publication is 2.0.1 on NuGet, by one manual run of the publication workflow, with Shaun's
-  approval. 1.0.0 stays on NuGet and supported until 2.0.1 is published and verified; deprecating it
-  afterwards is a separate decision, and nothing in the repository deprecates, unlists or deletes a version.
+- **Publication (decided, D-55, D-85, D-88 and D-91):** no 1.x release and no prerelease exists or is
+  authorized. 2.0.1 is published and verified, and no further publication is planned or authorized. 1.0.0
+  stays on NuGet, listed and supported, until Shaun decides otherwise: deprecating it is a separate decision
+  and a separate, explicitly approved action, and nothing in the repository deprecates, unlists or deletes a
+  version.
 - **Repository settings (made 2026-11-27, D-82):** a published release is immutable; private vulnerability
   reporting is on, and `SECURITY.md` sends reports there (D-81); secret scanning and push protection are on;
   Actions must be pinned to full commit SHAs; a ruleset on `master` requires the three CI checks by their
@@ -120,12 +129,12 @@ console applications. It is .NET only.
   `nuget-production` (D-88): Shaun is its required reviewer, only `master` may deploy to it, administrators
   cannot bypass it, and it holds no secret and one variable, the nuget.org user name. The record is in
   [development.md](docs/ai-context/development.md#repository-settings).
-- **`SECURITY.md` states the present,** unlike the README: the 2.x line is on GitHub Releases, and 1.0.0 is on
-  NuGet and supported until a 2.x version is published there. Its table names no patch version of 2.x. It is
-  on `master` only and is edited when 2.0.1 is on NuGet.
-- **Next phase:** the NuGet publication of 2.0.1: one manual run of `publish-nuget.yml`, which checks,
-  publishes and verifies. After it, on `master`, the date in the changelog and the table of `SECURITY.md`.
-  See [roadmap.md](docs/ai-context/roadmap.md). Each needs its own approval; start none unprompted.
+- **`SECURITY.md` states the present,** unlike the README: the 2.x line is on GitHub Releases and on NuGet,
+  1.0.0 is on NuGet, and both are supported. Its table names no patch version of 2.x. It is on `master` only,
+  and its row for 1.0.0 changes only with Shaun's decision about that version.
+- **Next phase:** the deprecation of 1.0.0 on nuget.org, if and when Shaun approves it: an action on a
+  published version, outside this repository, with its own explicit approval (Q-15). Nothing else of the
+  release is outstanding. See [roadmap.md](docs/ai-context/roadmap.md). Start nothing unprompted.
 
 | Project | Path | Target frameworks |
 |---|---|---|
@@ -159,8 +168,9 @@ bash eng/release-bundle.sh artifacts/package artifacts/release-bundle
 bash eng/release-bundle-tamper-test.sh artifacts/release-bundle
 bash eng/direct-reference-smoke.sh artifacts/release-bundle
 
-# The checks of the NuGet publication as a dry run. It reads GitHub and nuget.org, downloads the four files of
-# the release and compares; it needs gh and jq. The second line shows that the checks refuse every wrong case.
+# The checks of the NuGet publication as a dry run. It reads GitHub and nuget.org and compares; it needs gh and
+# jq. Since 2.0.1 is published it stops at its third stage, as it must: nuget.org lists the version. The second
+# line shows that the checks refuse every wrong case, and uses no network.
 bash eng/publication-preflight.sh --version 2.0.1 --tag v2.0.1 --release-id 461246889 --release-commit bff3ee1cb1e80b9cdc3bfe2abdfcbb13a60510cd
 bash eng/publication-preflight-selftest.sh
 ```
@@ -199,8 +209,10 @@ publication workflow: that is never a command to run in passing.
    it is not good, there is no candidate until a new reviewed commit has its own first push run. The CI
    workflow keeps read-only permission, no secret and no manual trigger, and every action of both workflows
    stays pinned to a full commit SHA (D-75). **The publication workflow is started only by hand and only with
-   that approval, and a run of it is never run again.** It publishes only the approved release, whose identity
-   and checksums are in `eng/publication.sh`; no API key is created and no secret is stored (D-88, D-89). If a
+   that approval, and a run of it is never run again.** It ran once, for 2.0.1, and is not started again for
+   that version. It publishes only the approved release, whose identity and checksums are in
+   `eng/publication.sh`; no API key is created and no secret is stored (D-88, D-89). **1.0.0 is not
+   deprecated, unlisted or changed on nuget.org without Shaun's explicit approval for that action** (D-91). If a
    publication fails after the push, nothing is pushed again, replaced or unlisted: what happens next is
    Shaun's decision. The GitHub releases of 2.0.0 and 2.0.1, their files and their tags are never edited,
    replaced or deleted, and the package of 2.0.0 is never pushed to NuGet (D-85). A repository setting or a
@@ -208,8 +220,9 @@ publication workflow: that is never a command to run in passing.
    `nuget-production` and the Trusted Publishing policy on nuget.org are settings in that sense. See
    [packaging-and-releases.md](docs/ai-context/packaging-and-releases.md).
 6. **Campertron is never modified from this repository or this workflow.** Adopting this package in Campertron is
-   done in Shaun's separate Campertron project and chat, after 2.0 is published and verified. The parity
-   fixtures and what the modern API renders for them do not change.
+   done in Shaun's separate Campertron project and chat. 2.0.1 is published and verified, which was its
+   precondition; it is still not planned, started or prepared from here. The parity fixtures and what the
+   modern API renders for them do not change.
 7. **No Python.** Do not propose, build or document a Python version or interoperability layer.
 8. **One focused phase per pull request,** scoped by Shaun beforehand. Do not start the next phase unprompted.
 9. **Keep these documents true.** A change that makes any of them wrong updates them in the same pull request.

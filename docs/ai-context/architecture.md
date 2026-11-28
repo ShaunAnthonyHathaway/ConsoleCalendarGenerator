@@ -337,8 +337,8 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
   section on moving from 1.0.0 lists the five updated behaviors and is the only place in the README that
   speaks of 1.0.0. The headings are free; the tests find the sections by what they are about. How it is
   worded is decided in [D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library).
-- **`CHANGELOG.md`** has a section for each version: 2.0.1, whose heading holds "Unreleased" until its date
-  is known; 2.0.0, which says it was distributed through GitHub Releases and not published to NuGet, with what
+- **`CHANGELOG.md`** has a section for each version: 2.0.1, with the date it was published to NuGet;
+  2.0.0, which says it was distributed through GitHub Releases and not published to NuGet, with what
   it added, the five updated behaviors and its compatibility; and 1.0.0. **`CONTRIBUTING.md`** has what a
   contributor needs, the commands, what a change must keep compatible, and one paragraph on releases.
   **`SECURITY.md`** says where the 2.x line and 1.0.0 are available and supported, what the library does with text it is

@@ -2,12 +2,13 @@
 
 ## Supported versions
 
-Security fixes are made for the latest version published on NuGet.
+| Version | State | Security fixes |
+|---|---|---|
+| 2.0.0 | Final in this repository, with an immutable release candidate. Not yet published. | From the day it is published on NuGet |
+| 1.0.0 | Published on NuGet. It is the only package publicly available until the publication of 2.0.0 completes. | Until the publication of 2.0.0 |
 
-Version 2.0.0 is the current version of this repository. Until it is published on NuGet, the latest published
-version is 1.0.0. A problem found in the code of this repository is worth reporting either way.
-
-A fix is released as a new version. Published versions are never changed.
+A fix is released as a new version. Published versions are never changed. A problem found in the code of this
+repository is worth reporting whichever version it is in.
 
 ## What the library does
 
@@ -23,11 +24,15 @@ terminal.
 
 ## Reporting a problem
 
-This repository does not have a private channel for vulnerability reports at present.
+Please report a security problem privately, through GitHub's private vulnerability reporting for this
+repository:
 
-Please [open an issue](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/issues) that says you
-have found a security problem, without the details that would let someone exploit it. The maintainer will
-reply there to arrange how to share the details. Issues are public, so do not include anything in one that
-should not be.
+- [Report a vulnerability](https://github.com/ShaunAnthonyHathaway/ConsoleCalendarGenerator/security/advisories/new), or
+- on the repository's page on GitHub, open the **Security** tab and choose **Report a vulnerability**.
+
+You need to be signed in to GitHub. GitHub shows the report to you and to the maintainer of this repository,
+not to the public.
+
+Please do not put the details of a vulnerability in a public issue, a discussion or a pull request.
 
 Reports are handled on a best-effort basis by a single maintainer. There is no guaranteed response time.

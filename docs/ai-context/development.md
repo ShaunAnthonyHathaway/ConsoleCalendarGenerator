@@ -247,11 +247,84 @@ A pin never moves by itself. To move one, deliberately and as its own small chan
 The three pins were made this way. Each is the latest release of its major version at the time, and the
 commit that CI was already running under the major tag, so pinning changed nothing about what runs.
 
+## Repository settings
+
+Settings of the repository on GitHub. They are not files, so no checkout shows them; this is their record.
+They were made on 2026-11-27 with Shaun's approval
+([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases)). **Changing one, changing a
+ruleset or using a bypass needs Shaun's separate approval**
+([Release boundaries](packaging-and-releases.md#release-boundaries)).
+
+| Setting | State | Read it back with |
+|---|---|---|
+| Immutable releases | on | `gh api repos/{owner}/{repo}/immutable-releases` |
+| Private vulnerability reporting | on | `gh api repos/{owner}/{repo}/private-vulnerability-reporting` |
+| Secret scanning | on | `gh api repos/{owner}/{repo} --jq .security_and_analysis` |
+| Push protection | on | the same |
+| Actions pinned to a full commit SHA | required | `gh api repos/{owner}/{repo}/actions/permissions` |
+| Permission of the workflow's token | read, as before | `gh api repos/{owner}/{repo}/actions/permissions/workflow` |
+| Rulesets | two, both active | `gh api repos/{owner}/{repo}/rulesets`, then `.../rulesets/<id>` |
+
+Left as they were: the secret-scanning options for patterns that are not a provider's and for validity checks
+(off), Dependabot (off), the merge methods, the description and the topics.
+
+**Immutable releases.** The setting protects a release published after it was turned on; none existed. Once a
+release is published, its files cannot be changed or removed and its tag cannot be moved, or deleted while the
+release exists. The title and the notes stay editable. So a release is created as a draft, gets all of its
+files, is compared with the checksums, and only then is published.
+
+**The ruleset for `master`** ("master: required checks, no force push, no deletion", id 28270949) applies to
+`refs/heads/master` and to nothing else:
+
+- Three status checks are required, reported by GitHub Actions:
+
+  ```text
+  Build (ubuntu-latest)
+  Build (windows-latest)
+  Build (macos-latest)
+  ```
+
+- Force pushes are blocked, and so is deleting the branch.
+- No review, no linear history and no signed commit is required, and the merge methods are not restricted.
+  The branch need not be up to date with `master` before a merge.
+- Bypass: the repository administrator, for a pull request only. It lets the administrator merge a pull
+  request whose checks did not pass. It is there for recovery, for instance when the ruleset and the workflow
+  disagree about a name, and it is not a way to merge faster.
+
+**The names of the checks are part of the ruleset.** They come from the workflow: the job is named
+`Build (${{ matrix.os }})` and the matrix holds the three systems. Rename the job, change the matrix or a
+runner's label, and the checks the ruleset waits for never arrive: no pull request can be merged until the
+ruleset is changed, which is a setting. Plan such a change with Shaun and change both together.
+`CurrentStateTests` fails when the names above and the workflow differ.
+
+**The ruleset for tags** ("v* tags: no update, no deletion", id 28270959) applies to `refs/tags/v*`:
+
+- A tag cannot be moved to another commit, by a push or a forced push, and cannot be deleted.
+- Creating a tag is not restricted by the ruleset. Who may create one is who may write to the repository,
+  which is its owner alone; the workflow's token is read-only and cannot.
+- Bypass: the repository administrator. Before the release is published it allows a tag on the wrong commit
+  to be corrected. After the GitHub release of a tag is published, immutability holds the tag whatever the
+  bypass says.
+
+**Secret scanning and push protection.** GitHub looks for credentials of known providers in the repository
+and refuses a push that contains one. Nothing in this repository is a credential and nothing may become one
+([Release boundaries](packaging-and-releases.md#release-boundaries)).
+
+**Private vulnerability reporting.** `SECURITY.md` sends reports to it
+([D-81](decisions.md#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)). A report
+arrives under the repository's **Security** tab, visible to the reporter and the maintainer.
+
+**What was not tried.** No tag was created to see the tag ruleset work, and no force push was tried on
+`master`: creating a tag needs its own approval, and a test of a protection on the real branch is a risk the
+protection is meant to remove. Both are known from what the API returns for the rulesets. The required
+checks are seen at work on every pull request.
+
 ## Working practice
 
 - One dedicated branch per phase, created from current `master`, and one focused pull request.
 - A pull request says what changed, how it was validated and what did not change.
-- All three CI jobs must pass. Do not weaken a check to get there.
+- All three CI jobs must pass. Do not weaken a check to get there. GitHub enforces it: `master` takes a
+  change only through a pull request whose three checks passed ([Repository settings](#repository-settings)).
 - Pull requests so far were merged with a merge commit, and the branch was deleted locally and remotely once it
   had no unmerged commits.
 - Whether a pull request may be merged without further review is stated in the brief for that phase. Do not

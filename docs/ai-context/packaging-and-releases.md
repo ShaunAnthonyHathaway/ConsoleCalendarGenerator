@@ -9,10 +9,15 @@
   no tag, no GitHub release and no package on nuget.org exists for it, and no prerelease was ever published.
 - **Only one build of it is the release: the candidate.** The candidate is the bundle the Linux job of the
   first push run for the release commit uploaded, and nothing else
-  ([The candidate](#the-candidate)). It is checked and designated outside the repository, and its record and
-  its checksums are **not in the repository**: the release commit is the commit it was built from, and nothing
-  is committed after it for its sake. Read nothing here as saying that a candidate exists or what its
-  checksums are.
+  ([The candidate](#the-candidate)). **It is designated:** the release commit is
+  `117df06e5b6d684da6891cd3ac0310e5aa81ec98` and the run is 46083727520
+  ([D-83](decisions.md#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)). `master` is
+  past that commit; the tag `v2.0.0` belongs on the release commit and on no later one. The candidate's record
+  and its checksums are **not in the repository.** Read no checksum here or in a CI log as the release's.
+- **The repository's settings for a release are made**
+  ([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases)): a published
+  release is immutable, and rulesets protect `master` and the tags `v*`. See
+  [development.md](development.md#repository-settings).
 - **The release machinery runs on every build.** CI makes the four files a release consists of (the package,
   the symbol package, an archive of the assemblies, a file of checksums), checks them, uses the assemblies
   directly, upgrades a program from the published 1.0.0, rehearses the check that follows publication, and
@@ -441,7 +446,7 @@ Each of the following needs Shaun's **separate, explicit approval**, every time:
 - publishing to NuGet
 - a manual workflow dispatch or rerun that could publish or change external state
 - recovering from a failed or partial publication
-- changing a repository setting
+- changing a repository setting or a ruleset, or using a ruleset's bypass
 
 Approval of a phase, of a pull request or of one of these actions does not cover another. When in doubt, stop
 and ask. Routine work (branches, commits, pull requests, CI runs triggered by pushes) is not in this list.
@@ -490,7 +495,8 @@ date is never guessed. The paragraph under the heading says so. The link definit
 the release on GitHub, `releases/tag/v2.0.0`, which exists once the release is published.
 
 **`SECURITY.md` and `CONTRIBUTING.md`** name version 2.0.0 and state what is published as a condition, like
-the README. `SECURITY.md` still says there is no private channel for reports, which is still true.
+the README. `SECURITY.md` said then that there was no private channel for reports, which was true then; it changed when
+private reporting was turned on ([D-81](decisions.md#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)).
 
 **The release notes of the package** stay the changelog on `master`
 ([D-78](decisions.md#d-78-the-documents-of-the-release-say-nothing-that-publication-would-make-false)).
@@ -505,20 +511,34 @@ the package and not in the archive, and everything links to them on `master`.
 
 - **The date in the changelog.** When 2.0.0 is on nuget.org, the heading becomes `## [2.0.0] - <the date>` and
   the sentence that says it is not on NuGet yet goes. A test requires the two to change together.
-- **`SECURITY.md`, when private vulnerability reporting is turned on**
-  ([Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on)). The setting and the file
-  change together, in a separately approved step, and that step has to come **before the GitHub release is
-  published**. It is a commit on `master` after the release commit. That does not touch the candidate: the
-  packed README links to `SECURITY.md` on `master` and quotes nothing from it, so the package stays consistent
-  with whatever the file says later. The sentence to replace is the one that says the repository has no
-  private channel; `PublicDocumentationTests` requires it today and changes with it.
-- **The conditional sentences** in the README, `SECURITY.md` and `CONTRIBUTING.md` ("until 2.0.0 is listed
-  there") stay true after publication and need no edit. They may be simplified on `master` later; the README
-  inside the published package keeps its wording for good, which is why it was written to stay true.
+- **The table in `SECURITY.md`.** Since private vulnerability reporting was turned on
+  ([D-81](decisions.md#d-81-security-reports-go-through-githubs-private-vulnerability-reporting)), `SECURITY.md`
+  states the present: 1.0.0 is the only package publicly available, and 2.0.0 has a candidate and is not yet
+  published. When 2.0.0 is on nuget.org the two rows are edited on `master`, with the changelog, and the test
+  that requires today's wording changes with them. The commit that brought this wording is on `master` after
+  the release commit and does not touch the candidate: the packed README links to `SECURITY.md` on `master`
+  and quotes nothing from it.
+- **The conditional sentences** in the README and `CONTRIBUTING.md` ("until 2.0.0 is listed there") stay true
+  after publication and need no edit. They may be simplified on `master` later; the README inside the
+  published package keeps its wording for good, which is why it was written to stay true.
 - **The package-validation baseline and the next development version,** when work on a later version begins
   ([When the baseline changes](#when-the-baseline-changes)).
 
 ## The candidate
+
+**The candidate of 2.0.0 is designated** ([D-83](decisions.md#d-83-the-release-commit-is-117df06-and-master-moves-on-without-changing-the-release)):
+
+| | |
+|---|---|
+| Release commit | `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of release preparation |
+| Workflow run | 46083727520, started by the push of that commit to `master`, first attempt, never run again |
+| Designated | 2026-11-27, with every check of a release run on the downloaded files |
+| Record and checksums | outside the repository, with the four files, read-only |
+
+`master` has commits after the release commit. They are not part of the release, and the tag `v2.0.0` does
+not go on them. CI still makes a bundle for every push, and each says 2.0.0: none of those is the candidate.
+Do not run `eng/designate-candidate.sh` again while this candidate stands; it would accept the first push run
+of the commit `master` is at.
 
 The rule ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)):
 
@@ -620,17 +640,18 @@ Done:
 - The release infrastructure, and the release-readiness audit.
 - Release preparation: `master` is the source of 2.0.0.
 
-To come, in this order:
+In this order. The first two are done:
 
-1. **The candidate is designated** ([The candidate](#the-candidate)), right after the release-preparation
-   change is merged, from the first push run for its merge commit. Its record is kept outside the repository.
-2. **Repository settings,** each approved separately. Needed before the GitHub release is published:
-   **release immutability**, which protects only releases published after it is turned on. Shaun's choice
-   under [Q-11](open-questions.md#q-11-is-private-vulnerability-reporting-turned-on): **private vulnerability
-   reporting**, with `SECURITY.md` changed in the same step. Optional hardening: a ruleset for `master` and one
-   for tags `v*`, secret scanning with push protection, and the Actions setting that requires SHA pins.
-3. **The tag** `v2.0.0`, on the release commit, which is the commit the candidate's package names. Separate
-   approval. From then on the three links of the README resolve.
+1. **Done: the candidate is designated** ([The candidate](#the-candidate)), from the first push run for the
+   merge commit of release preparation. Its record is kept outside the repository.
+2. **Done: the repository settings** ([D-82](decisions.md#d-82-repository-settings-protect-master-release-tags-and-published-releases);
+   [the record](development.md#repository-settings)). **Release immutability** is on, and protects the
+   release because it was on before the release is published. **Private vulnerability reporting** is on, and
+   `SECURITY.md` points at it. A ruleset protects `master` and one protects the tags `v*`; secret scanning
+   with push protection and the requirement of SHA pins are on.
+3. **The tag** `v2.0.0`, on the release commit `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, which is the
+   commit the candidate's package names and is not the head of `master`. The tag ruleset lets it be created
+   and then keeps it from being moved or deleted. Separate approval. From then on the three links of the README resolve.
 4. **The GitHub release** "ConsoleCalendarGenerator 2.0.0", for the existing tag: created as a draft, with the
    notes of `RELEASE-NOTES.md` and exactly the candidate's four files attached, checked against
    `SHA256SUMS.txt`, and then published. With immutability on, the tag and the files can no longer be changed

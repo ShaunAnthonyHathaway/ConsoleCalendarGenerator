@@ -166,6 +166,41 @@ public class CurrentStateTests
         Assert.That(RetiredClaims.Where(claim => Regex.IsMatch(text, claim, RegexOptions.IgnoreCase)), Is.Empty);
     }
 
+    // ---- what is recorded of the repository's settings ----
+
+    /// <summary>
+    /// The ruleset for `master` on GitHub waits for three checks by name, and the names come from the workflow:
+    /// the name of its job and the systems of its matrix. The ruleset is a setting and is in no file, so the
+    /// notes record the names it requires; this test keeps that record and the workflow the same. If it fails
+    /// because the workflow changed, the ruleset has to change with it, which needs approval: until it does,
+    /// the checks it waits for never arrive and no pull request can be merged.
+    /// </summary>
+    [Test]
+    public void TheChecksRecordedAsRequiredForMaster_AreTheChecksTheWorkflowProduces()
+    {
+        string workflow = Repository.Read(".github/workflows/ci.yml");
+        string notes = Repository.Read("docs/ai-context/development.md");
+
+        MatchCollection jobNames = Regex.Matches(workflow, @"(?m)^    name: (?<name>.+)$");
+        Match matrix = Regex.Match(workflow, @"(?m)^        os: \[(?<systems>[^\]]+)\]$");
+        Assert.That(jobNames, Has.Count.EqualTo(1), "one job, named once");
+        Assert.That(matrix.Success, "one matrix of operating systems");
+        string jobName = jobNames[0].Groups["name"].Value;
+        Assert.That(jobName, Does.Contain("${{ matrix.os }}"));
+        string[] produced = matrix.Groups["systems"].Value.Split(',').Select(system => jobName.Replace("${{ matrix.os }}", system.Trim(), StringComparison.Ordinal)).ToArray();
+
+        string settings = notes[notes.IndexOf("## Repository settings\n", StringComparison.Ordinal)..];
+        string[] recorded = Regex.Match(settings, "```text\n(?<names>[^`]+)```").Groups["names"].Value
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(produced, Is.EqualTo(new[] { "Build (ubuntu-latest)", "Build (windows-latest)", "Build (macos-latest)" }), "what the ruleset was created with");
+            Assert.That(recorded, Is.EqualTo(produced), "the names in development.md");
+            Assert.That(produced.Where(name => !Repository.Read("CLAUDE.md").Contains("`" + name + "`", StringComparison.Ordinal)), Is.Empty, "the names in CLAUDE.md");
+        }
+    }
+
     // ---- what the maintenance notes must not contain ----
 
     [TestCaseSource(nameof(MaintenanceNotes))]

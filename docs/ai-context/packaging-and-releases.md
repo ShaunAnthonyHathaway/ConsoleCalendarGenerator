@@ -19,7 +19,10 @@
   not released:** no tag `v2.0.1`, no GitHub release and no package on nuget.org exists for it.
 - **Only one build of it is the release: the candidate.** The candidate is the bundle the Linux job of the
   first push run for the release commit uploaded, and nothing else ([The candidate](#the-candidate)). The
-  release commit of 2.0.1 is the merge commit of the pull request that set the version to 2.0.1. Whether the
+  release commit of 2.0.1 is the merge commit of the last pull request that changed what the package
+  contains: the wording changes that followed the final editorial review
+  ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)). An
+  earlier candidate, built from `097eace`, was superseded before any tag. Whether the
   candidate has been designated, its record and its checksums are **not in the repository.** Read no checksum
   here or in a CI log as the release's.
 - **The repository's settings for a release are made**
@@ -508,7 +511,7 @@ for the people who read the release page. `eng/release-notes.sh 2.0.1` prints it
 the four files of that version and links to no other tag. It is a text of its own, not the changelog's
 section.
 
-**`SECURITY.md`** has a row for each version that says where the version is. **`CONTRIBUTING.md`** says how to
+**`SECURITY.md`** has a row for the 2.x line and a row for 1.0.0 that say where each is available. **`CONTRIBUTING.md`** says how to
 contribute and nothing about the state of a release.
 
 ### What is finalized after publication
@@ -518,10 +521,11 @@ the package and not in the archive, and everything links to them on `master`.
 
 - **The date in the changelog.** When 2.0.1 is on nuget.org, its heading becomes `## [2.0.1] - <the date>`. A
   test requires the heading to hold "Unreleased" or a date.
-- **The table in `SECURITY.md`.** It states the present: 1.0.0 is the current version on NuGet and is
-  supported until 2.0.1 is published there, 2.0.0 is on GitHub Releases, and 2.0.1 is the next release. When
-  2.0.1 is on nuget.org the rows are edited on `master`, with the changelog, and the test that requires
-  today's rows changes with them.
+- **The table in `SECURITY.md`.** It states the present: the 2.x line is on GitHub Releases, and 1.0.0 is on
+  NuGet and supported until a 2.x version is published there. It names no patch version of 2.x, so it does
+  not change with each release. When 2.0.1 is on nuget.org the two rows are edited on `master`, with the
+  changelog: 2.x is then on NuGet as well, and what is said about 1.0.0 follows Shaun's decision on it. The
+  test that requires today's rows changes with them.
 - **The test of what the documents say about availability**
   (`NoDocumentSaysThatThisReleaseIsPublished_OrThatTheGitHubReleaseIsOnNuGet`) is edited in the same change.
 - **The package-validation baseline and the next development version,** when work on a later version begins
@@ -533,7 +537,7 @@ the package and not in the archive, and everything links to them on `master`.
 
 | | 2.0.0 | 2.0.1 |
 |---|---|---|
-| Release commit | `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of its release preparation | the merge commit of the pull request that set the version to 2.0.1 |
+| Release commit | `117df06e5b6d684da6891cd3ac0310e5aa81ec98`, the merge commit of its release preparation | the merge commit of the wording changes that followed the final editorial review ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)) |
 | Workflow run | 46083727520, first attempt, never run again | the first push run for that commit, in its first attempt |
 | State | designated, tagged `v2.0.0`, and released on GitHub; not on NuGet, and never to be | designated after that run, outside the repository |
 | Record and checksums | outside the repository, with the four files, read-only, kept unchanged | outside the repository, in a folder of their own |
@@ -541,6 +545,14 @@ the package and not in the archive, and everything links to them on `master`.
 The candidate of 2.0.0 is history that stays: its four files are the files of the immutable GitHub release,
 and its package is not authorized for NuGet ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)).
 The candidate of 2.0.1 is the one that goes to GitHub and to NuGet.
+
+**A candidate of 2.0.1 was superseded.** The first one was the bundle of the first push run (46094403379)
+for `097eace95f90d668badf9684188f32c3db164f4b`, the merge commit of the pull request that set the version to
+2.0.1. It was designated, and then Shaun read the public text once more and approved ten wording
+improvements before any tag. The README is inside the package, so the improvements needed a new commit and
+with it a new candidate. The superseded candidate is kept as it is, with a record that says so, and is never
+tagged, released or published. Nothing was wrong with its code: the version stays 2.0.1, because no tag,
+release or publication of 2.0.1 existed.
 
 `master` may get commits after a release commit. They are not part of that release, and its tag does not go
 on them. CI makes a bundle for every push, and each says the version of the project file: none of those is a
@@ -647,14 +659,15 @@ Done:
 - **2.0.0:** release preparation, the candidate, the repository settings, the tag `v2.0.0` and the GitHub
   release, which is published and immutable. Its NuGet publication was stopped before it began and does not
   happen.
-- **2.0.1:** the public presentation rewritten ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)),
+- **2.0.1:** a final editorial review of everything public, with ten wording improvements, and before it the
+  public presentation rewritten ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library)),
   and release preparation: `master` is the source of 2.0.1.
 
 To come for 2.0.1, in this order:
 
 1. **The candidate is designated** ([The candidate](#the-candidate)), from the first push run for the merge
-   commit of the pull request that set the version to 2.0.1. Its record is kept outside the repository, in a
-   folder of its own beside the folder of 2.0.0.
+   commit of the wording changes that followed the final editorial review. Its record is kept outside the
+   repository, in a folder of its own beside the folder of 2.0.0 and the folder of the superseded candidate.
 2. **The tag** `v2.0.1`, on the release commit of 2.0.1, which is the commit the candidate's package names.
    The tag ruleset lets it be created and then keeps it from being moved or deleted. Separate approval. From
    then on the three links of the README resolve.

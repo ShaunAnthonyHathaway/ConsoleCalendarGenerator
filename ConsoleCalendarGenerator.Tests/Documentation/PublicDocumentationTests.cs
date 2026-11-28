@@ -234,8 +234,10 @@ public class PublicDocumentationTests
 
     /// <summary>
     /// `SECURITY.md` is a document of current policy: it is not packed into the package, every link to it
-    /// points at the default branch, and it is edited when the facts change. It has a row for each version
-    /// that says where the version is, and it sends reports to GitHub's private vulnerability reporting.
+    /// points at the default branch, and it is edited when the facts change. Its table has a row for the 2.x
+    /// line and a row for 1.0.0, each saying where that is available, in words that name no patch version of
+    /// 2.x and so do not go out of date with each release. It sends reports to GitHub's private vulnerability
+    /// reporting.
     /// </summary>
     [Test]
     public void TheSecurityDocument_SaysWhereEachVersionIs_AndSendsReportsToThePrivateChannel()
@@ -246,10 +248,11 @@ public class PublicDocumentationTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(rows.Select(row => Regex.Match(row, @"^\| (\d+\.\d+\.\d+) \|").Groups[1].Value), Is.EqualTo(new[] { ReleaseVersion(), OnGitHubOnly, OnNuGet }));
-            Assert.That(rows[1], Ordinal.Contains("GitHub Releases"));
-            Assert.That(rows[2], Ordinal.Contains("NuGet"));
-            Assert.That(rows[2], Ordinal.Contains("until " + ReleaseVersion() + " is published on NuGet"), "how long the version on NuGet is supported");
+            Assert.That(rows.Select(row => row.Split('|')[1].Trim()), Is.EqualTo(new[] { "2.x", OnNuGet }));
+            Assert.That(rows[0], Ordinal.Contains("GitHub Releases"), "where the 2.x line is available today");
+            Assert.That(rows[1], Ordinal.Contains("NuGet"));
+            Assert.That(rows[1], Ordinal.Contains("until a 2.x version is published on NuGet"), "how long the version on NuGet is supported");
+            Assert.That(string.Concat(rows), Does.Not.Match(@"\b2\.\d+\.\d+\b"), "no patch version of 2.x in the table");
             Assert.That(security, Ordinal.Contains("Published versions are never changed"));
 
             // The route for a report: the form of GitHub's private vulnerability reporting for this repository.
@@ -361,7 +364,8 @@ public class PublicDocumentationTests
         var known = new HashSet<string>(StringComparer.Ordinal)
         {
             // .NET's own names, and the two prefixes the README uses for groups of methods.
-            "ConsoleColor", "DayOfWeek", "TextWriter", "Console.Out", "ArgumentNullException", "NullReferenceException", "Get", "Set", "With",
+            "ConsoleColor", "ConsoleColor.Yellow", "DayOfWeek", "TextWriter", "Console.Out", "ArgumentException", "ArgumentNullException", "NullReferenceException",
+            "Get", "Set", "With",
         };
         foreach (Type type in library.GetExportedTypes())
         {
@@ -546,6 +550,16 @@ public class PublicDocumentationTests
     public void NoOtherLanguage_AndNoConsumerOfThePackage(string file)
     {
         Assert.That(Regex.Matches(TextOf(file), @"python|\bpip\b|campertron", RegexOptions.IgnoreCase).Select(match => match.Value), Is.Empty);
+    }
+
+    /// <summary>
+    /// The maintenance notes are working notes of the project, written in its internal vocabulary. They are in
+    /// the repository, and no document for users or contributors sends a reader to them.
+    /// </summary>
+    [TestCaseSource(nameof(Prose))]
+    public void NoLinkToTheMaintenanceNotes(string document)
+    {
+        Assert.That(Regex.Matches(Repository.Read(document), @"docs/ai-context|CLAUDE\.md").Select(match => match.Value), Is.Empty);
     }
 
     [TestCaseSource(nameof(Prose))]

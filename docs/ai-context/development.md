@@ -162,7 +162,7 @@ What to do when one of them changes:
 - **What a document says about a release** ([D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version)).
   The README is packed into the package: it says which version it documents, gives the installation command
   with that version, and says nothing about whether the version is published. The changelog's heading of an
-  unreleased version says "Unreleased". `SECURITY.md` says where each version is. The notes of a release are
+  unreleased version says "Unreleased". `SECURITY.md` says where the 2.x line and 1.0.0 are available. The notes of a release are
   `docs/release-notes/<version>.md`. No document says that a version is published, tagged or released before
   it is, and none says that 2.0.0 is on NuGet. Tests hold the documents to it.
 - **The screenshot,** `docs/images/month-with-theme.png`. It is drawn from what the example really writes to a
@@ -274,7 +274,13 @@ ruleset or using a bypass needs Shaun's separate approval**
 | Rulesets | two, both active | `gh api repos/{owner}/{repo}/rulesets`, then `.../rulesets/<id>` |
 
 Left as they were: the secret-scanning options for patterns that are not a provider's and for validity checks
-(off), Dependabot (off), the merge methods, the description and the topics.
+(off), Dependabot (off), the merge methods and the topics.
+
+**The description** of the repository was changed later the same day, with Shaun's approval
+([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)), from the
+sentence it had since 1.0.0 to: "A .NET library for month calendars: deterministic text rendering, structured output, date markers, themes, and console output." Read it back with
+`gh api repos/{owner}/{repo} --jq .description`. It is public text and follows
+[D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library).
 
 **Immutable releases.** The setting protects a release published after it was turned on; none existed. Once a
 release is published, its files cannot be changed or removed and its tag cannot be moved, or deleted while the

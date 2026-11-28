@@ -21,8 +21,10 @@ console applications. It is .NET only.
   of it says it is 2.0.1. **It is not released:** no tag `v2.0.1`, no GitHub release and no package on
   nuget.org exists for it. Only one build of it is the release, the **candidate**: the bundle the Linux job of
   the first push run for the release commit uploaded (D-79). The release commit of 2.0.1 is the merge commit
-  of the pull request that set the version to 2.0.1, and the tag `v2.0.1` belongs on that commit, whatever the
-  head of `master` is by then. Whether the candidate has been designated, its record and its checksums are
+  of the last pull request that changed what the package contains: the wording changes that followed the
+  final editorial review (D-87). An earlier candidate, built from `097eace`, was superseded before any tag
+  and is never released. The tag `v2.0.1` belongs on the release commit, whatever the head of `master` is by
+  then. Whether the candidate has been designated, its record and its checksums are
   **not in the repository**. Never build, name or substitute another.
 - **Production code:** the legacy class and the modern API, in one assembly. The modern API is everything in the
   `ConsoleCalendarGenerator` namespace.
@@ -81,7 +83,8 @@ console applications. It is .NET only.
   narrates how the project is run: no release state ("not yet published", "if the command gives you"), no
   candidate, approval, audit, decision or pull request number, test count, tooling, Campertron or Python.
   `PublicDocumentationTests` checks the exact rejected phrases; the tone is judged by reading. These notes
-  keep "legacy class" and "modern API" as internal names, and nothing in them is public text.
+  keep "legacy class" and "modern API" as internal names, and nothing in them is public text: no public
+  document links to `CLAUDE.md` or `docs/ai-context/`, and a test fails on such a link.
 - **Weekday labels and operating systems (decided, D-54):** labels taken from a culture are the day names .NET
   has on the machine, and they differ: for `en-US`, two letters on Linux and macOS, one letter on Windows. That
   stays as it is. Labels supplied with `WithWeekdayLabels` are the same everywhere, and the README's quick
@@ -96,11 +99,12 @@ console applications. It is .NET only.
   exact names (`Build (ubuntu-latest)`, `Build (windows-latest)`, `Build (macos-latest)`) and blocks force
   pushes and deletion; a ruleset on tags `v*` blocks moving and deleting a tag. So every change reaches
   `master` through a pull request with the three checks green, and renaming a CI job stops every merge until
-  the ruleset is changed. The record is in
+  the ruleset is changed. The repository's description on GitHub was set, with Shaun's approval, to the
+  sentence that describes the 2.x library (D-87). The record is in
   [development.md](docs/ai-context/development.md#repository-settings).
-- **`SECURITY.md` states the present,** unlike the README: 1.0.0 is the current version on NuGet and supported
-  until 2.0.1 is published there, 2.0.0 is on GitHub Releases, and 2.0.1 is the next release. It is on
-  `master` only and is edited when that changes.
+- **`SECURITY.md` states the present,** unlike the README: the 2.x line is on GitHub Releases, and 1.0.0 is on
+  NuGet and supported until a 2.x version is published there. Its table names no patch version of 2.x. It is
+  on `master` only and is edited when 2.0.1 is on NuGet.
 - **Next phase:** the separately approved steps of releasing 2.0.1: the tag `v2.0.1` on its release commit,
   the GitHub release, the NuGet publication, verification. See [roadmap.md](docs/ai-context/roadmap.md). Each
   needs its own approval; start none unprompted.

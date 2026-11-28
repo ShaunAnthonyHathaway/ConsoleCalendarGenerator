@@ -2,11 +2,10 @@
 
 ## Supported versions
 
-| Version | Availability | Security fixes |
+| Version | Availability | Supported |
 |---|---|---|
-| 2.0.1 | The version this repository builds, and the next release | Yes |
-| 2.0.0 | GitHub Releases | Yes, through a newer 2.x version |
-| 1.0.0 | NuGet, where it is the current version | Yes, until 2.0.1 is published on NuGet |
+| 2.x | GitHub Releases | Yes |
+| 1.0.0 | NuGet | Yes, until a 2.x version is published on NuGet |
 
 A fix is released as a new version. Published versions are never changed.
 

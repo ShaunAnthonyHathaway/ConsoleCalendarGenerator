@@ -340,7 +340,7 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
   is known; 2.0.0, which says it was distributed through GitHub Releases and not published to NuGet, with what
   it added, the five updated behaviors and its compatibility; and 1.0.0. **`CONTRIBUTING.md`** has what a
   contributor needs, the commands, what a change must keep compatible, and one paragraph on releases.
-  **`SECURITY.md`** says where each version is and which gets fixes, what the library does with text it is
+  **`SECURITY.md`** says where the 2.x line and 1.0.0 are available and supported, what the library does with text it is
   given, and how to report a problem. **`docs/release-notes/<version>.md`** is the text of that version's
   GitHub release.
 - **The example application** has two files. `Examples.cs` has one method per capability, each containing one
@@ -359,7 +359,7 @@ Reasons: [decisions.md](decisions.md#states-themes-and-output).
 - **XML documentation** on every public type and member is the API reference. There is no generated site.
 
 Nothing in the public documents names a consumer of the package, and nothing in `docs/ai-context/` is written
-for users.
+for users. No public document links to the maintenance notes; a test fails on such a link.
 
 ### Tests
 

@@ -38,6 +38,8 @@ phase's pull request is #2.
 | Tag `v2.0.0` | Created the annotated, unsigned tag `v2.0.0` on the release commit `117df06` and pushed that one ref, with Shaun's approval. Nothing else changed. | none | none |
 | GitHub release 2.0.0 | Created a draft release for the tag with the candidate's four files, verified the downloaded files byte for byte, and published it. It is immutable and marked Latest, and GitHub's release attestation verifies. Nothing was pushed to NuGet. | none | none |
 | Public presentation and 2.0.1 | Shaun rejected the public wording of 2.0.0 after its GitHub release, before any NuGet publication. The release stays as it is and 2.0.0 is not pushed to NuGet ([D-85](decisions.md#d-85-200-stays-on-github-only-and-201-replaces-it-for-nuget)). This phase rewrote everything a user reads, from scratch: the README, the changelog, `SECURITY.md`, `CONTRIBUTING.md`, the package description and tags, the XML comments of `ConsoleCalendar`, the example program and the notes of the release ([D-84](decisions.md#d-84-public-text-is-positive-direct-and-about-the-library), [D-86](decisions.md#d-86-a-release-has-written-notes-and-the-readme-names-its-version)). It set the version to 2.0.1 with assembly version 2.0.0.0 and file version 2.0.1.0, and redesigned the documentation tests to check facts and the rejected phrases. No runtime code and no public API changed. | #22 | see `git log` |
+| First candidate of 2.0.1 | Designated the Linux `release-bundle` of the first push run (46094403379) for the merge commit of #22, `097eace`, with every check of a release passing. It was superseded before any tag by the wording changes below and is kept, unreleased, as a record. | none | none |
+| Editorial review and wording changes | A read-only review of everything public in that candidate approved the presentation and named ten passages that could be better. Shaun approved all ten: four in the README, one in the XML comments of `ConsoleCalendar`, the table of `SECURITY.md`, the order and one sentence of the release notes, and three in `CONTRIBUTING.md`, which no longer links to the maintenance notes. The repository's description on GitHub was set to the sentence that describes the 2.x library. No runtime code and no public API changed; the version stays 2.0.1 ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)). | #23 | see `git log` |
 
 All of the above happened on 2026-11-27. The layout model was the first phase that added production code. The
 behavior of the legacy class was unchanged in every phase before the constructor colors. With the Gregorian
@@ -50,8 +52,9 @@ rewritten, and is the version that goes to NuGet.
 `master` is the source of 2.0.1. What is left is its release. Each item is an action of its own and needs
 Shaun's separate approval before it starts.
 
-1. **The candidate of 2.0.1 is designated,** right after the pull request that set the version to 2.0.1 is
-   merged: the Linux `release-bundle` artifact of the first push run for its merge commit, checked, and
+1. **The candidate of 2.0.1 is designated,** right after the wording changes that followed the final
+   editorial review are merged: the Linux `release-bundle` artifact of the first push run for that merge
+   commit, checked, and
    recorded outside the repository ([D-79](decisions.md#d-79-the-candidate-is-the-linux-bundle-of-the-first-push-run-for-the-release-commit)).
    Whether that has happened is in the report of that phase, not in this repository.
 2. **The tag** `v2.0.1` on that merge commit, the release commit of 2.0.1.
@@ -96,7 +99,9 @@ approval. Read [packaging-and-releases.md](packaging-and-releases.md) first:
 What that starts from:
 
 - `master` is the source of 2.0.1, and `bash eng/release-state.sh` passes on it.
-- The release commit of 2.0.1 is the merge commit of the pull request that set the version to 2.0.1. The
+- The release commit of 2.0.1 is the merge commit of the wording changes that followed the final editorial
+  review ([D-87](decisions.md#d-87-the-release-commit-of-201-is-the-merge-of-the-final-wording-changes)).
+  The candidate built from `097eace` before them is superseded and is never released. The
   candidate's record and its checksums are outside the repository: in the report of the phase that designated
   it and in the folder that phase names, beside the folder of 2.0.0. Do not look for them here, and do not
   take any checksum from a CI log as the release's without that record.
@@ -116,7 +121,6 @@ Known and not yet dealt with:
   nuget.org: the rows of the table, and the date in the heading.
 - No force push was tried on `master` and no tag was moved or deleted to try the tag ruleset: both rulesets
   are known from what GitHub's API returns for them, and the required checks from pull requests.
-- The repository's description on GitHub still reads as it did for 1.0.0. It is a repository setting.
 - That the console writer puts the caller's colors back is not verified on Windows
   ([D-43](decisions.md#d-43-the-console-writer-restores-the-callers-colors-and-serializes-its-own-writes)). The
   README no longer says so; it is a fact about the tests, recorded here.

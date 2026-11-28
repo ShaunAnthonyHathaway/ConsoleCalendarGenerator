@@ -150,11 +150,9 @@ namespace CalendarGenerator
         /// on Monday whatever the culture is. The year is written as given and is never converted.
         /// </para>
         /// <para>
-        /// <b>The console.</b> Text is written to <see cref="Console.Out"/> piece by piece, and the color of each piece
-        /// is set through <see cref="Console.ForegroundColor"/>. A selected day is written in the color for selected
-        /// days, together with the space before it. <see cref="Console.ResetColor"/> is called after the title, after
-        /// the weekday row and at the end, so the console's colors are reset when the month is drawn. Colors are set
-        /// even when <see cref="Console.Out"/> has been replaced or redirected.
+        /// <b>The console.</b> Text is written to <see cref="Console.Out"/> in the configured colors, and the console's
+        /// colors are reset when the month is drawn. Colors are set even when <see cref="Console.Out"/> has been
+        /// replaced or redirected.
         /// </para>
         /// <para>
         /// <b>Line ends.</b> Every line, the last line of days and the empty line after it included, ends with the

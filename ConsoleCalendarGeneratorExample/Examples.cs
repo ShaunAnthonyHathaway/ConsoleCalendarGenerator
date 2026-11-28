@@ -113,7 +113,7 @@ internal static class Examples
         Console.WriteLine($"April 2027 needs {layout.Weeks.Count} weeks. Its first week:");
         foreach (MonthLayoutCell cell in layout.Weeks[0].Cells)
         {
-            Console.WriteLine($"  {cell.DayOfWeek}: {(cell.Date is DateTime date ? $"the {date.Day}" : "empty")}");
+            Console.WriteLine($"  {cell.DayOfWeek}: {(cell.Date is DateTime date ? $"day {date.Day}" : "empty")}");
         }
         // </Layout>
     }

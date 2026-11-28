@@ -63,10 +63,10 @@ April 2027 needs 5 weeks. Its first week:
   Monday: empty
   Tuesday: empty
   Wednesday: empty
-  Thursday: the 1
-  Friday: the 2
-  Saturday: the 3
-  Sunday: the 4
+  Thursday: day 1
+  Friday: day 2
+  Saturday: day 3
+  Sunday: day 4
 
 == ConsoleCalendar ==
     March 2027
